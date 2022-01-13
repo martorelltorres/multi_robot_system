@@ -21,8 +21,9 @@ public:
 protected:
     // Callbacks
     void AUVNavigationCb(const cola2_msgs::NavStsConstPtr& auv_navigation_msg);
+    void ASVNavigationCb(const cola2_msgs::NavStsConstPtr& asv_navigation_msg);
     void GridMapPublisher();
-    void getMapInfo(double& AUV_position_north, double& AUV_position_east);
+    void getMapInfo(double& position_north, double& position_east, string& robot);
 
     
 private:
@@ -31,6 +32,8 @@ private:
     double AUV_position_east;
     double AUV_position_depth;
     double AUV_altitude;
+    double ASV_position_north;
+    double ASV_position_east;
     double length; 
     double size; 
     double resolution;
@@ -38,9 +41,13 @@ private:
     string map_frame_id;
     GridMap * map;
     string node_name_;
+    string ASV = std::string("ASV");
+    string AUV = std::string("AUV");
     ros::Subscriber auv_navigation_sub_;
+    ros::Subscriber asv_navigation_sub_;
     ros::Publisher grid_map_pub_;
-    ros::Publisher info_map_pub_;
+    ros::Publisher info_map_ASV_pub_;
+    ros::Publisher info_map_AUV_pub_;
     ros::NodeHandle nh_;
 
 };
@@ -69,10 +76,12 @@ GridMapInfo::GridMapInfo(ros::NodeHandle nh):  nh_(nh)
 
     // Setup subscribers
     auv_navigation_sub_ = nhp.subscribe("/turbot/navigator/navigation", 1, &GridMapInfo::AUVNavigationCb, this);
+    asv_navigation_sub_ = nhp.subscribe("/xiroi/navigator/navigation", 1, &GridMapInfo::ASVNavigationCb, this);
 
     // Setup publishers
     grid_map_pub_ = nhp.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
-    info_map_pub_ = nhp.advertise<sensor_msgs::Range>("grid_map_data", 1, true); 
+    info_map_ASV_pub_ = nhp.advertise<sensor_msgs::Range>("grid_map_ASV_data", 1, true); 
+    info_map_AUV_pub_ = nhp.advertise<sensor_msgs::Range>("grid_map_AUV_data", 1, true);
 
 }
 
@@ -83,18 +92,33 @@ void GridMapInfo::AUVNavigationCb(const cola2_msgs::NavStsConstPtr& auv_navigati
     AUV_position_east = auv_navigation_msg->position.east;
     AUV_position_depth = auv_navigation_msg->position.depth;
     AUV_altitude = auv_navigation_msg->altitude;
-    getMapInfo(AUV_position_north, AUV_position_east);
+    getMapInfo(AUV_position_north, AUV_position_east, AUV );
 }
 
-void GridMapInfo::getMapInfo(double& AUV_position_north, double& AUV_position_east) 
+void GridMapInfo::ASVNavigationCb(const cola2_msgs::NavStsConstPtr& asv_navigation_msg)
 {
-    int north_position = trunc(AUV_position_north);
-    int east_position = trunc(AUV_position_east);
+    GridMapPublisher();
+    ASV_position_north = asv_navigation_msg->position.north;
+    ASV_position_east = asv_navigation_msg->position.east;
+    getMapInfo(ASV_position_north, ASV_position_east, ASV);
+}
+
+void GridMapInfo::getMapInfo(double& position_north, double& position_east, string& robot ) 
+{
+    int north_position = trunc(position_north);
+    int east_position = trunc(position_east);
     sensor_msgs::Range range_msg;
     range_msg.header.stamp = ros::Time::now();
     range_msg.header.frame_id = "base_link";
     range_msg.range = map->atPosition(layer_name,{north_position,east_position});
-    info_map_pub_.publish(range_msg);
+
+        if (robot=="AUV"){
+            info_map_AUV_pub_.publish(range_msg);
+        }
+        else{
+            info_map_ASV_pub_.publish(range_msg);
+        }
+    
 }
 
 void GridMapInfo::GridMapPublisher() 

@@ -1,15 +1,16 @@
 <launch>
  <!-- Params -->
-  <arg name="robot_name" default="turbot"/>
+  <arg name="auv_name" default="turbot"/>
+  <arg name="asv_name" default="xiroi"/>
+  <arg name="mrs_name" default="mrs"/>
 
   <!-- Launch the AUV Simulation -->
-  <include  file="$(find cola2_turbot)/launch/simulation.launch">
-      <!-- <arg name="environment" value="$(arg environment)"/>
-      <arg name="simGPS" value="$(arg simGPS)"/>
-      <arg name="USBL_tf" value="$(arg USBL_tf)"/> -->
-  </include>
+  <include  file="$(find cola2_turbot)/launch/simulation.launch"/>
 
-  <group ns="$(arg robot_name)">
+  <!-- Launch the Xiroi Simulation -->
+  <include  file="$(find cola2_xiroi)/launch/simulation.launch"/>
+
+  <group ns="$(arg mrs_name)">
     <!-- Launch the Grid Map management -->
     <node name="grid_map_info" pkg="multi_robot_system" type="grid_map_info" output="screen" respawn="true">
       <rosparam command="load" file="$(find multi_robot_system)/config/mrs_navigation.yaml"/>
