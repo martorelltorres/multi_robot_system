@@ -1,0 +1,8 @@
+
+grid_map_topic: /grid_map_simple_demo/grid_map
+# Grid map geometry
+length: 50.0
+size: 50.0 
+resolution: 1.0
+map_frame_id: "world_ned"
+layer_name: "elevation"
