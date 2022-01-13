@@ -1,12 +1,24 @@
 <launch>
-  <!-- Launch the MRS navigation -->
-  <node name="grid_map_info" pkg="cola2_turbot" type="grid_map_info" output="screen" respawn="true">
-    <rosparam command="load" file="$(find cola2_turbot)/config/MRS/mrs_navigation.yaml"/>
-  </node>
-  <!-- Launch the grid map visualizer -->
-  <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
-    <rosparam command="load" file="$(find cola2_turbot)/config/MRS/visualization.yaml"/>
-  </node>
+ <!-- Params -->
+  <arg name="robot_name" default="turbot"/>
+
+  <!-- Launch the AUV Simulation -->
+  <include  file="$(find cola2_turbot)/launch/simulation.launch">
+      <!-- <arg name="environment" value="$(arg environment)"/>
+      <arg name="simGPS" value="$(arg simGPS)"/>
+      <arg name="USBL_tf" value="$(arg USBL_tf)"/> -->
+  </include>
+
+  <group ns="$(arg robot_name)">
+    <!-- Launch the Grid Map management -->
+    <node name="grid_map_info" pkg="multi_robot_system" type="grid_map_info" output="screen" respawn="true">
+      <rosparam command="load" file="$(find multi_robot_system)/config/mrs_navigation.yaml"/>
+    </node>
+    <!-- Launch the grid map visualizer -->
+    <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
+      <rosparam command="load" file="$(find multi_robot_system)/config/visualization.yaml"/>
+    </node>
+  </group>
 
 </launch>
 
