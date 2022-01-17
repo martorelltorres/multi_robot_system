@@ -13,10 +13,10 @@
 using namespace grid_map;
 using namespace std;
 
-class GridMapInfo
+class GridMapHandler
 {
 public:
-    GridMapInfo(ros::NodeHandle nh);
+    GridMapHandler(ros::NodeHandle nh);
 
 protected:
     // Callbacks
@@ -24,6 +24,8 @@ protected:
     void ASVNavigationCb(const cola2_msgs::NavStsConstPtr& asv_navigation_msg);
     void GridMapPublisher();
     void getMapInfo(double& position_north, double& position_east, string& robot);
+    void createGridMapLayer(string& new_layer_name);
+    void addDataToLayer(double& position_north, double& position_east, double& value, string& layer_name );
 
     
 private:
@@ -38,6 +40,7 @@ private:
     double size; 
     double resolution;
     string layer_name;
+    string new_layer_name;
     string map_frame_id;
     GridMap * map;
     string node_name_;
@@ -49,10 +52,12 @@ private:
     ros::Publisher info_map_ASV_pub_;
     ros::Publisher info_map_AUV_pub_;
     ros::NodeHandle nh_;
+    double AUV_read_value;
+    double ASV_read_value;
 
 };
 
-GridMapInfo::GridMapInfo(ros::NodeHandle nh):  nh_(nh)
+GridMapHandler::GridMapHandler(ros::NodeHandle nh):  nh_(nh)
 {
     ros::NodeHandle nhp("~");
     node_name_ = ros::this_node::getName();
@@ -67,16 +72,16 @@ GridMapInfo::GridMapInfo(ros::NodeHandle nh):  nh_(nh)
     map = new GridMap({layer_name});
 
     ROS_INFO("MRSNavigation parameters");
-	  ROS_INFO_STREAM("Grid map length: " << length);	
-	  ROS_INFO_STREAM("Grid map size: " << size);	
-	  ROS_INFO_STREAM("Grid map resolution: " << resolution);	
-	  ROS_INFO_STREAM("Grid map layer name: " << layer_name);
+	ROS_INFO_STREAM("Grid map length: " << length);	
+	ROS_INFO_STREAM("Grid map size: " << size);	
+	ROS_INFO_STREAM("Grid map resolution: " << resolution);	
+	ROS_INFO_STREAM("Grid map layer name: " << layer_name);
     ROS_INFO_STREAM("Grid map frame_id: " << map_frame_id);	
     ROS_INFO("-----------------------------------");
 
     // Setup subscribers
-    auv_navigation_sub_ = nhp.subscribe("/turbot/navigator/navigation", 1, &GridMapInfo::AUVNavigationCb, this);
-    asv_navigation_sub_ = nhp.subscribe("/xiroi/navigator/navigation", 1, &GridMapInfo::ASVNavigationCb, this);
+    auv_navigation_sub_ = nhp.subscribe("/turbot/navigator/navigation", 1, &GridMapHandler::AUVNavigationCb, this);
+    asv_navigation_sub_ = nhp.subscribe("/xiroi/navigator/navigation", 1, &GridMapHandler::ASVNavigationCb, this);
 
     // Setup publishers
     grid_map_pub_ = nhp.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
@@ -85,7 +90,7 @@ GridMapInfo::GridMapInfo(ros::NodeHandle nh):  nh_(nh)
 
 }
 
-void GridMapInfo::AUVNavigationCb(const cola2_msgs::NavStsConstPtr& auv_navigation_msg)
+void GridMapHandler::AUVNavigationCb(const cola2_msgs::NavStsConstPtr& auv_navigation_msg)
 {
     GridMapPublisher();
     AUV_position_north = auv_navigation_msg->position.north;
@@ -93,17 +98,29 @@ void GridMapInfo::AUVNavigationCb(const cola2_msgs::NavStsConstPtr& auv_navigati
     AUV_position_depth = auv_navigation_msg->position.depth;
     AUV_altitude = auv_navigation_msg->altitude;
     getMapInfo(AUV_position_north, AUV_position_east, AUV );
+    createGridMapLayer(AUV);
+    addDataToLayer(AUV_position_north, AUV_position_east, AUV_read_value, AUV);
 }
 
-void GridMapInfo::ASVNavigationCb(const cola2_msgs::NavStsConstPtr& asv_navigation_msg)
+
+void GridMapHandler::ASVNavigationCb(const cola2_msgs::NavStsConstPtr& asv_navigation_msg)
 {
     GridMapPublisher();
     ASV_position_north = asv_navigation_msg->position.north;
     ASV_position_east = asv_navigation_msg->position.east;
     getMapInfo(ASV_position_north, ASV_position_east, ASV);
+    createGridMapLayer(ASV);
+    addDataToLayer(ASV_position_north, ASV_position_east, ASV_read_value, ASV);
 }
 
-void GridMapInfo::getMapInfo(double& position_north, double& position_east, string& robot ) 
+
+void GridMapHandler::addDataToLayer(double& position_north, double& position_east, double& value, string& layer_name)
+{
+    map->at(layer_name,{position_north,position_east}) = value;
+
+}
+
+void GridMapHandler::getMapInfo(double& position_north, double& position_east, string& robot ) 
 {
     int north_position = trunc(position_north);
     int east_position = trunc(position_east);
@@ -114,14 +131,21 @@ void GridMapInfo::getMapInfo(double& position_north, double& position_east, stri
 
         if (robot=="AUV"){
             info_map_AUV_pub_.publish(range_msg);
+            AUV_read_value =range_msg.range;
         }
         else{
             info_map_ASV_pub_.publish(range_msg);
+            ASV_read_value =range_msg.range;
         }
     
 }
+void GridMapHandler::createGridMapLayer(string& new_layer_name)
+{
+//Grid Map layer initialization  
+  map->add(new_layer_name,0.0);
+}
 
-void GridMapInfo::GridMapPublisher() 
+void GridMapHandler::GridMapPublisher() 
 {
   map->setFrameId(map_frame_id);
   map->setGeometry(Length(size, length), resolution);
@@ -131,7 +155,7 @@ void GridMapInfo::GridMapPublisher()
   for (GridMapIterator it(*map); !it.isPastEnd(); ++it) {
       Position position;
       map->getPosition(*it, position);
-      map->at("elevation", *it) =   2 + std::sin(position.x()/3);
+      map->at("elevation", *it) =  10 + (5 * std::sin(position.x()/7));
   }
   // Publish grid map
   map->setTimestamp(time.toNSec());
@@ -141,13 +165,14 @@ void GridMapInfo::GridMapPublisher()
 
 }
 
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "grid_map_info");
 
     ros::NodeHandle nh;
 
-    GridMapInfo node(nh);
+    GridMapHandler node(nh);
     
     ros::spin();
 

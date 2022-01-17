@@ -44,19 +44,111 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: false
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
-      Marker Scale: 10
+        turbot/base_link:
+          Value: false
+        turbot/depth:
+          Value: false
+        turbot/dvl:
+          Value: false
+        turbot/dvl_altitude:
+          Value: false
+        turbot/dynamics:
+          Value: false
+        turbot/echosounder:
+          Value: false
+        turbot/gps:
+          Value: false
+        turbot/imu:
+          Value: false
+        turbot/imu_filter:
+          Value: false
+        turbot/modem:
+          Value: false
+        turbot/pressure:
+          Value: false
+        turbot/thruster_0:
+          Value: false
+        turbot/thruster_1:
+          Value: false
+        turbot/thruster_2:
+          Value: false
+        world:
+          Value: false
+        world_ned:
+          Value: false
+        xiroi/base_link:
+          Value: true
+        xiroi/dynamics:
+          Value: false
+        xiroi/gps:
+          Value: true
+        xiroi/imu:
+          Value: true
+        xiroi/imu_filter:
+          Value: false
+        xiroi/odom:
+          Value: false
+        xiroi/thruster_1:
+          Value: true
+        xiroi/thruster_2:
+          Value: true
+        xiroi/usbl:
+          Value: true
+      Marker Scale: 2
       Name: tf
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          world_ned:
+            turbot/base_link:
+              turbot/dvl:
+                turbot/dvl_altitude:
+                  {}
+              turbot/echosounder:
+                {}
+              turbot/gps:
+                {}
+              turbot/imu:
+                {}
+              turbot/imu_filter:
+                {}
+              turbot/modem:
+                {}
+              turbot/pressure:
+                turbot/depth:
+                  {}
+              turbot/thruster_0:
+                {}
+              turbot/thruster_1:
+                {}
+              turbot/thruster_2:
+                {}
+            turbot/dynamics:
+              {}
+            xiroi/dynamics:
+              {}
+            xiroi/odom:
+              xiroi/base_link:
+                xiroi/gps:
+                  {}
+                xiroi/imu:
+                  {}
+                xiroi/imu_filter:
+                  {}
+                xiroi/thruster_1:
+                  {}
+                xiroi/thruster_2:
+                  {}
+                xiroi/usbl:
+                  {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Class: rviz/Axes
       Enabled: true
       Length: 1
@@ -78,6 +170,51 @@ Visualization Manager:
       Radius: 0.10000000149011612
       Reference Frame: turbot/base_link_map_origin
       Value: false
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        xiroi/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        xiroi/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        xiroi/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        xiroi/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        xiroi/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        xiroi/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        xiroi/usbl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: xiroi/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -447,27 +584,6 @@ Visualization Manager:
       Topic: /turbot/modem_raw
       Unreliable: false
       Value: false
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Class: grid_map_rviz_plugin/GridMap
-      Color: 200; 200; 200
-      Color Layer: elevation
-      Color Transformer: GridMapLayer
-      Enabled: true
-      Height Layer: elevation
-      Height Transformer: GridMapLayer
-      History Length: 1
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 10
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: GridMap
-      Show Grid Lines: true
-      Topic: /turbot/grid_map_info/grid_map
-      Unreliable: false
-      Use Rainbow: true
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 165; 165; 165
@@ -482,25 +598,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 44.58081817626953
+      Distance: 6.46406888961792
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -2.318525552749634
-        Y: 1.4967671632766724
-        Z: 0.8154281377792358
+        X: 0.8867818117141724
+        Y: -0.6855686902999878
+        Z: 0.6405085921287537
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4997974634170532
+      Pitch: 0.9197962880134583
       Target Frame: turbot/base_link
       Value: Orbit (rviz)
-      Yaw: 2.042224884033203
+      Yaw: 3.817228078842163
     Saved: ~
 Window Geometry:
   Displays:

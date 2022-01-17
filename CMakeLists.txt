@@ -107,9 +107,9 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/multi_robot_system_node.cpp)
-add_executable(grid_map_info src/grid_map_info.cpp)
-target_link_libraries(grid_map_info ${catkin_LIBRARIES})
-add_dependencies(grid_map_info ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(grid_map_handler src/grid_map_handler.cpp)
+target_link_libraries(grid_map_handler ${catkin_LIBRARIES})
+add_dependencies(grid_map_handler ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

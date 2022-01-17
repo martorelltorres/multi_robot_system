@@ -1,24 +1,33 @@
 <launch>
  <!-- Params -->
-  <arg name="auv_name" default="turbot"/>
-  <arg name="asv_name" default="xiroi"/>
-  <arg name="mrs_name" default="mrs"/>
+  <arg name="auvName" default="turbot"/>
+  <arg name="asvName" default="xiroi"/>
+  <arg name="mrsName" default="mrs"/>
+  <arg name="enableIquaASV" default="false"/>
+  <arg name="enableIquaAUV" default="true"/>
 
   <!-- Launch the AUV Simulation -->
-  <include  file="$(find cola2_turbot)/launch/simulation.launch"/>
+  <include  file="$(find cola2_turbot)/launch/simulation.launch">
+    <arg name="enableIqua" value="$(arg enableIquaAUV)"/>
+  </include>
 
   <!-- Launch the Xiroi Simulation -->
-  <include  file="$(find cola2_xiroi)/launch/simulation.launch"/>
+  <include  file="$(find cola2_xiroi)/launch/simulation.launch">
+    <arg name="enableIqua" value="$(arg enableIquaASV)"/>
+  </include>
 
-  <group ns="$(arg mrs_name)">
+  <group ns="$(arg mrsName)">
     <!-- Launch the Grid Map management -->
-    <node name="grid_map_info" pkg="multi_robot_system" type="grid_map_info" output="screen" respawn="true">
+    <node name="grid_map_handler" pkg="multi_robot_system" type="grid_map_handler" output="screen" respawn="true">
       <rosparam command="load" file="$(find multi_robot_system)/config/mrs_navigation.yaml"/>
     </node>
     <!-- Launch the grid map visualizer -->
     <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
       <rosparam command="load" file="$(find multi_robot_system)/config/visualization.yaml"/>
     </node>
+
+    <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true"/>
+
   </group>
 
 </launch>
