@@ -69,6 +69,8 @@ add_service_files(
 generate_messages(
     DEPENDENCIES
       std_msgs
+      cola2_msgs
+      actionlib_msgs
  #   auv_msgs
  #   cola2_msgs
  #   nav_msgs

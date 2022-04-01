@@ -18,15 +18,16 @@
 
   <group ns="$(arg mrsName)">
     <!-- Launch the Grid Map management -->
-    <node name="grid_map_handler" pkg="multi_robot_system" type="grid_map_handler" output="screen" respawn="true">
+    <!-- <node name="grid_map_handler" pkg="multi_robot_system" type="grid_map_handler" output="screen" respawn="true">
       <rosparam command="load" file="$(find multi_robot_system)/config/mrs_navigation.yaml"/>
-    </node>
+    </node> -->
     <!-- Launch the grid map visualizer -->
-    <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
+    <!-- <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
       <rosparam command="load" file="$(find multi_robot_system)/config/visualization.yaml"/>
     </node>
 
-    <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true"/>
+    <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true"/> -->
+    <node name="area_partition" pkg="multi_robot_system" type="area_partition.py" output="screen" respawn="true"/>
 
   </group>
 
