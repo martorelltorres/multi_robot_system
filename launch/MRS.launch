@@ -3,17 +3,21 @@
   <arg name="auvName" default="turbot"/>
   <arg name="asvName" default="xiroi"/>
   <arg name="mrsName" default="mrs"/>
+  <arg name="place" default="bendinat.yaml"/>
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="true"/>
+  <arg name="enableRviz" default="false"/>
 
   <!-- Launch the AUV Simulation -->
   <include  file="$(find cola2_turbot)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaAUV)"/>
+    <arg name="place" value="$(arg place)"/>
   </include>
 
   <!-- Launch the Xiroi Simulation -->
   <include  file="$(find cola2_xiroi)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaASV)"/>
+    <arg name="place" value="$(arg place)"/>
   </include>
 
   <group ns="$(arg mrsName)">
@@ -30,6 +34,9 @@
     <node name="area_partition" pkg="multi_robot_system" type="area_partition.py" output="screen" respawn="true"/>
 
   </group>
+
+  <!-- RViz -->
+    <node if="$(arg enableRviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find multi_robot_system)/scene/MRS.rviz"/>
 
 </launch>
 

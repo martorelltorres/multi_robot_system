@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+from operator import indexOf
 import roslib
 import rospy
 from array import *
 import numpy as np
+import math
 import os
 import re
 import geopandas as gpd
@@ -12,6 +14,9 @@ from shapely.geometry import Polygon
 from shapely.ops import split, LineString
 from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
+from geometry_msgs.msg import Point, PolygonStamped
+from visualization_msgs.msg import Marker
+
 
 
 class path_planner:
@@ -21,6 +26,9 @@ class path_planner:
         self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.read_file()
+        self.extract_NED_positions()
+        self.characterize_polygon()
+        self.define_path_coverage()
 
     def read_file(self):
         data = []
@@ -45,12 +53,7 @@ class path_planner:
                 substring_long = line[start:end]
                 self.longitude.append(float(substring_long))
         
-        self.extract_NED_positions()
-
-
-    
     def extract_NED_positions(self):
-        # self.ned = NED(39.52563336913869, 2.5492000075129138, 0.0)
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  # NED frame
         self.north_position =[]
         self.east_position =[]
@@ -65,69 +68,52 @@ class path_planner:
         self.north_position.append(self.north_position[0])
         self.east_position.append(self.east_position[0])
         plt.plot(self.north_position, self.east_position, c="red")
-        plt.show()
-        self.define_polygon() 
-
-    def define_polygon(self):
-        self.polygon_area = Polygon(zip(self.east_position, self.north_position))
-        plt.plot(self.north_position, self.east_position, c="red")
-        crs = {'init': 'epsg:4326'}
-        polygon = gpd.GeoDataFrame(index=[0], crs=crs, geometry=[self.polygon_area])  
-        print(self.polygon_area.area)     
-        print("defineee")
-
-        points=[]
-        coords=[]
+        
+    
+    def characterize_polygon(self):
+        #obtain the global_points (lat,long) of the polygon
+        self.global_points=[]
+        self.global_coords=[]
         for i in range(len(self.latitude)):
-            points.append([self.latitude[i],self.longitude[i]])
-        coords.append(points[i])
-        # region_polys, region_pts = voronoi_regions_from_coords(coords, self.polygon_area)
-        # split_polygon(self.polygon_area)
-            
+            self.global_points.append([self.latitude[i],self.longitude[i]])
+        self.global_coords.append(self.global_points[i])
 
-def get_squares_from_rect(RectangularPolygon, side_length=0.0025):
-    rect_coords = np.array(RectangularPolygon.boundary.coords.xy)
-    y_list = rect_coords[1]
-    x_list = rect_coords[0]
-    y1 = min(y_list)
-    y2 = max(y_list)
-    x1 = min(x_list)
-    x2 = max(x_list)
-    width = x2 - x1
-    height = y2 - y1
+        #obtain the local_points (lat,long) of the polygon
+        self.local_points=[]
+        self.local_coords=[]
+        for i in range(len(self.north_position)):
+            self.local_points.append([self.north_position[i],self.east_position[i]])
+        self.local_coords.append(self.local_points[i])
 
-    xcells = int(np.round(width / side_length))
-    ycells = int(np.round(height / side_length))
+        # obtain the distance[m] between the different points of the polygon
+        self.distance =[]
+        for i in range(len(self.north_position)):
 
-    yindices = np.linspace(y1, y2, ycells + 1)
-    xindices = np.linspace(x1, x2, xcells + 1)
-    horizontal_splitters = [
-        LineString([(x, yindices[0]), (x, yindices[-1])]) for x in xindices
-    ]
-    vertical_splitters = [
-        LineString([(xindices[0], y), (xindices[-1], y)]) for y in yindices
-    ]
-    result = RectangularPolygon
-    for splitter in vertical_splitters:
-        result = MultiPolygon(split(result, splitter))
-    for splitter in horizontal_splitters:
-        result = MultiPolygon(split(result, splitter))
-    square_polygons = list(result)
+            if(i==(len(self.north_position)-1)):
+                x_distance = self.north_position[i]-self.north_position[(len(self.north_position)-1)]
+                y_distance = self.east_position[i]-self.east_position[(len(self.north_position)-1)]
 
-    return square_polygons
+            else:
+                x_distance = self.north_position[i]-self.north_position[(i+1)]
+                y_distance = self.east_position[i]-self.east_position[(i+1)]
 
+            cartesian_distance = np.sqrt(x_distance**2 + y_distance**2)
+            self.distance.append(cartesian_distance)
+        
+        # find the max distance reference_points
+        max_distance = max(self.distance)
+        index =  self.distance.index(max_distance)
+        self.reference_points =[]
+        self.reference_points.append (index)
 
-def split_polygon(polygon, side_length=0.025, shape="square", thresh=0.9):
-    assert side_length>0, "side_length must be a float>0"
-    Rectangle    = polygon.envelope
-    squares      = get_squares_from_rect(Rectangle, side_length=side_length)
-    SquareGeoDF  = gpd.GeoDataFrame(squares).rename(columns={0: "geometry"})
-    Geoms        = SquareGeoDF[SquareGeoDF.intersects(polygon)].geometry.values
-    if shape == "square":
-        self.geoms = [g for g in Geoms if ((g.intersection(polygon)).area / g.area) >= thresh]
-    print("spliiit")
-    plt.plot(self.geoms)
-    plt.show()
+        if (index+1 == len(self.north_position)-1):
+            self.reference_points.append(0)
+
+    def define_path_coverage(self):
+        # define the initial line between the reference_points
+        # point_A = self.local_points[self.reference_points[0]]
+        # point_B = self.local_points[self.reference_points[0]]
+        # slope = 
 
 def get_param(self, param_name, default = None):
     if rospy.has_param(param_name):
