@@ -32,6 +32,7 @@
 
     <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true"/> -->
     <node name="area_partition" pkg="multi_robot_system" type="area_partition.py" output="screen" respawn="true"/>
+    <!-- <node name="poligon_divider" pkg="multi_robot_system" type="test.py" output="screen" respawn="true"/> -->
 
   </group>
 

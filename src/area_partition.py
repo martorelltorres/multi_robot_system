@@ -5,13 +5,16 @@ import roslib
 import rospy            
 from array import *
 import numpy as np
+from numpy import asarray
 import math
 import os
+import pprint
 import re
 import geopandas as gpd
-from shapely.geometry import MultiPolygon
-from shapely.geometry import Polygon
-from shapely.ops import split, LineString
+from shapely.geometry import MultiPolygon, Point
+from shapely.geometry import Polygon,asMultiPoint,asPolygon,asLineString
+from scipy.spatial import Voronoi, voronoi_plot_2d
+from shapely.ops import split, LineString,triangulate
 from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
 from geometry_msgs.msg import Point, PolygonStamped
@@ -27,14 +30,10 @@ class path_planner:
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.point_distance = 2
         self.line_ecuations=[]
-        self.MAIN()
-
-
-    def MAIN(self):
         self.read_file()
         self.extract_NED_positions()
         self.characterize_polygon()
-        self.define_path_coverage()
+        # self.define_path_coverage()
 
 
     def read_file(self):
@@ -91,13 +90,126 @@ class path_planner:
         self.local_coords=[]
         for i in range(len(self.north_position)):
             self.local_points.append([self.north_position[i],self.east_position[i]])
-        # self.local_coords.append(self.local_points[i])
-        # print("11111111111111111111111111111111")
-        # print(self.local_points)
-        # plt.plot(self.local_points)
-        # plt.plot(self.local_coords)
-        # # plt.show()
+
+        # Define the main polygon object
+        main_polygon = Polygon(self.local_points)
+        polygon_centroid = main_polygon.centroid
+        self.polygon_points = self.local_points
+        # self.polygon_points.append([polygon_centroid.x,polygon_centroid.y])
+
+        # Triangulate the polygon
+        poligonized_points =Polygon(self.polygon_points)
+        triangles = triangulate(poligonized_points)
+        centroid_points = []
+        # extract centroid points of the triangles
+        for triangle in triangles:
+            triangle_centroid = triangle.centroid
+            centroid_points.append([triangle_centroid.x,triangle_centroid.y])
+        centroid_points.append([polygon_centroid.x,polygon_centroid.y])
+   
+        # compute Voronoi tesselation
+        voronoi_regions = Voronoi(centroid_points)
+        regions, vertices = self.voronoi_finite_polygons_2d(voronoi_regions)
+        voronoi_plot_2d(voronoi_regions)
+        min_x = voronoi_regions.min_bound[0] - 0.1
+        max_x = voronoi_regions.max_bound[0] + 0.1
+        min_y = voronoi_regions.min_bound[1] - 0.1
+        max_y = voronoi_regions.max_bound[1] + 0.1
+
+        mins = np.tile((min_x, min_y), (vertices.shape[0], 1))
+        bounded_vertices = np.max((vertices, mins), axis=0)
+        maxs = np.tile((max_x, max_y), (vertices.shape[0], 1))
+        bounded_vertices = np.min((bounded_vertices, maxs), axis=0)
+        # colorize
+        # for region in voronoi_regions.regions:
+        #     if not -1 in region:
+        #         polygon = [voronoi_regions.vertices[i] for i in region]
+        #         plt.fill(*zip(*polygon))
+        #     print("1111111111111111")
+        #     print(voronoi_regions.vertices)
         # plt.show()
+        # colorize
+        for region in regions:
+            polygon = vertices[region]
+            # Clipping polygon
+            poly = Polygon(polygon)
+            poly = poly.intersection(main_polygon)
+            polygon = [p for p in poly.exterior.coords]
+
+            plt.fill(*zip(*polygon), alpha=0.4)
+
+        plt.plot(centroid_points)
+        plt.plot(self.polygon_points)
+        plt.axis('equal')
+        plt.xlim(voronoi_regions.min_bound[0] - 10, voronoi_regions.max_bound[0] + 10)
+        plt.ylim(voronoi_regions.min_bound[1] - 10, voronoi_regions.max_bound[1] + 10)
+
+        plt.savefig('voro.png')
+        plt.show()
+
+    def voronoi_finite_polygons_2d(self,vor, radius=None):
+
+        if vor.points.shape[1] != 2:
+            raise ValueError("Requires 2D input")
+
+        new_regions = []
+        new_vertices = vor.vertices.tolist()
+
+        center = vor.points.mean(axis=0)
+        if radius is None:
+            radius = vor.points.ptp().max()*2
+
+        # Construct a map containing all ridges for a given point
+        all_ridges = {}
+        for (p1, p2), (v1, v2) in zip(vor.ridge_points, vor.ridge_vertices):
+            all_ridges.setdefault(p1, []).append((p2, v1, v2))
+            all_ridges.setdefault(p2, []).append((p1, v1, v2))
+
+        # Reconstruct infinite regions
+        for p1, region in enumerate(vor.point_region):
+            vertices = vor.regions[region]
+
+            if all(v >= 0 for v in vertices):
+                # finite region
+                new_regions.append(vertices)
+                continue
+
+            # reconstruct a non-finite region
+            ridges = all_ridges[p1]
+            new_region = [v for v in vertices if v >= 0]
+
+            for p2, v1, v2 in ridges:
+                if v2 < 0:
+                    v1, v2 = v2, v1
+                if v1 >= 0:
+                    # finite ridge: already in the region
+                    continue
+
+                # Compute the missing endpoint of an infinite ridge
+
+                t = vor.points[p2] - vor.points[p1] # tangent
+                t /= np.linalg.norm(t)
+                n = np.array([-t[1], t[0]])  # normal
+
+                midpoint = vor.points[[p1, p2]].mean(axis=0)
+                direction = np.sign(np.dot(midpoint - center, n)) * n
+                far_point = vor.vertices[v2] + direction * radius
+
+                new_region.append(len(new_vertices))
+                new_vertices.append(far_point.tolist())
+
+            # sort region counterclockwise
+            vs = np.asarray([new_vertices[v] for v in new_region])
+            c = vs.mean(axis=0)
+            angles = np.arctan2(vs[:,1] - c[1], vs[:,0] - c[0])
+            new_region = np.array(new_region)[np.argsort(angles)]
+
+            # finish
+            new_regions.append(new_region.tolist())
+
+        return new_regions, np.asarray(new_vertices)
+
+
 
         # obtain the distance[m] between the different points of the polygon
         self.distance =[]
