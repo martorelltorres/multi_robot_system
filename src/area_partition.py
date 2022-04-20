@@ -11,15 +11,11 @@ import os
 import pprint
 import re
 import geopandas as gpd
-from shapely.geometry import MultiPolygon, Point, MultiLineString, box, MultiPoint
-from shapely.geometry import Polygon,asMultiPoint,asPolygon,asLineString
+from shapely.geometry import Polygon,LineString
 from scipy.spatial import Voronoi, voronoi_plot_2d
 from shapely.ops import split, LineString,triangulate
 from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
-from geometry_msgs.msg import Point, PolygonStamped
-from visualization_msgs.msg import Marker
-
 
 
 class area_partition:
@@ -37,42 +33,63 @@ class area_partition:
         plt.show()
 
     def define_path_coverage(self):
+        for voronoi_polygon in range(len(self.voronoi_polygons)):
+            self.find_largest_side(self.voronoi_polygons[voronoi_polygon])
+            self.cover_lines(self.voronoi_polygons[voronoi_polygon])
+            
+    
+    def cover_lines(self, polygon):
+        x,y = polygon.exterior.coords.xy
+        slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
+        # # extract line ecuation 
+        y_coordinate =[]
+        x_threshold = 10
+        y_threshold = 10
+        print("111111111111111")
+        print(slope)
+        p = (slope*((x[self.reference_points[1]]+x_threshold )-x[self.reference_points[1]])) + y[self.reference_points[1]]
+        y_coordinate.append(p)
+
+        l = (slope*((x[self.reference_points[0]]-x_threshold )-x[self.reference_points[0]])) + y[self.reference_points[0]]
+        y_coordinate.append(l)
+
+        x1 = x[self.reference_points[0]]-x_threshold
+        x0 = x[self.reference_points[1]]+x_threshold
+        # y1 = y[self.reference_points[0]]+y_threshold
+        # y0 = y[self.reference_points[1]]-y_threshold
+
+        line = LineString([(x1, y_coordinate[1]), (x0, y_coordinate[0])])
         
-        polygon_bounds = self.voronoi_polygons[0].bounds
-        max_x = polygon_bounds[2]
-        max_y = polygon_bounds[3]
-        min_x = polygon_bounds[0]
-        min_y = polygon_bounds[1]
-        # p = polygon_bounds.minimum_rotated_rectangle
-        b = box(polygon_bounds[0],polygon_bounds[1],polygon_bounds[2],polygon_bounds[3])
-        p = MultiPoint([(min_x,min_y),(max_x,min_y),(max_x,max_y),(min_x,max_y)]).minimum_rotated_rectangle
-        # print(b)
-        # plt.plot(*b.exterior.xy)
-        plt.plot(*p.exterior.xy)
-        # poly = self.voronoi_polygons[0]
-        # plt.plot(*self.voronoi_polygons[0].exterior.xy)
-        # self.find_largest_side()
+        offset = line.parallel_offset(5, 'left', join_style=1)
+        self.plot_line(offset)
 
+    def plot_line(ax, ob):
+        parts = hasattr(ob, 'geoms') and ob or [ob]
+        for part in parts:
+            x, y = part.xy
+            plt.plot(x, y, linewidth=3, solid_capstyle='round', zorder=1)
 
-    def find_largest_side(self):
-        polygon = self.voronoi_polygons[0]
-        coords = polygon.exterior.coords
-        print(coords)
-        print(polygon)
-        a = coords[1]
-        print(a)
-        print(a[1])
-
+    def find_largest_side(self, polygon):
+        x,y = polygon.exterior.coords.xy
         self.distance =[]
-        for i in len(coords):
-        
-            # x_distance = self.coords[i][-self.north_position[(len(self.north_position)-1)]
-            # x_distance = coords[i]-self.north_position[(len(self.north_position)-1)]
-            y_distance = self.east_position[i]-self.east_position[(len(self.north_position)-1)]
-
+        for i in range(len(x)-1):
+            if(i==(len(x)-1)):
+                x_distance = x[i]-x[0]
+                y_distance = y[i]-y[0]
+            else:
+                x_distance = x[i]-x[(i+1)]
+                y_distance = y[i]-y[(i+1)]
 
             cartesian_distance = np.sqrt(x_distance**2 + y_distance**2)
             self.distance.append(cartesian_distance)
+
+        max_distance = max(self.distance)
+        index =  self.distance.index(max_distance)+1
+        # the reference_points contains the index of the two points of the major side
+        self.reference_points =[]
+        self.reference_points.append(index)
+        self.reference_points.append (index-1)
+        print(self.reference_points)
 
     def read_file(self):
         data = []
