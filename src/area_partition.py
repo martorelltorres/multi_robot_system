@@ -11,7 +11,7 @@ import os
 import pprint
 import re
 import geopandas as gpd
-from shapely.geometry import MultiPolygon, Point
+from shapely.geometry import MultiPolygon, Point, MultiLineString, box, MultiPoint
 from shapely.geometry import Polygon,asMultiPoint,asPolygon,asLineString
 from scipy.spatial import Voronoi, voronoi_plot_2d
 from shapely.ops import split, LineString,triangulate
@@ -22,7 +22,7 @@ from visualization_msgs.msg import Marker
 
 
 
-class path_planner:
+class area_partition:
 
     def __init__(self, name):
         self.name = name
@@ -32,9 +32,47 @@ class path_planner:
         self.line_ecuations=[]
         self.read_file()
         self.extract_NED_positions()
-        self.characterize_polygon()
-        # self.define_path_coverage()
+        self.divide_polygon()
+        self.define_path_coverage()
+        plt.show()
 
+    def define_path_coverage(self):
+        
+        polygon_bounds = self.voronoi_polygons[0].bounds
+        max_x = polygon_bounds[2]
+        max_y = polygon_bounds[3]
+        min_x = polygon_bounds[0]
+        min_y = polygon_bounds[1]
+        # p = polygon_bounds.minimum_rotated_rectangle
+        b = box(polygon_bounds[0],polygon_bounds[1],polygon_bounds[2],polygon_bounds[3])
+        p = MultiPoint([(min_x,min_y),(max_x,min_y),(max_x,max_y),(min_x,max_y)]).minimum_rotated_rectangle
+        # print(b)
+        # plt.plot(*b.exterior.xy)
+        plt.plot(*p.exterior.xy)
+        # poly = self.voronoi_polygons[0]
+        # plt.plot(*self.voronoi_polygons[0].exterior.xy)
+        # self.find_largest_side()
+
+
+    def find_largest_side(self):
+        polygon = self.voronoi_polygons[0]
+        coords = polygon.exterior.coords
+        print(coords)
+        print(polygon)
+        a = coords[1]
+        print(a)
+        print(a[1])
+
+        self.distance =[]
+        for i in len(coords):
+        
+            # x_distance = self.coords[i][-self.north_position[(len(self.north_position)-1)]
+            # x_distance = coords[i]-self.north_position[(len(self.north_position)-1)]
+            y_distance = self.east_position[i]-self.east_position[(len(self.north_position)-1)]
+
+
+            cartesian_distance = np.sqrt(x_distance**2 + y_distance**2)
+            self.distance.append(cartesian_distance)
 
     def read_file(self):
         data = []
@@ -77,7 +115,7 @@ class path_planner:
         # plt.show()
         
     
-    def characterize_polygon(self):
+    def divide_polygon(self):
         #obtain the global_points (lat,long) of the polygon
         self.global_points=[]
         self.global_coords=[]
@@ -91,12 +129,11 @@ class path_planner:
         for i in range(len(self.north_position)):
             self.local_points.append([self.north_position[i],self.east_position[i]])
 
+
         # Define the main polygon object
         main_polygon = Polygon(self.local_points)
         polygon_centroid = main_polygon.centroid
         self.polygon_points = self.local_points
-        # self.polygon_points.append([polygon_centroid.x,polygon_centroid.y])
-
         # Triangulate the polygon
         poligonized_points =Polygon(self.polygon_points)
         triangles = triangulate(poligonized_points)
@@ -111,44 +148,40 @@ class path_planner:
         voronoi_regions = Voronoi(centroid_points)
         regions, vertices = self.voronoi_finite_polygons_2d(voronoi_regions)
         voronoi_plot_2d(voronoi_regions)
-        min_x = voronoi_regions.min_bound[0] - 0.1
-        max_x = voronoi_regions.max_bound[0] + 0.1
-        min_y = voronoi_regions.min_bound[1] - 0.1
-        max_y = voronoi_regions.max_bound[1] + 0.1
+        min_x = voronoi_regions.min_bound[0] - 10
+        max_x = voronoi_regions.max_bound[0] + 10
+        min_y = voronoi_regions.min_bound[1] - 10
+        max_y = voronoi_regions.max_bound[1] + 10
 
         mins = np.tile((min_x, min_y), (vertices.shape[0], 1))
         bounded_vertices = np.max((vertices, mins), axis=0)
         maxs = np.tile((max_x, max_y), (vertices.shape[0], 1))
         bounded_vertices = np.min((bounded_vertices, maxs), axis=0)
+
         # colorize
-        # for region in voronoi_regions.regions:
-        #     if not -1 in region:
-        #         polygon = [voronoi_regions.vertices[i] for i in region]
-        #         plt.fill(*zip(*polygon))
-        #     print("1111111111111111")
-        #     print(voronoi_regions.vertices)
-        # plt.show()
-        # colorize
+        self.voronoi_polygons = []
+        self.voronoi_polygons_points = []
         for region in regions:
             polygon = vertices[region]
             # Clipping polygon
-            poly = Polygon(polygon)
-            poly = poly.intersection(main_polygon)
-            polygon = [p for p in poly.exterior.coords]
-
+            sub_polygons = Polygon(polygon)
+            sub_polygons = sub_polygons.intersection(main_polygon)
+            polygon = [p for p in sub_polygons.exterior.coords]
+            # save the differents points of the subpolygon in voronoi_polygons as a polygon object and in voronoi_polygons_points as a polygon points
+            polygon_coords = polygon
+            self.voronoi_polygons.append(sub_polygons)
+            self.voronoi_polygons_points.append(polygon_coords)
             plt.fill(*zip(*polygon), alpha=0.4)
-
-        plt.plot(centroid_points)
-        plt.plot(self.polygon_points)
+        
+        # print(self.voronoi_polygons)
+        # print(self.voronoi_polygons_points)
+        plt.plot(*zip(*self.polygon_points))
         plt.axis('equal')
-        plt.xlim(voronoi_regions.min_bound[0] - 10, voronoi_regions.max_bound[0] + 10)
-        plt.ylim(voronoi_regions.min_bound[1] - 10, voronoi_regions.max_bound[1] + 10)
-
-        plt.savefig('voro.png')
-        plt.show()
+        plt.xlim(-100,-5)
+        plt.ylim(-110,20)
+        # plt.show()
 
     def voronoi_finite_polygons_2d(self,vor, radius=None):
-
         if vor.points.shape[1] != 2:
             raise ValueError("Requires 2D input")
 
@@ -208,104 +241,6 @@ class path_planner:
             new_regions.append(new_region.tolist())
 
         return new_regions, np.asarray(new_vertices)
-
-
-
-        # obtain the distance[m] between the different points of the polygon
-        self.distance =[]
-        for i in range(len(self.north_position)):
-
-            if(i==(len(self.north_position)-1)):
-                x_distance = self.north_position[i]-self.north_position[(len(self.north_position)-1)]
-                y_distance = self.east_position[i]-self.east_position[(len(self.north_position)-1)]
-
-            else:
-                x_distance = self.north_position[i]-self.north_position[(i+1)]
-                y_distance = self.east_position[i]-self.east_position[(i+1)]
-
-            cartesian_distance = np.sqrt(x_distance**2 + y_distance**2)
-            self.distance.append(cartesian_distance)
-
-        # find the max distance reference_points
-        max_distance = max(self.distance)
-        index =  self.distance.index(max_distance)
-        self.reference_points =[]
-        self.reference_points.append (index)
-        self.reference_points.append (index-1)
-
-        if (index+1 == len(self.north_position)-1):
-            self.reference_points.append(0)
-
-    def define_path_coverage(self):
-        # define the ecuation of the line between the reference_points
-        # The reference_point are the points that defines the major edge of the polygon, for example the 0 and 5 vertex
-        point_A = self.local_points[self.reference_points[0]]
-        point_B = self.local_points[self.reference_points[1]]
-        # Extract reference line ecuation parameters
-        self.slope_reference = (point_B[1]-point_B[0])/(point_A[1]-point_A[0])
-        self.n_reference = point_B[1] - (self.slope_reference*point_B[0]) 
-        # self.line_ecuations.append([self.reference_points[0],self.reference_points[1],self.slope_reference,self.n_reference])
-        self.find_neighbour_points(self.reference_points[0],self.reference_points[1]) 
-        if(self.neig_A > self.neig_B):
-            self.neig_B = self.neig_A + 1
-        else:
-            self.neig_B = self.neig_A - 1
-
-        point_A = self.local_points[self.neig_A]
-        point_B = self.local_points[self.neig_B]
-    
-        self.extract_line_ecuation(point_A,point_B)
-        self.find_angle_btw_edges()
-        # for i in range(len(self.reference_points)):
-        self.extract_desired_point(self.reference_points[1])
-
-    def extract_desired_point(self,reference_point):
-        if(self.angle>90):
-            self.angle = self.angle-90
-        y = self.point_distance
-        x = np.tan(self.angle)*y
-        self.desired_point = []
-        reference_local_point = self.local_points[reference_point]
-        desired_point_north = reference_local_point[0] + x
-        desired_point_east = reference_local_point[1] + y
-        desired_point = [desired_point_north,desired_point_east]
-        self.desired_point.append(desired_point)
-      
-
-    def find_angle_btw_edges(self):
-        for i in range(len(self.line_ecuations)):
-            m1=self.slope_reference
-            m2=self.line_ecuations[i][2]
-            print(m1)
-            print(m2)
-            pi= 22/7
-            self.angle = abs((m1-m2)/(1+(m2*m1)))
-            self.angle= np.arctan(self.angle)
-            self.angle = self.angle*(180/pi)
-        
-        return(self.angle)
-
-
-    def extract_line_ecuation(self, point_1, point_2):
-        print("**************extract_line_ecuation******************")
-        self.slope = (point_2[1]-point_2[0])/(point_1[1]-point_1[0])
-        # ecuacion recta punto, pendiente: y=m(x-x1)+y1=mx-mx1+y1 => y=mx+n donde n=y1-mx1
-        self.n = point_2[1] - (self.slope*point_2[0]) 
-        self.line_ecuations.append([self.neig_A,self.neig_B,self.slope,self.n])
-        # print("11111111111111111111111111111111111")
-        # print(self.line_ecuations)
-        return self.line_ecuations
-
-    # The find_neighbour_points method finds the nearest edge from a point, for example given the 5 and 0 points from a 5 edges polygon, 
-    # the neares edge of 5 is 4 and the neares edge of 0 is 1
-    def find_neighbour_points(self,point_A,point_B):
-        if(point_A > point_B):          
-            self.neig_A = point_A - 1
-            self.neig_B = point_B + 1
-        else:
-            self.neig_A = point_A + 1
-            self.neig_B = point_B - 1
-        return(self.neig_A,self.neig_B)
    
 def get_param(self, param_name, default = None):
     if rospy.has_param(param_name):
@@ -320,8 +255,8 @@ def get_param(self, param_name, default = None):
               
 if __name__ == '__main__':
     try:
-        rospy.init_node('path_planner')
-        path_planner = path_planner(rospy.get_name())
+        rospy.init_node('area_partition')
+        area_partition = area_partition(rospy.get_name())
         rospy.spin()
         
     except rospy.ROSInterruptException:

@@ -25,6 +25,19 @@ from cola2_lib.utils.ned import NED
 from std_srvs.srv import Empty, EmptyRequest
 from cola2_lib.rosutils import param_loader
 from cola2_lib.rosutils.param_loader import get_ros_params
+from operator import indexOf
+import numpy as np
+from numpy import asarray
+import math
+import os
+from shapely.geometry import MultiPolygon, Point, MultiLineString,Polygon,asMultiPoint,asPolygon,asLineString
+from scipy.spatial import Voronoi, voronoi_plot_2d
+from shapely.ops import split, LineString,triangulate
+from geometry_msgs.msg import Point, PolygonStamped
+from visualization_msgs.msg import Marker
+#import classes
+import area_partition
+
 
 
 class MultiRobotSystem:
@@ -35,102 +48,22 @@ class MultiRobotSystem:
         # Get config parameters
         self.name = name
         # self.get_config()
-
-        # Services clients
-        # try:
-        #     rospy.wait_for_service('captain/enable_goto', 20)
-        #     self.goto_srv = rospy.ServiceProxy(
-        #                 'captain/enable_goto', Goto)
-        # except rospy.exceptions.ROSException:
-        #     rospy.logerr('%s: error creating client to goto service',
-        #                  self.name)
-        #     rospy.signal_shutdown('Error creating client to goto service')
-
-        # try:
-        #     rospy.wait_for_service('captain/disable_all_and_set_idle', 20)
-        #     self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
-        #                 'captain/disable_all_and_set_idle', Trigger)
-        # except rospy.exceptions.ROSException:
-        #     rospy.logerr('%s: error creating client to disable_all service',
-        #                  self.name)
-        #     rospy.signal_shutdown('Error creating client to disable_all service')
-
-        #Define subscribers
-        # rospy.Subscriber("/xiroi/navigator/navigation",
-        #                  NavSts,    
-        #                  self.update_asv_nav_sts,
-        #                  queue_size=1)
-
-        # rospy.Subscriber("/turbot/navigator/navigation",
-        #                  NavSts,
-        #                  self.update_auv_nav_sts,
-        #                  queue_size=1)
-
-        # rospy.Subscriber("/mrs/grid_map_handler/grid_map_ASV_data",
-        #                  Range,
-        #                  self.update_ASV_data,
-        #                  queue_size=1)
-
-        # rospy.Subscriber("/mrs/grid_map_handler/grid_map_AUV_data",
-        #                  Range,
-        #                  self.update_AUV_data,
-        #                  queue_size=1)
-
-        # Service server
-        self.goto = rospy.Service('mrs/goto',
-                                   Empty,
-                                   self.goto)
-        #Actionlib section client
-        section_action = actionlib.SimpleActionClient("/turbot/pilot/world_section_req", WorldSectionAction)
-        section_action.wait_for_server()
-
-
-        ASV_navigation_sub = message_filters.Subscriber("/xiroi/navigator/navigation",NavSts)
-        AUV_navigation_sub = message_filters.Subscriber("/turbot/navigator/navigation",NavSts)
-        ASV_data_sub = message_filters.Subscriber("/mrs/grid_map_handler/grid_map_ASV_data",Range)
-        AUV_data_sub = message_filters.Subscriber("/mrs/grid_map_handler/grid_map_AUV_data",Range)
-
-        # Topic synchronization
-        ts_ASV =  message_filters.ApproximateTimeSynchronizer([ASV_navigation_sub, ASV_data_sub], 1, 1)
-        ts_AUV =  message_filters.ApproximateTimeSynchronizer([ASV_navigation_sub, ASV_data_sub], 1, 1)
-        # Internal callbacks
-        ts_ASV.registerCallback(self.ASV_update)
-        ts_AUV.registerCallback(self.AUV_update)
-
-        #Define publishers
-
-        #Define node parameters
-        # self.robot_name
-        self.min_ASV_depth = 1
-        self.max_ASV_depth = 4
-        self.min_AUV_depth = 4
-        self.max_AUV_depth = 40
-
+        self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
+        self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')     
         
-        # Show messa
+        # Show message
         rospy.loginfo('[%s]: initialized', self.name)
 
-
-    def section(self,initial_position_x,initial_position_y,initial_position_z, initial_yaw, final_position_x, final_position_y, final_position_z):
-
-        section_req = WorldSectionAction()
-        section_req.initial_position.x = initial_position_x
-        section_req.initial_position.y = initial_position_y
-        section_req.initial_position.z = initial_position_z
-        section_req.initial.yaw = initial_yaw
-        section_req.final_position.x = final_position_x
-        section_req.final_position.y = final_position_y
-        section_req.final_position.z = final_position_z
-        section_req.altitude_mode = True
-        section_req.tolerance.x = 2.0
-        section_req.tolerance.y = 2.0
-        section_req.tolerance.z = 2.0
-        section_req.surge_velocity = 0.7
-        section_req.timeout = 120
-        print("--------------------section initialized-----------------------------")
-        section_action(section_req)
-        rospy.sleep(1.0)
-
+    def get_param(self, param_name, default = None):
+        if rospy.has_param(param_name):
+            param_value = rospy.get_param(param_name)
+            return param_value
+        elif default is not None:
+            return default
+        else:
+            rospy.logfatal('[%s]: invalid parameters for %s in param server!', self.name, param_name)
+            rospy.logfatal('[%s]: shutdown due to invalid config parameters!', self.name)
+            exit(0)
     
 
     def goto(self, req):
