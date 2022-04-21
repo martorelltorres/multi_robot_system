@@ -11,7 +11,7 @@ import os
 import pprint
 import re
 import geopandas as gpd
-from shapely.geometry import Polygon,LineString
+from shapely.geometry import Polygon,LineString,Point
 from scipy.spatial import Voronoi, voronoi_plot_2d
 from shapely.ops import split, LineString,triangulate
 from cola2_lib.utils.ned import NED
@@ -24,8 +24,10 @@ class area_partition:
         self.name = name
         self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
-        self.point_distance = 2
+        self.offset_distance = 1
+        self.initial_offset = 1
         self.line_ecuations=[]
+        self.intersection_points =[]
         self.read_file()
         self.extract_NED_positions()
         self.divide_polygon()
@@ -33,9 +35,10 @@ class area_partition:
         plt.show()
 
     def define_path_coverage(self):
-        for voronoi_polygon in range(len(self.voronoi_polygons)):
-            self.find_largest_side(self.voronoi_polygons[voronoi_polygon])
-            self.cover_lines(self.voronoi_polygons[voronoi_polygon])
+        #create the loop for the diferent voronoi polygons
+        # for voronoi_polygon in range(len(self.voronoi_polygons)):
+        self.find_largest_side(self.voronoi_polygons[2])
+        self.cover_lines(self.voronoi_polygons[2])
             
     
     def cover_lines(self, polygon):
@@ -45,23 +48,86 @@ class area_partition:
         y_coordinate =[]
         x_threshold = 10
         y_threshold = 10
-        print("111111111111111")
+
+
+        # if(slope<0):
+        print("11111111111111111111111111")
         print(slope)
+        print(self.reference_points)
+        print(x[self.reference_points[0]])
+        print(y[self.reference_points[0]])
+        print(x[self.reference_points[1]])
+        print(y[self.reference_points[1]])
+    
+        x1 = x[self.reference_points[0]]-x_threshold
+        x0 = x[self.reference_points[1]]+x_threshold
+
         p = (slope*((x[self.reference_points[1]]+x_threshold )-x[self.reference_points[1]])) + y[self.reference_points[1]]
         y_coordinate.append(p)
 
         l = (slope*((x[self.reference_points[0]]-x_threshold )-x[self.reference_points[0]])) + y[self.reference_points[0]]
         y_coordinate.append(l)
+        print(x0)
+        print(y_coordinate[0])
+        print(x1)
+        print(y_coordinate[1])
 
-        x1 = x[self.reference_points[0]]-x_threshold
-        x0 = x[self.reference_points[1]]+x_threshold
+        # else:
+        #     print("2222222222222222")
+        #     print(slope)
+        #     print(self.reference_points)
+        #     print(x[self.reference_points[0]])
+        #     print(y[self.reference_points[0]])
+        #     print(x[self.reference_points[1]])
+        #     print(y[self.reference_points[1]])
+
+
+        #     x1 = x[self.reference_points[0]]+x_threshold
+        #     x0 = x[self.reference_points[1]]-x_threshold
+        #     p = (slope*((x[self.reference_points[1]]-x_threshold )-x[self.reference_points[1]])) + y[self.reference_points[1]]
+        #     y_coordinate.append(p)
+
+        #     l = (slope*((x[self.reference_points[0]]+x_threshold )-x[self.reference_points[0]])) + y[self.reference_points[0]]
+        #     y_coordinate.append(l)
+        #     print(x0)
+        #     print(y_coordinate[0])
+        #     print(x1)
+        #     print(y_coordinate[1])
+           
+
         # y1 = y[self.reference_points[0]]+y_threshold
         # y0 = y[self.reference_points[1]]-y_threshold
-
-        line = LineString([(x1, y_coordinate[1]), (x0, y_coordinate[0])])
         
-        offset = line.parallel_offset(5, 'left', join_style=1)
-        self.plot_line(offset)
+        line = LineString([(x0, y_coordinate[0]), (x1, y_coordinate[1])])
+        # line = LineString([(x1, y_coordinate[1]), (x0, y_coordinate[0])])
+        self.distance_point_to_line(line,polygon)
+        # print(line.distance.)
+        
+        while(self.offset_distance < self.max_distance):
+            self.offset_distance = self.initial_offset + self.offset_distance
+            offset = line.parallel_offset(self.offset_distance, 'right', join_style=1)
+            self.find_intersection_points(polygon,offset)
+            self.plot_line(offset)
+        
+        
+    def find_intersection_points(self, polygon,line):
+        points = line.intersection(polygon)
+        # the intersection_points array stores the diferent goal points
+        self.intersection_points.append(list(points.coords))
+
+    def distance_point_to_line(self,line,polygon):
+        x,y = polygon.exterior.coords.xy
+        distance_point_to_line = []
+
+        for i in range(len(x)):
+            distance = line.distance(Point(x[i],y[i]))
+            distance_point_to_line.append(distance)
+
+        self.max_distance = max(distance_point_to_line)
+        max_distance_point_x = distance_point_to_line.index(self.max_distance)
+        # print("13333333333333333333333333333333333")
+        # print(max_distance_point_x)
+        # print(distance_point_to_line)
 
     def plot_line(ax, ob):
         parts = hasattr(ob, 'geoms') and ob or [ob]
@@ -79,6 +145,7 @@ class area_partition:
             else:
                 x_distance = x[i]-x[(i+1)]
                 y_distance = y[i]-y[(i+1)]
+            
 
             cartesian_distance = np.sqrt(x_distance**2 + y_distance**2)
             self.distance.append(cartesian_distance)
@@ -89,7 +156,12 @@ class area_partition:
         self.reference_points =[]
         self.reference_points.append(index)
         self.reference_points.append (index-1)
-        print(self.reference_points)
+        # print("111111111111111")
+        # print(max_distance)
+        # print(self.reference_points)
+        # print(x)
+        # print(y)
+        
 
     def read_file(self):
         data = []
