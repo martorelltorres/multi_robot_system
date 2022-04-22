@@ -36,85 +36,48 @@ class area_partition:
 
     def define_path_coverage(self):
         #create the loop for the diferent voronoi polygons
-        # for voronoi_polygon in range(len(self.voronoi_polygons)):
-        self.find_largest_side(self.voronoi_polygons[2])
-        self.cover_lines(self.voronoi_polygons[2])
+        for voronoi_polygon in range(len(self.voronoi_polygons)):
+            self.find_largest_side(self.voronoi_polygons[3])
+            self.cover_lines(self.voronoi_polygons[3])
             
     
     def cover_lines(self, polygon):
         x,y = polygon.exterior.coords.xy
         slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
-        # # extract line ecuation 
         y_coordinate =[]
         x_threshold = 10
-        y_threshold = 10
 
-
-        # if(slope<0):
-        print("11111111111111111111111111")
-        print(slope)
-        print(self.reference_points)
-        print(x[self.reference_points[0]])
-        print(y[self.reference_points[0]])
-        print(x[self.reference_points[1]])
-        print(y[self.reference_points[1]])
-    
-        x1 = x[self.reference_points[0]]-x_threshold
-        x0 = x[self.reference_points[1]]+x_threshold
-
-        p = (slope*((x[self.reference_points[1]]+x_threshold )-x[self.reference_points[1]])) + y[self.reference_points[1]]
-        y_coordinate.append(p)
-
-        l = (slope*((x[self.reference_points[0]]-x_threshold )-x[self.reference_points[0]])) + y[self.reference_points[0]]
-        y_coordinate.append(l)
-        print(x0)
-        print(y_coordinate[0])
-        print(x1)
-        print(y_coordinate[1])
-
-        # else:
-        #     print("2222222222222222")
-        #     print(slope)
-        #     print(self.reference_points)
-        #     print(x[self.reference_points[0]])
-        #     print(y[self.reference_points[0]])
-        #     print(x[self.reference_points[1]])
-        #     print(y[self.reference_points[1]])
-
-
-        #     x1 = x[self.reference_points[0]]+x_threshold
-        #     x0 = x[self.reference_points[1]]-x_threshold
-        #     p = (slope*((x[self.reference_points[1]]-x_threshold )-x[self.reference_points[1]])) + y[self.reference_points[1]]
-        #     y_coordinate.append(p)
-
-        #     l = (slope*((x[self.reference_points[0]]+x_threshold )-x[self.reference_points[0]])) + y[self.reference_points[0]]
-        #     y_coordinate.append(l)
-        #     print(x0)
-        #     print(y_coordinate[0])
-        #     print(x1)
-        #     print(y_coordinate[1])
-           
-
-        # y1 = y[self.reference_points[0]]+y_threshold
-        # y0 = y[self.reference_points[1]]-y_threshold
+        if(x[self.reference_points[0]] > x[self.reference_points[1]]):
+            x_0 = x[self.reference_points[0]] + x_threshold
+            x_1 = x[self.reference_points[1]] - x_threshold
+        else: 
+            x_0 = x[self.reference_points[0]] - x_threshold
+            x_1 = x[self.reference_points[1]] + x_threshold
         
-        line = LineString([(x0, y_coordinate[0]), (x1, y_coordinate[1])])
-        # line = LineString([(x1, y_coordinate[1]), (x0, y_coordinate[0])])
+        y_0 = slope*(x_0-x[self.reference_points[0]]) + y[self.reference_points[0]]
+        y_coordinate.append(y_0)
+
+        y_1 = slope*(x_1-x[self.reference_points[0]]) + y[self.reference_points[0]]
+        y_coordinate.append(y_1)
+        line = LineString([(x_0, y_coordinate[0]), (x_1, y_coordinate[1])])
         self.distance_point_to_line(line,polygon)
-        # print(line.distance.)
-        
+
         while(self.offset_distance < self.max_distance):
             self.offset_distance = self.initial_offset + self.offset_distance
-            offset = line.parallel_offset(self.offset_distance, 'right', join_style=1)
+            offset = line.parallel_offset(self.offset_distance, 'left', join_style=1)
             self.find_intersection_points(polygon,offset)
             self.plot_line(offset)
-        
-        
+
+        # the goal_points array stores the diferent intersection points of each voronoi polygon, then print(self.goal_points[0])store the intersection points of the polygon 0
+        self.goal_points = []
+        for voronoi_polygon in range(len(self.voronoi_polygons)):
+            self.goal_points.append([[voronoi_polygon],[self.intersection_points]])
+
     def find_intersection_points(self, polygon,line):
         points = line.intersection(polygon)
         # the intersection_points array stores the diferent goal points
         self.intersection_points.append(list(points.coords))
-
+   
     def distance_point_to_line(self,line,polygon):
         x,y = polygon.exterior.coords.xy
         distance_point_to_line = []
@@ -125,9 +88,6 @@ class area_partition:
 
         self.max_distance = max(distance_point_to_line)
         max_distance_point_x = distance_point_to_line.index(self.max_distance)
-        # print("13333333333333333333333333333333333")
-        # print(max_distance_point_x)
-        # print(distance_point_to_line)
 
     def plot_line(ax, ob):
         parts = hasattr(ob, 'geoms') and ob or [ob]
@@ -155,13 +115,7 @@ class area_partition:
         # the reference_points contains the index of the two points of the major side
         self.reference_points =[]
         self.reference_points.append(index)
-        self.reference_points.append (index-1)
-        # print("111111111111111")
-        # print(max_distance)
-        # print(self.reference_points)
-        # print(x)
-        # print(y)
-        
+        self.reference_points.append (index-1)      
 
     def read_file(self):
         data = []
@@ -199,10 +153,7 @@ class area_partition:
             self.east_position.append(east) 
             
         self.north_position.append(self.north_position[0])
-        self.east_position.append(self.east_position[0])
-        # plt.plot(self.north_position, self.east_position, c="red")
-        # plt.show()
-        
+        self.east_position.append(self.east_position[0])      
     
     def divide_polygon(self):
         #obtain the global_points (lat,long) of the polygon
@@ -262,13 +213,10 @@ class area_partition:
             self.voronoi_polygons_points.append(polygon_coords)
             plt.fill(*zip(*polygon), alpha=0.4)
         
-        # print(self.voronoi_polygons)
-        # print(self.voronoi_polygons_points)
         plt.plot(*zip(*self.polygon_points))
         plt.axis('equal')
         plt.xlim(-100,-5)
         plt.ylim(-110,20)
-        # plt.show()
 
     def voronoi_finite_polygons_2d(self,vor, radius=None):
         if vor.points.shape[1] != 2:
