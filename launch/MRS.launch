@@ -28,10 +28,11 @@
     <!-- Launch the grid map visualizer -->
     <!-- <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
       <rosparam command="load" file="$(find multi_robot_system)/config/visualization.yaml"/>
-    </node>
+    </node> -->
 
-    <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true"/> -->
+    
     <node name="area_partition" pkg="multi_robot_system" type="area_partition.py" output="screen" respawn="true"/>
+    <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true"/>
     <!-- <node name="poligon_divider" pkg="multi_robot_system" type="test.py" output="screen" respawn="true"/> -->
 
   </group>

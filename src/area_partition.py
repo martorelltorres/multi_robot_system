@@ -12,10 +12,16 @@ import pprint
 import re
 import geopandas as gpd
 from shapely.geometry import Polygon,LineString,Point
+from std_srvs.srv import Empty, EmptyResponse
 from scipy.spatial import Voronoi, voronoi_plot_2d
 from shapely.ops import split, LineString,triangulate
 from cola2_lib.utils.ned import NED
+from geometry_msgs.msg import PointStamped
 import matplotlib.pyplot as plt
+from std_srvs.srv import Empty, EmptyRequest
+# from multi_robot_system.srv import GoalPoint
+from cola2_msgs.srv import Goto, GotoRequest
+from cola2_msgs.msg import  NavSts
 
 
 class area_partition:
@@ -24,21 +30,73 @@ class area_partition:
         self.name = name
         self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
-        self.offset_distance = 1
+        self.offset_distance = 0
         self.initial_offset = 1
-        self.line_ecuations=[]
         self.intersection_points =[]
+        self.distance = []
+
+        # Sevice server
+        self.send_position = rospy.Service('mrs_control/send_position',
+                                       Empty,
+                                       self.send_position)
+        #Publishers
+        self.goal_position = rospy.Publisher("/mrs/goal_position",
+                                                PointStamped,
+                                                queue_size=1)
+        #Subscribers
+        rospy.Subscriber("/xiroi/navigator/navigation",
+                         NavSts,    
+                         self.update_robot_position,
+                         queue_size=1)
+        
+
         self.read_file()
         self.extract_NED_positions()
         self.divide_polygon()
-        self.define_path_coverage()
-        plt.show()
+        # self.define_path_coverage()
+        # plt.show()
+    def update_robot_position(self,msg):
+        self.position_north = msg.position.north
+        self.position_east = msg.position.east
 
-    def define_path_coverage(self):
+
+    def define_path_coverage(self, polygon):
         #create the loop for the diferent voronoi polygons
-        for voronoi_polygon in range(len(self.voronoi_polygons)):
-            self.find_largest_side(self.voronoi_polygons[3])
-            self.cover_lines(self.voronoi_polygons[3])
+        self.find_largest_side(self.voronoi_polygons[polygon])
+        self.cover_lines(self.voronoi_polygons[polygon])
+        return(self.goal_points)
+
+    def determine_nearest_polygon(self,x_position, y_position):
+        point = Point(x_position,y_position)
+        #determine if the robots are in the predefined area
+        is_in = self.main_polygon.contains(point)
+        #determine in which subpolygon are 
+        if (is_in == True):
+            for voronoi_polygon in range(len(self.voronoi_polygons)):
+                is_in = self.voronoi_polygons[voronoi_polygon].contains(point)
+                if (is_in == True):
+                    self.goal_polygon = voronoi_polygon
+                    self.goal_polygon_defined = True
+        else:            
+        #in case that the robot was not in any polygon, determine the nearest polygon in order to cover it
+            for voronoi_polygon in range(len(self.voronoi_polygons)):
+                distance_point_to_polygons = point.distance(self.voronoi_polygons[voronoi_polygon])
+                self.distance.append(distance_point_to_polygons)
+            min_distance = min(self.distance)
+            self.goal_polygon = self.distance.index(min_distance)
+            self.goal_polygon_defined = True
+        return(self.goal_polygon)
+
+    def get_goal_points(self, goal_polygon):
+        if (self.goal_polygon_defined == True):
+            goal_points = self.goal_points([goal_polygon])
+
+        self.goal_polygon_defined = False
+        return(goal_points)
+
+    def send_position(self, req):
+        self.send_position = True
+        return EmptyResponse()
             
     
     def cover_lines(self, polygon):
@@ -71,7 +129,7 @@ class area_partition:
         # the goal_points array stores the diferent intersection points of each voronoi polygon, then print(self.goal_points[0])store the intersection points of the polygon 0
         self.goal_points = []
         for voronoi_polygon in range(len(self.voronoi_polygons)):
-            self.goal_points.append([[voronoi_polygon],[self.intersection_points]])
+            self.goal_points.append([[voronoi_polygon],self.intersection_points])
 
     def find_intersection_points(self, polygon,line):
         points = line.intersection(polygon)
@@ -94,6 +152,7 @@ class area_partition:
         for part in parts:
             x, y = part.xy
             plt.plot(x, y, linewidth=3, solid_capstyle='round', zorder=1)
+        # plt.show()
 
     def find_largest_side(self, polygon):
         x,y = polygon.exterior.coords.xy
@@ -171,8 +230,8 @@ class area_partition:
 
 
         # Define the main polygon object
-        main_polygon = Polygon(self.local_points)
-        polygon_centroid = main_polygon.centroid
+        self.main_polygon = Polygon(self.local_points)
+        polygon_centroid = self.main_polygon.centroid
         self.polygon_points = self.local_points
         # Triangulate the polygon
         poligonized_points =Polygon(self.polygon_points)
@@ -205,7 +264,7 @@ class area_partition:
             polygon = vertices[region]
             # Clipping polygon
             sub_polygons = Polygon(polygon)
-            sub_polygons = sub_polygons.intersection(main_polygon)
+            sub_polygons = sub_polygons.intersection(self.main_polygon)
             polygon = [p for p in sub_polygons.exterior.coords]
             # save the differents points of the subpolygon in voronoi_polygons as a polygon object and in voronoi_polygons_points as a polygon points
             polygon_coords = polygon

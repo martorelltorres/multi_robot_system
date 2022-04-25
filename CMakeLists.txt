@@ -48,15 +48,11 @@ add_message_files(
 )
  
  
- ## Generate services in the 'srv' folder
-add_service_files(
-   FILES
-#    SetNedOrigin.srv
-#    EnableNavStatus.srv
-#    RecordRequest.srv
-#    RecoveryAction.srv
-#    SharePosition.srv
-)
+ # Generate services in the 'srv' folder
+# add_service_files(
+#    FILES
+#    GoalPoint.srv
+# )
  
  ## Generate actions in the 'action' folder
  # add_action_files(
