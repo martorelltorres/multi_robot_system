@@ -58,6 +58,15 @@ class area_partition:
     def update_robot_position(self,msg):
         self.position_north = msg.position.north
         self.position_east = msg.position.east
+    
+    def get_polygon_points(self,polygon):
+        polygon_points = self.voronoi_polygons[polygon]
+        polygon_coords_x,polygon_coords_y = polygon_points.exterior.coords.xy
+        return(polygon_coords_x,polygon_coords_y)
+
+    def get_polygon_number(self):
+        polygon_number = len(self.voronoi_polygons)
+        return(polygon_number)
 
 
     def define_path_coverage(self, polygon):
