@@ -50,7 +50,12 @@ class MultiRobotSystem:
 
         rospy.Subscriber("/xiroi/navigator/navigation",
                          NavSts,    
-                         self.update_robot_position,
+                         self.update_xiroi_position,
+                         queue_size=1)
+
+        rospy.Subscriber("/turbot/navigator/navigation",
+                         NavSts,    
+                         self.update_turbot_position,
                          queue_size=1)
         #Publishers
         self.polygon_pub = rospy.Publisher("polygon_area",
@@ -72,10 +77,19 @@ class MultiRobotSystem:
         # uint64 FAILURE=2
         # uint64 BUSY=3
 
-    def update_robot_position(self,msg):
+    def update_turbot_position(self,msg):
+        turbot_position_north = msg.position.north
+        turbot_position_east = msg.position.east
+        self.turbot_yaw = msg.orientation.yaw
+        if(self.check_current_position == True):
+            self.goal_polygon = self.area_handler.determine_nearest_polygon(turbot_position_north,turbot_position_east)
+            self.mrs_coverage()
+            self.check_current_position = False
+
+    def update_xiroi_position(self,msg):
         self.position_north = msg.position.north
         self.position_east = msg.position.east
-        self.yaw = msg.orientation.yaw
+        self.xiroi_yaw = msg.orientation.yaw
         if(self.check_current_position == True):
             self.goal_polygon = self.area_handler.determine_nearest_polygon(self.position_north,self.position_east)
             self.mrs_coverage()
@@ -127,7 +141,8 @@ class MultiRobotSystem:
                 current_section = all_sections[self.section]
                 initial_point = current_section[1]
                 final_point = current_section[0]
-                self.send_section_strategy(initial_point,final_point)
+                yaw = self.turbot_yaw
+                self.send_section_strategy(initial_point,final_point,yaw)
                 self.wait_until_section_reached()
 
             #if is an odd number
@@ -135,18 +150,20 @@ class MultiRobotSystem:
                 current_section = all_sections[self.section]
                 initial_point = current_section[1]
                 final_point = current_section[0]
-                self.send_section_strategy(initial_point,final_point)
+                yaw = self.turbot_yaw
+                self.send_section_strategy(initial_point,final_point,yaw)
                 self.wait_until_section_reached()
             #if is an even number
             elif (self.success_result):
                 current_section = all_sections[self.section]
                 initial_point = current_section[0]
                 final_point = current_section[1]
-                self.send_section_strategy(initial_point,final_point)
+                yaw = self.turbot_yaw
+                self.send_section_strategy(initial_point,final_point,yaw)
                 self.wait_until_section_reached()
 
 
-    def send_section_strategy(self,initial_point,final_point):
+    def send_section_strategy(self,initial_point,final_point,yaw):
         initial_position_x = initial_point[0]
         final_position_x = final_point[0]
         initial_position_y = initial_point[1]
@@ -156,7 +173,7 @@ class MultiRobotSystem:
         section_req.initial_position.x = initial_position_x
         section_req.initial_position.y = initial_position_y
         section_req.initial_position.z = 10
-        section_req.initial_yaw = self.yaw
+        section_req.initial_yaw = yaw
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
         section_req.final_position.z = 10
@@ -166,10 +183,10 @@ class MultiRobotSystem:
         section_req.tolerance.z = 2
         section_req.controller_type = WorldSectionGoal.LOSCTE
         section_req.priority = GoalDescriptor.PRIORITY_NORMAL
-        section_req.surge_velocity = 1
+        section_req.surge_velocity = 0.3
         section_req.timeout = 6000
 
-        # send section goale using actionlib
+        # send section goal using actionlib
         self.is_section_actionlib_running = True
         self.success_result = False
         self.section_action.send_goal(section_req)
