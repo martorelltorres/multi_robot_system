@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+import tf
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -13,7 +14,6 @@ from cola2_msgs.msg import  NavSts
 from visualization_msgs.msg import Marker
 #import classes
 from area_partition import area_partition
-from robot import robot
 
 class MultiRobotSystem:
     
@@ -25,7 +25,6 @@ class MultiRobotSystem:
         self.ned_origin_lat = self.get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = self.get_param(self,'/xiroi/navigator/ned_longitude')    
         self.area_handler =  area_partition("area_partition")
-        self.robot_handler = robot("robot")
         self.goal_points = []
         self.check_current_position = True
         self.success_result = False
@@ -59,12 +58,12 @@ class MultiRobotSystem:
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
 
         #Actionlib section client
-        self.section_action_turbot = actionlib.SimpleActionClient("/turbot/pilot/world_section_req", WorldSectionAction)
-        self.section_action_turbot.wait_for_server()
+        self.section_action = {}
+        self.section_action["turbot"] = actionlib.SimpleActionClient("/turbot/pilot/world_section_req", WorldSectionAction)
+        self.section_action["turbot"].wait_for_server()
 
-        self.section_action_xiroi = actionlib.SimpleActionClient("/xiroi/pilot/world_section_req", WorldSectionAction)
-        self.section_action_xiroi.wait_for_server()
-
+        self.section_action["xiroi"] = actionlib.SimpleActionClient("/xiroi/pilot/world_section_req", WorldSectionAction)
+        self.section_action["xiroi"].wait_for_server()
 
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
@@ -84,7 +83,7 @@ class MultiRobotSystem:
         if(self.check_current_position == True):
             goal_polygon = None
             goal_polygon = self.mrs_task_assignment(turbot_position_north,turbot_position_east,goal_polygon)
-            self.mrs_coverage(goal_polygon,"turbot")
+            self.mrs_coverage(goal_polygon, "turbot")
             self.check_current_position = False
 
     def update_xiroi_position(self,msg):
@@ -96,7 +95,7 @@ class MultiRobotSystem:
         if(self.check_current_position == True):
             goal_polygon = None
             goal_polygon = self.mrs_task_assignment(xiroi_position_north, xiroi_position_east,goal_polygon)
-            self.mrs_coverage(goal_polygon,"xiroi")
+            self.mrs_coverage(goal_polygon, "xiroi")
             self.check_current_position = False
 
     def print_polygon(self,event):
@@ -132,8 +131,7 @@ class MultiRobotSystem:
             self.success_result = True
 
     def mrs_task_assignment(self,x_position, y_position,assigned_polygon):
-        voronoy_polygons = self.area_handler.get_voronoi_polygons()
-        goal_polygon = self.area_handler.determine_nearest_polygon(x_position,y_position,voronoy_polygons)
+        goal_polygon = self.area_handler.determine_nearest_polygon(x_position,y_position)
         return(goal_polygon)
             
      
@@ -196,14 +194,38 @@ class MultiRobotSystem:
         section_req.surge_velocity = 0.3
         section_req.timeout = 6000
 
-        # send section goal using actionlib
-        self.success_result = False
-        self.section_action_turbot.send_goal(section_req)
-        #  Wait for result or cancel if timed out
-        self.section_action_turbot.wait_for_result()
 
-        # self.send_section_action(vehicle,section_req)
-    
+        # send section goal using actionlib
+        self.is_section_actionlib_running = True
+        self.success_result = False
+
+        self.section_action[vehicle].send_goal(section_req)
+        #  Wait for result or cancel if timed out
+        self.section_action[vehicle].wait_for_result()
+
+    def anchor_marker(self):
+        self.anchor = Marker()
+        self.anchor.header.frame_id = "world_ned"
+        self.anchor.header.stamp = rospy.Time.now()
+        self.anchor.ns = "mrs"
+        self.anchor.id = 0
+        self.anchor.type = Marker.LINE_STRIP
+        self.anchor.action = Marker.ADD
+        self.anchor.pose.position.x = self.auv_position_north
+        self.anchor.pose.position.y = self.auv_position_east
+        self.anchor.pose.position.z = 0
+        self.anchor.pose.orientation.x = 0
+        self.anchor.pose.orientation.y = 0
+        self.anchor.pose.orientation.z = 0
+        self.anchor.pose.orientation.w = 1.0
+        self.anchor.scale.x = self.anchor_radius*2
+        self.anchor.scale.y = self.anchor_radius*2
+        self.anchor.scale.z = 0.1
+        self.anchor.color.r = 0.0
+        self.anchor.color.g = 1.0
+        self.anchor.color.b = 0.0
+        self.anchor.color.a = 0.3
+        self.markerPub_anchor.publish(self.anchor)
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

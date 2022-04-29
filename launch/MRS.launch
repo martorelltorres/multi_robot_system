@@ -1,12 +1,13 @@
 <launch>
  <!-- Params -->
-  <arg name="auvName" default="turbot"/>
-  <arg name="asvName" default="xiroi"/>
+  <arg name="number_of_robots" default="2"/>
+  <arg name="robot_1" default="turbot"/>
+  <arg name="robot_2" default="xiroi"/>
   <arg name="mrsName" default="mrs"/>
   <arg name="place" default="bendinat.yaml"/>
   <arg name="enableIquaASV" default="false"/>
-  <arg name="enableIquaAUV" default="true"/>
-  <arg name="enableRviz" default="false"/>
+  <arg name="enableIquaAUV" default="false"/>
+  <arg name="enableRviz" default="true"/>
 
   <!-- Launch the AUV Simulation -->
   <include  file="$(find cola2_turbot)/launch/simulation.launch">
@@ -20,22 +21,25 @@
     <arg name="place" value="$(arg place)"/>
   </include>
 
-  <group ns="$(arg mrsName)">
-    <!-- Launch the Grid Map management -->
-    <!-- <node name="grid_map_handler" pkg="multi_robot_system" type="grid_map_handler" output="screen" respawn="true">
-      <rosparam command="load" file="$(find multi_robot_system)/config/mrs_navigation.yaml"/>
-    </node> -->
-    <!-- Launch the grid map visualizer -->
-    <!-- <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
-      <rosparam command="load" file="$(find multi_robot_system)/config/visualization.yaml"/>
-    </node> -->
+  <!-- Launch the Multi Robot System -->
 
-    
-    <node name="area_partition" pkg="multi_robot_system" type="area_partition.py" output="screen" respawn="true"/>
-    <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true"/>
-    <!-- <node name="poligon_divider" pkg="multi_robot_system" type="test.py" output="screen" respawn="true"/> -->
+  <!-- Task Allocator -->
+  <node name="task_allocator" pkg="multi_robot_system" type="task_allocator.py" output="screen" respawn="true">
+    <rosparam command="load" file="$(find multi_robot_system)/config/task_allocator.yaml"/>
+  </node>
 
+  <!-- Coverage -->
+  <group ns="$(arg robot_1)">
+    <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true">
+        <!-- <param name="robot_name" value="$(arg robot_1)"/> -->
+    </node>
   </group>
+  <!-- <group ns="$(arg robot_2)">
+    <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true">
+        <param name="robot_name" value="$(arg robot_2)"/>
+    </node>
+  </group> -->
+
 
   <!-- RViz -->
     <node if="$(arg enableRviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find multi_robot_system)/scene/MRS.rviz"/>
