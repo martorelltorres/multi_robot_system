@@ -7,7 +7,7 @@
   <arg name="place" default="bendinat.yaml"/>
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
-  <arg name="enableRviz" default="true"/>
+  <arg name="enableRviz" default="false"/>
 
   <!-- Launch the AUV Simulation -->
   <include  file="$(find cola2_turbot)/launch/simulation.launch">
@@ -29,11 +29,11 @@
   </node>
 
   <!-- Coverage -->
-  <group ns="$(arg robot_1)">
+  <!-- <group ns="$(arg robot_1)">
     <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true">
-        <!-- <param name="robot_name" value="$(arg robot_1)"/> -->
     </node>
-  </group>
+  </group> -->
+
   <!-- <group ns="$(arg robot_2)">
     <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true">
         <param name="robot_name" value="$(arg robot_2)"/>

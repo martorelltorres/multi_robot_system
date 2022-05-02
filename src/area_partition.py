@@ -66,6 +66,11 @@ class area_partition:
 
     def get_voronoi_polygons(self):
         return(self.voronoi_polygons)
+    
+    def get_main_polygon_centroid(self):
+        self.main_polygon = Polygon(self.local_points)
+        polygon_centroid = self.main_polygon.centroid
+        return(polygon_centroid)
 
     def get_polygon_centroids(self):
         return(self.centroid_points)
@@ -75,6 +80,18 @@ class area_partition:
         self.find_largest_side(self.voronoi_polygons[polygon])
         self.cover_lines(self.voronoi_polygons[polygon])
         return(self.goal_points)
+
+    def distance_between_points(self,point_a, point_b):
+        distance = point_a.distance(point_b)
+        return(distance)
+
+    def get_central_polygon(self,voronoi_polygons,main_centroid):
+        for voronoi_polygon in range(len(voronoi_polygons)):
+            is_in = self.voronoi_polygons[voronoi_polygon].contains(main_centroid)
+            if (is_in == True):
+                central_polygon = voronoi_polygon
+                return(central_polygon)
+
 
     def determine_nearest_polygon(self,x_position, y_position,polygons):
         point = Point(x_position,y_position)
