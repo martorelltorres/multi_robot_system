@@ -29,6 +29,11 @@ class robot:
                          self.get_robot_position,
                          queue_size=1)
 
+        rospy.Subscriber(self.ns + "navigator/navigation",
+                         NavSts,    
+                         self.robot_init,
+                         queue_size=1)
+
         rospy.Subscriber(self.ns + "pilot/world_section_req/result",
                     WorldSectionActionResult,    
                     self.update_section_result,
@@ -37,6 +42,9 @@ class robot:
         #Actionlib section client
         self.section_action = actionlib.SimpleActionClient(self.ns + "pilot/world_section_req", WorldSectionAction)
         self.section_action.wait_for_server()
+    
+    def robot_init(self,msg):
+        return(True)
 
     def update_section_result(self,msg):
         final_status = msg.result.final_status

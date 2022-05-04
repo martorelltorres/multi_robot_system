@@ -1,0 +1,3 @@
+navigation_topic: "/xiroi/navigator/navigation"
+ned_origin_lat: "/xiroi/navigator/ned_latitude"
+ned_origin_lon: "/xiroi/navigator/ned_longitude"

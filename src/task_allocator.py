@@ -25,14 +25,18 @@ class task_allocation:
         self.setup_start_points = False
         self.goal_polygon_robot1 = []
         self.goal_polygon_robot2 = []
+        self.polygons = []
+        self.central_polygon_defined=False
+
+        
 
         #Subscribers
-        rospy.Subscriber(robot_2+"/navigator/navigation",
+        rospy.Subscriber("/xiroi/navigator/navigation",
                         NavSts,    
                         self.get_robot2_position,
                         queue_size=1)
 
-        rospy.Subscriber(robot_1+"/navigator/navigation",
+        rospy.Subscriber("/turbot/navigator/navigation",
                         NavSts,    
                         self.get_robot1_position,
                         queue_size=1)
@@ -57,56 +61,71 @@ class task_allocation:
         self.robot2_orientation_yaw = msg.orientation.yaw 
         self.robot2_init = True
         self.initialization()
-        self.main()
+        
 
     def initialization(self):
         if(self.robot2_init == True and self.robot1_init==True):
             self.system_init = True
+            self.task_allocation()
         else:
             self.system_init = False
 
-    def main(self):
+    def task_allocation(self):
         if(self.system_init==True and self.setup_start_points==False):
+            polygon_number = self.area.get_polygon_number()
+            # create an array with the polygon_ids
+            for polygon in range(polygon_number):
+                self.polygons.append(polygon)
+            # define the central polygon in order to be the meeting point
+            if(self.central_polygon_defined==False):
+                self.central_polygon_id = self.define_meeting_point()
+
             goal_polygon_1,goal_polygon_2 = self.find_start_polygons()
+            #avoid to set adjacent goal_polygons 
+            if((goal_polygon_1 == goal_polygon_2+1)or(goal_polygon_1 == goal_polygon_2-1)):
+                goal_polygon_2 = goal_polygon_1 -2
+                # ojo! hi pot haver porblemes si surten numeros negatius
             self.update_goal_polygons(goal_polygon_1,goal_polygon_2)
             self.update_area(goal_polygon_1)
             self.update_area(goal_polygon_2)
-        
-        # define the central polygon
-        voronoi_polygons = self.area.get_voronoi_polygons()
-        main_polygon_centroid = self.area.get_main_polygon_centroid()
-        central_polygon = self.area.get_central_polygon(voronoi_polygons,main_polygon_centroid)
-        self.update_area(central_polygon)
 
-        # print("111111111111111111111")
-        print(self.goal_polygon_robot1)
-        print(self.goal_polygon_robot2)
-        print(self.polygons)
-        print(self.centroids)
+            for element in self.polygons:
+                if(self.goal_polygon_robot1[0]>element):
+                    # move R1 clockwise
+                    self.goal_polygon_robot1.append(element)
+                else:
+                    # move R2 counterclockwise
+                    self.goal_polygon_robot2.append(element)
+        # print("---------------------------------------")
+        # # print(self.central_polygon_id)
+        # print(self.goal_polygon_robot1)
+        # print(self.goal_polygon_robot2)
 
-        
-        # for polygon in self.polygons:
-        #     x,y = self.centroids[self.goal_polygon_robot1[polygon]]
+        return(self.goal_polygon_robot1,self.goal_polygon_robot2)
             
 
-
-                
-        # return(goal_polygon_robot1,goal_polygon_robot2)
+    
+    def define_meeting_point(self):
+        # find the central polygon
+        voronoi_polygons = self.area.get_voronoi_polygons()
+        main_polygon_centroid = self.area.get_main_polygon_centroid()
+        # central_polygon_id shows the number of the center_polygon referenced to the voronoy_polygons
+        self.central_polygon_id = self.area.get_central_polygon(voronoi_polygons,main_polygon_centroid)
+        central_polygon_index = self.polygons.index(self.central_polygon_id)
+        self.update_area(central_polygon_index)
+        self.central_polygon_defined = True
+        return(self.central_polygon_id)
+        
     def update_goal_polygons(self,goal_polygon_1,goal_polygon_2):
             self.goal_polygon_robot1.append(goal_polygon_1)
             self.goal_polygon_robot2.append(goal_polygon_2)
     
     def update_area(self,polygon):
-        # remove the obtained goal_polygon from the polygons and centroid arrays 
+        # remove the obtained goal_polygon from the polygon array
         self.polygons.pop(polygon)
-        self.centroids.pop(polygon)
+        # self.centroids.pop(polygon)
     
     def find_start_polygons(self):
-        polygon_number = self.area.get_polygon_number()
-        # create an array with the polygon_id
-        for polygon in range(polygon_number):
-            self.polygons.append(polygon)
-
         voronoy_polygons = self.area.get_voronoi_polygons()
         self.centroids = self.area.get_polygon_centroids()
         goal_polygon_1 = self.area.determine_nearest_polygon(self.robot2_position_north,self.robot2_position_east,voronoy_polygons)

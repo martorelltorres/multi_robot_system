@@ -28,6 +28,7 @@ class area_partition:
 
     def __init__(self, name):
         self.name = name
+        # self.navigation_topic = get_param(self,'/xiroi/navigator/navigation')
         self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.offset_distance = 0
@@ -41,6 +42,11 @@ class area_partition:
                                                 queue_size=1)
         #Subscribers
         rospy.Subscriber("/xiroi/navigator/navigation",
+                         NavSts,    
+                         self.update_robot_position,
+                         queue_size=1)
+
+        rospy.Subscriber("/turbot/navigator/navigation",
                          NavSts,    
                          self.update_robot_position,
                          queue_size=1)
