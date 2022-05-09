@@ -1,0 +1,8 @@
+# Main parameters
+ned_latitude: 39.5319633484
+ned_longitude: 2.57906508446
+# Robot INFO
+robot_ID: 0
+navigation_topic: "/xiroi/navigator/navigation"
+section_action: "/turbot/pilot/world_section_req"
+section_result: "/turbot/pilot/world_section_req/result"

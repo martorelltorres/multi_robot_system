@@ -7,24 +7,33 @@ import matplotlib.pyplot as plt
 import datetime
 from numpy import *
 import actionlib
-from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
+from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult,VehicleStatus
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Point, PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
 from visualization_msgs.msg import Marker
 #import classes
 from area_partition import area_partition
+from task_allocator import task_allocation
+
+
 
 class MultiRobotSystem:
     
     def __init__(self, name):
         """ Init the class """
-        # Get config parameters
+       
         self.name = name
-        # self.get_config()
-        self.ned_origin_lat = self.get_param(self,'/xiroi/navigator/ned_latitude')
-        self.ned_origin_lon = self.get_param(self,'/xiroi/navigator/ned_longitude')    
+         # Get config parameters from the parameter server
+        self.ned_origin_lat = self.get_param('/multi_robot_system/ned_latitude')
+        self.ned_origin_lon = self.get_param('/multi_robot_system/ned_longitude') 
+        self.robot_ID = self.get_param('/multi_robot_system/robot_ID',0)   
+        self.navigation_topic = self.get_param('/multi_robot_system/navigation_topic','/xiroi/navigator/navigation') 
+        self.section_action = self.get_param('/multi_robot_system/section_action','/turbot/pilot/world_section_req') 
+        self.section_result = self.get_param('/multi_robot_system/section_result','/turbot/pilot/world_section_req/result') 
+
         self.area_handler =  area_partition("area_partition")
+        self.task_allocation_handler = task_allocation("task_allocation")
         self.goal_points = []
         self.check_current_position = True
         self.success_result = False
@@ -34,24 +43,17 @@ class MultiRobotSystem:
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
-        # mrs_control/send_position service
-        rospy.wait_for_service('mrs_control/send_position', 10)
-        try:
-            self.send_position_srv = rospy.ServiceProxy(
-                        'mrs_control/send_position', Empty)
-        except rospy.ServiceException, e:
-            rospy.logwarn("%s: Service call failed: %s", self.name, e)
-
         #Subscribers
-        rospy.Subscriber("/turbot/pilot/world_section_req/result",
+        rospy.Subscriber(self.section_result,
                          WorldSectionActionResult,    
                          self.update_section_result,
                          queue_size=1)
 
-        rospy.Subscriber("/xiroi/navigator/navigation",
+        rospy.Subscriber(self.navigation_topic ,
                          NavSts,    
                          self.update_robot_position,
                          queue_size=1)
+
         #Publishers
         self.polygon_pub = rospy.Publisher("polygon_area",
                                         PolygonStamped,
@@ -60,8 +62,8 @@ class MultiRobotSystem:
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
 
         #Actionlib section client
-        self.section_action = actionlib.SimpleActionClient("/turbot/pilot/world_section_req", WorldSectionAction)
-        self.section_action.wait_for_server()
+        self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
+        self.section_strategy.wait_for_server()
 
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
@@ -77,9 +79,15 @@ class MultiRobotSystem:
         self.position_east = msg.position.east
         self.yaw = msg.orientation.yaw
         if(self.check_current_position == True):
-            self.goal_polygon = self.area_handler.determine_nearest_polygon(self.position_north,self.position_east)
+            # self.goal_polygon = self.area_handler.determine_nearest_polygon(self.position_north,self.position_east)
+            goals = self.task_allocation_handler.task_allocation()
+            # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
+            self.goal_polygons = goals[self.robot_ID][1]
+        for task in self.goal_polygons:
+            self.goal_polygon = self.goal_polygons[task]
+            print(self.goal_polygon)
             self.mrs_coverage()
-            self.check_current_position = False
+        self.check_current_position = False
 
     def print_polygon(self,event):
         if(self.data_gattered==True):      
@@ -131,20 +139,21 @@ class MultiRobotSystem:
                 self.wait_until_section_reached()
 
             #if is an odd number
-            elif(self.section%2==0 & self.success_result):
+            # elif(self.section%2==0 & self.success_result):
+            elif(self.section%2==0):
                 current_section = all_sections[self.section]
                 initial_point = current_section[1]
                 final_point = current_section[0]
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
             #if is an even number
-            elif (self.success_result):
+            # elif (self.success_result):
+            else:
                 current_section = all_sections[self.section]
                 initial_point = current_section[0]
                 final_point = current_section[1]
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
-
 
     def send_section_strategy(self,initial_point,final_point):
         initial_position_x = initial_point[0]
@@ -170,36 +179,11 @@ class MultiRobotSystem:
         section_req.timeout = 6000
 
         # send section goale using actionlib
-        self.is_section_actionlib_running = True
         self.success_result = False
-        self.section_action.send_goal(section_req)
+        self.section_strategy.send_goal(section_req)
 
         #  Wait for result or cancel if timed out
-        self.section_action.wait_for_result()
-
-    def anchor_marker(self):
-        self.anchor = Marker()
-        self.anchor.header.frame_id = "world_ned"
-        self.anchor.header.stamp = rospy.Time.now()
-        self.anchor.ns = "mrs"
-        self.anchor.id = 0
-        self.anchor.type = Marker.LINE_STRIP
-        self.anchor.action = Marker.ADD
-        self.anchor.pose.position.x = self.auv_position_north
-        self.anchor.pose.position.y = self.auv_position_east
-        self.anchor.pose.position.z = 0
-        self.anchor.pose.orientation.x = 0
-        self.anchor.pose.orientation.y = 0
-        self.anchor.pose.orientation.z = 0
-        self.anchor.pose.orientation.w = 1.0
-        self.anchor.scale.x = self.anchor_radius*2
-        self.anchor.scale.y = self.anchor_radius*2
-        self.anchor.scale.z = 0.1
-        self.anchor.color.r = 0.0
-        self.anchor.color.g = 1.0
-        self.anchor.color.b = 0.0
-        self.anchor.color.a = 0.3
-        self.markerPub_anchor.publish(self.anchor)
+        self.section_strategy.wait_for_result()
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
@@ -211,7 +195,6 @@ class MultiRobotSystem:
             rospy.logfatal('[%s]: invalid parameters for %s in param server!', self.name, param_name)
             rospy.logfatal('[%s]: shutdown due to invalid config parameters!', self.name)
             exit(0)
- 
      
 if __name__ == '__main__':
     try:

@@ -28,6 +28,7 @@ class area_partition:
 
     def __init__(self, name):
         self.name = name
+        # self.navigation_topic = get_param(self,'/xiroi/navigator/navigation')
         self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.offset_distance = 0
@@ -35,16 +36,17 @@ class area_partition:
         self.intersection_points =[]
         self.distance = []
 
-        # Sevice server
-        self.send_position = rospy.Service('mrs_control/send_position',
-                                       Empty,
-                                       self.send_position)
         #Publishers
         self.goal_position = rospy.Publisher("/mrs/goal_position",
                                                 PointStamped,
                                                 queue_size=1)
         #Subscribers
         rospy.Subscriber("/xiroi/navigator/navigation",
+                         NavSts,    
+                         self.update_robot_position,
+                         queue_size=1)
+
+        rospy.Subscriber("/turbot/navigator/navigation",
                          NavSts,    
                          self.update_robot_position,
                          queue_size=1)
@@ -68,6 +70,16 @@ class area_partition:
         polygon_number = len(self.voronoi_polygons)
         return(polygon_number)
 
+    def get_voronoi_polygons(self):
+        return(self.voronoi_polygons)
+    
+    def get_main_polygon_centroid(self):
+        self.main_polygon = Polygon(self.local_points)
+        polygon_centroid = self.main_polygon.centroid
+        return(polygon_centroid)
+
+    def get_polygon_centroids(self):
+        return(self.centroid_points)
 
     def define_path_coverage(self, polygon):
         #create the loop for the diferent voronoi polygons
@@ -75,21 +87,33 @@ class area_partition:
         self.cover_lines(self.voronoi_polygons[polygon])
         return(self.goal_points)
 
-    def determine_nearest_polygon(self,x_position, y_position):
+    def distance_between_points(self,point_a, point_b):
+        distance = point_a.distance(point_b)
+        return(distance)
+
+    def get_central_polygon(self,voronoi_polygons,main_centroid):
+        for voronoi_polygon in range(len(voronoi_polygons)):
+            is_in = self.voronoi_polygons[voronoi_polygon].contains(main_centroid)
+            if (is_in == True):
+                central_polygon = voronoi_polygon
+                return(central_polygon)
+
+
+    def determine_nearest_polygon(self,x_position, y_position,polygons):
         point = Point(x_position,y_position)
         #determine if the robots are in the predefined area
         is_in = self.main_polygon.contains(point)
         #determine in which subpolygon are 
         if (is_in == True):
-            for voronoi_polygon in range(len(self.voronoi_polygons)):
+            for voronoi_polygon in range(len(polygons)):
                 is_in = self.voronoi_polygons[voronoi_polygon].contains(point)
                 if (is_in == True):
                     self.goal_polygon = voronoi_polygon
                     self.goal_polygon_defined = True
         else:            
         #in case that the robot was not in any polygon, determine the nearest polygon in order to cover it
-            for voronoi_polygon in range(len(self.voronoi_polygons)):
-                distance_point_to_polygons = point.distance(self.voronoi_polygons[voronoi_polygon])
+            for voronoi_polygon in range(len(polygons)):
+                distance_point_to_polygons = point.distance(polygons[voronoi_polygon])
                 self.distance.append(distance_point_to_polygons)
             min_distance = min(self.distance)
             self.goal_polygon = self.distance.index(min_distance)
@@ -245,15 +269,15 @@ class area_partition:
         # Triangulate the polygon
         poligonized_points =Polygon(self.polygon_points)
         triangles = triangulate(poligonized_points)
-        centroid_points = []
+        self.centroid_points = []
         # extract centroid points of the triangles
         for triangle in triangles:
             triangle_centroid = triangle.centroid
-            centroid_points.append([triangle_centroid.x,triangle_centroid.y])
-        centroid_points.append([polygon_centroid.x,polygon_centroid.y])
+            self.centroid_points.append([triangle_centroid.x,triangle_centroid.y])
+        self.centroid_points.append([polygon_centroid.x,polygon_centroid.y])
    
         # compute Voronoi tesselation
-        voronoi_regions = Voronoi(centroid_points)
+        voronoi_regions = Voronoi(self.centroid_points)
         regions, vertices = self.voronoi_finite_polygons_2d(voronoi_regions)
         voronoi_plot_2d(voronoi_regions)
         min_x = voronoi_regions.min_bound[0] - 10
