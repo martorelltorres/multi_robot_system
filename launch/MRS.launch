@@ -4,12 +4,15 @@
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
+  <arg name="robot_0" default="turbot"/>
+  <arg name="robot_1" default="xiroi"/>
 
-  <!-- Launch the AUV Simulation -->
+  <!-- Launch the Simulation -->
   <include  file="$(find cola2_turbot)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaAUV)"/>
     <arg name="place" value="$(arg place)"/>
   </include>
+
 
   <!-- Launch the Xiroi Simulation -->
   <include  file="$(find cola2_xiroi)/launch/simulation.launch">
@@ -21,8 +24,21 @@
     <rosparam command="load" file="$(find multi_robot_system)/config/task_allocation.yaml"/>
   </node>
 
-  <node name="multi_robot_system" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true">
-    <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
+  <!-- set as many robots as you have defined in the task_allocation.yaml -->
+  <!-- Robot 0 -->
+  <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true">
+    <param name="robot_ID" value="0"/>
+    <param name="navigation_topic" value="/xiroi/navigator/navigation"/>
+    <param name="section_action" value="/turbot/pilot/world_section_req"/>
+    <param name="section_result" value="/turbot/pilot/world_section_req/result"/>
+  </node>
+
+  <!-- Robot 1 -->
+  <node name="multi_robot_system_$(arg robot_1)" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true">
+    <param name="robot_ID" value="1"/>
+    <param name="navigation_topic" value="/xiroi/navigator/navigation"/>
+    <param name="section_action" value="/xiroi/pilot/world_section_req"/>
+    <param name="section_result" value="/xiroi/pilot/world_section_req/result"/>
   </node>
 
   <!-- RViz -->

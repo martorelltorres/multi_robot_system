@@ -25,12 +25,10 @@ class MultiRobotSystem:
        
         self.name = name
          # Get config parameters from the parameter server
-        self.ned_origin_lat = self.get_param('/multi_robot_system/ned_latitude')
-        self.ned_origin_lon = self.get_param('/multi_robot_system/ned_longitude') 
-        self.robot_ID = self.get_param('/multi_robot_system/robot_ID',0)   
-        self.navigation_topic = self.get_param('/multi_robot_system/navigation_topic','/xiroi/navigator/navigation') 
-        self.section_action = self.get_param('/multi_robot_system/section_action','/turbot/pilot/world_section_req') 
-        self.section_result = self.get_param('/multi_robot_system/section_result','/turbot/pilot/world_section_req/result') 
+        self.robot_ID = self.get_param('~robot_ID',0)   
+        self.navigation_topic = self.get_param('~navigation_topic','/xiroi/navigator/navigation') 
+        self.section_action = self.get_param('~section_action','/turbot/pilot/world_section_req') 
+        self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
 
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
@@ -75,19 +73,20 @@ class MultiRobotSystem:
         # uint64 BUSY=3
 
     def update_robot_position(self,msg):
-        self.position_north = msg.position.north
-        self.position_east = msg.position.east
+        # self.position_north = msg.position.north
+        # self.position_east = msg.position.east
         self.yaw = msg.orientation.yaw
         if(self.check_current_position == True):
-            # self.goal_polygon = self.area_handler.determine_nearest_polygon(self.position_north,self.position_east)
+            self.check_current_position = False
             goals = self.task_allocation_handler.task_allocation()
             # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
             self.goal_polygons = goals[self.robot_ID][1]
-        for task in self.goal_polygons:
+            print(self.goal_polygons)
+        for task in range(len(self.goal_polygons)):
             self.goal_polygon = self.goal_polygons[task]
             print(self.goal_polygon)
-            self.mrs_coverage()
-        self.check_current_position = False
+            self.mrs_coverage(self.goal_polygon)
+        
 
     def print_polygon(self,event):
         if(self.data_gattered==True):      
@@ -101,7 +100,7 @@ class MultiRobotSystem:
                     polygon_points = Point32()
                     polygon_points.x = polygon_coords_x[coord]
                     polygon_points.y = polygon_coords_y[coord]
-                    polygon_points.z = 10
+                    polygon_points.z = 0
                     points.append(polygon_points)
 
                     # create polygon message
@@ -120,12 +119,13 @@ class MultiRobotSystem:
     def wait_until_section_reached(self):
         if(self.final_status==0):
             self.success_result = True
+
         
-    def mrs_coverage(self):
+    def mrs_coverage(self,goal):
         self.data_gattered = True
         # obtain all the polygons goal_points
-        self.goal_points = self.area_handler.define_path_coverage(self.goal_polygon)
-        self.polygon_goal_points = self.goal_points[self.goal_polygon]
+        self.goal_points = self.area_handler.define_path_coverage(goal)
+        self.polygon_goal_points = self.goal_points[goal]
         all_sections = self.polygon_goal_points[1]
 
         for self.section in range((len(all_sections)-1)):
@@ -139,16 +139,14 @@ class MultiRobotSystem:
                 self.wait_until_section_reached()
 
             #if is an odd number
-            # elif(self.section%2==0 & self.success_result):
-            elif(self.section%2==0):
+            elif(self.section%2==0 & self.success_result):
                 current_section = all_sections[self.section]
                 initial_point = current_section[1]
                 final_point = current_section[0]
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
             #if is an even number
-            # elif (self.success_result):
-            else:
+            elif (self.success_result):
                 current_section = all_sections[self.section]
                 initial_point = current_section[0]
                 final_point = current_section[1]
@@ -164,11 +162,11 @@ class MultiRobotSystem:
         section_req = WorldSectionGoal()
         section_req.initial_position.x = initial_position_x
         section_req.initial_position.y = initial_position_y
-        section_req.initial_position.z = 10
+        section_req.initial_position.z = 0.0
         section_req.initial_yaw = self.yaw
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
-        section_req.final_position.z = 10
+        section_req.final_position.z = 0.0
         section_req.altitude_mode = False
         section_req.tolerance.x = 2
         section_req.tolerance.y = 2

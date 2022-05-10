@@ -370,7 +370,7 @@ Visualization Manager:
       Marker Topic: /turbot/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /turbot/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -432,6 +432,71 @@ Visualization Manager:
       Topic: /polygon_area
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /xiroi/captain/trajectory_path
+      Unreliable: false
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /xiroi/ekf_map/odometry
+      Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /xiroi/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /xiroi/pilot: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 165; 165; 165
@@ -446,25 +511,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 177.722900390625
+      Distance: 81.64578247070312
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -3.160329580307007
-        Y: 32.261009216308594
-        Z: 5.376743793487549
+        X: -12.638954162597656
+        Y: -2.9371540546417236
+        Z: 3.050184726715088
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5047963857650757
+      Pitch: 0.8597972393035889
       Target Frame: turbot/base_link
       Value: Orbit (rviz)
-      Yaw: 4.712225437164307
+      Yaw: 5.882215976715088
     Saved: ~
 Window Geometry:
   Displays:
