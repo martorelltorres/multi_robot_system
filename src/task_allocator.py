@@ -15,7 +15,7 @@ class task_allocation:
         self.name = name
 
         # read parameter from the parameter server
-        self.number_of_robots = self.get_param('/task_allocation/number_of_robots')
+        self.number_of_robots = self.get_param('number_of_robots')
 
         # define variables
         # self.robot1_init = False

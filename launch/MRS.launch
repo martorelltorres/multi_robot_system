@@ -20,9 +20,9 @@
     <arg name="place" value="$(arg place)"/>
   </include>
   
-  <node name="task_allocation" pkg="multi_robot_system" type="task_allocator.py" output="screen" respawn="true">
-    <rosparam command="load" file="$(find multi_robot_system)/config/task_allocation.yaml"/>
-  </node>
+   <!-- load the multi_robot_system.yaml parameters file -->
+  <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
+
 
   <!-- set as many robots as you have defined in the task_allocation.yaml -->
   <!-- Robot 0 -->

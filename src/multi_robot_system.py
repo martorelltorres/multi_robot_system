@@ -163,41 +163,35 @@ class MultiRobotSystem:
         self.data_gattered = True
         # obtain all the polygons goal_points
         self.goal_points = self.area_handler.define_path_coverage(goal)
-        self.polygon_goal_points = self.goal_points[goal]
-        all_sections = self.polygon_goal_points[1]
+        # print(self.goal_points[0])
+        polygon_goal_points = self.goal_points[goal]
+        all_sections = polygon_goal_points[1]
 
-        for self.section in range((len(all_sections)-1)):
+        for self.section in range(len(all_sections)):
            
             # First section
             if (self.section==0):
                 current_section = all_sections[self.section]
-                initial_point = current_section[1]
-                final_point = current_section[0]
+                initial_point = current_section[0]
+                final_point = current_section[1]
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
 
             #if is an odd number
-            elif(self.section%2==0 & self.success_result):
+            elif(self.section%2==0 and self.success_result):
+                current_section = all_sections[self.section]
+                initial_point = current_section[0]
+                final_point = current_section[1]
+                self.send_section_strategy(initial_point,final_point)
+                self.wait_until_section_reached()
+            #if is an even number
+            elif (self.section%2!=0 and self.success_result):
                 current_section = all_sections[self.section]
                 initial_point = current_section[1]
                 final_point = current_section[0]
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
-            #if is an even number
-            elif (self.success_result):
-                current_section = all_sections[self.section]
-                initial_point = current_section[0]
-                final_point = current_section[1]
-                self.send_section_strategy(initial_point,final_point)
-                self.wait_until_section_reached()
 
-            elif(self.section==(len(all_sections)-1)):
-                current_section = all_sections[self.section]
-                initial_point = current_section[0]
-                final_point = current_section[1]
-                self.send_section_strategy(initial_point,final_point)
-                self.wait_until_section_reached()
-                self.move_to_next_goal = True
 
     def send_section_strategy(self,initial_point,final_point):
         initial_position_x = initial_point[0]
