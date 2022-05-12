@@ -31,8 +31,10 @@ class area_partition:
         # self.navigation_topic = get_param(self,'/xiroi/navigator/navigation')
         self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
+        self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
+        self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
         self.offset_distance = 0
-        self.fixed_offset = 1
+        # self.fixed_offset = 1
         self.intersection_points =[]
         self.distance = []
 
@@ -55,7 +57,7 @@ class area_partition:
         self.read_file()
         self.extract_NED_positions()
         self.divide_polygon()
-        self.define_voronoi_offset_polygons(2)
+        self.define_voronoi_offset_polygons(self.offset_polygon_distance)
         # self.define_path_coverage()
         # plt.show()
     def update_robot_position(self,msg):
@@ -100,15 +102,12 @@ class area_partition:
         return(self.voronoi_offset_polygons)
 
     def define_path_coverage(self, polygon):
-        #create the loop for the diferent voronoi polygons
-
         #setup to cover the original voronoi polygon without any offset
-        # self.find_largest_side(self.voronoi_polygons[polygon])
-        # self.cover_lines(self.voronoi_polygons[polygon])
-
-        self.find_largest_side(self.voronoi_offset_polygons[polygon])
-        self.cover_lines(self.voronoi_offset_polygons[polygon])
-        return(self.goal_points)
+        self.find_largest_side(self.voronoi_polygons[polygon])
+        goal_points = self.cover_lines(self.voronoi_polygons[polygon])
+        # self.find_largest_side(self.voronoi_offset_polygons[polygon])
+        # self.cover_lines(self.voronoi_offset_polygons[polygon])
+        return(goal_points)
 
     def distance_between_points(self,point_a, point_b):
         distance = point_a.distance(point_b)
@@ -160,13 +159,12 @@ class area_partition:
             new_polygon = self.create_voronoi_offset_polygon(voronoi_polygon,offset)
             self.voronoi_offset_polygons.append(new_polygon)
 
-            
     
     def cover_lines(self, polygon):
         x,y = polygon.exterior.coords.xy
         slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
         y_coordinate =[]
-        x_threshold = 50
+        x_threshold = 10
 
         if(x[self.reference_points[0]] > x[self.reference_points[1]]):
             x_0 = x[self.reference_points[0]] + x_threshold
@@ -184,7 +182,7 @@ class area_partition:
         self.distance_point_to_line(line,polygon)
 
         while(self.offset_distance < self.max_distance):
-            self.offset_distance = self.offset_distance + self.fixed_offset
+            self.offset_distance = self.offset_distance + self.offset_coverage_distance
             offset = line.parallel_offset(self.offset_distance, 'left', join_style=1)
             self.find_intersection_points(polygon,offset)
             self.plot_line(offset)
