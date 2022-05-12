@@ -30,7 +30,6 @@ class task_allocation:
         # create atributes
         self.area = area_partition("area_partition")
 
-
     def task_allocation(self):
         polygon_number = self.area.get_polygon_number()
         # create an array with the goal polygon_ids, from 0 to n

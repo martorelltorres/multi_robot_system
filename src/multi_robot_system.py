@@ -36,6 +36,8 @@ class MultiRobotSystem:
         self.check_current_position = True
         self.success_result = False
         self.data_gattered = False
+        self.first_time = True
+        self.move_to_next_goal = False
         
         
         # Show initialization message
@@ -53,15 +55,20 @@ class MultiRobotSystem:
                          queue_size=1)
 
         #Publishers
-        self.polygon_pub = rospy.Publisher("polygon_area",
+        self.polygon_pub = rospy.Publisher("voronoi_polygons",
+                                        PolygonStamped,
+                                        queue_size=1)
+        self.polygon_offset_pub = rospy.Publisher("voronoi_offset_polygons",
                                         PolygonStamped,
                                         queue_size=1)
         # Init periodic check timer
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
+        rospy.Timer(rospy.Duration(1.0), self.print_offset_polygon)
 
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
         self.section_strategy.wait_for_server()
+        
 
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
@@ -73,19 +80,22 @@ class MultiRobotSystem:
         # uint64 BUSY=3
 
     def update_robot_position(self,msg):
-        # self.position_north = msg.position.north
-        # self.position_east = msg.position.east
         self.yaw = msg.orientation.yaw
         if(self.check_current_position == True):
             self.check_current_position = False
             goals = self.task_allocation_handler.task_allocation()
             # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
             self.goal_polygons = goals[self.robot_ID][1]
-            print(self.goal_polygons)
+            self.robot_task_assignement()
+
+    def robot_task_assignement(self):            
         for task in range(len(self.goal_polygons)):
-            self.goal_polygon = self.goal_polygons[task]
-            print(self.goal_polygon)
-            self.mrs_coverage(self.goal_polygon)
+            polygon = self.goal_polygons[task]
+            print(polygon)
+            if(self.first_time == True or self.move_to_next_goal == True):
+                self.first_time = False
+                self.mrs_coverage(polygon)
+                print("doing the coverage...")
         
 
     def print_polygon(self,event):
@@ -115,6 +125,34 @@ class MultiRobotSystem:
                     self.polygon_pub.publish(polygon_stamped_msg)
         else:
             rospy.logwarn("Unable to print polygon, data not gattered yet")      
+
+    def print_offset_polygon(self,event):
+        if(self.data_gattered==True):      
+            points = []
+            polygon_number = self.area_handler.get_polygon_number()
+            polygon_number = polygon_number -1
+            for polygon in range(polygon_number):
+                polygon_coords_x,polygon_coords_y = self.area_handler.get_offset_polygon_points(polygon)
+
+                for coord in range(len(polygon_coords_x)):
+                    polygon_points = Point32()
+                    polygon_points.x = polygon_coords_x[coord]
+                    polygon_points.y = polygon_coords_y[coord]
+                    polygon_points.z = 0
+                    points.append(polygon_points)
+
+                    # create polygon message
+                    polygon_msg = Polygon()
+                    polygon_msg.points = points
+                    
+                    # create polygon_stamped message
+                    polygon_stamped_msg = PolygonStamped()
+                    polygon_stamped_msg.header.frame_id = "world_ned"
+                    polygon_stamped_msg.header.stamp = rospy.Time.now()
+                    polygon_stamped_msg.polygon = polygon_msg
+                    self.polygon_offset_pub.publish(polygon_stamped_msg)
+        else:
+            rospy.logwarn("Unable to print polygon, data not gattered yet")  
 
     def wait_until_section_reached(self):
         if(self.final_status==0):
@@ -152,6 +190,14 @@ class MultiRobotSystem:
                 final_point = current_section[1]
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
+
+            elif(self.section==(len(all_sections)-1)):
+                current_section = all_sections[self.section]
+                initial_point = current_section[0]
+                final_point = current_section[1]
+                self.send_section_strategy(initial_point,final_point)
+                self.wait_until_section_reached()
+                self.move_to_next_goal = True
 
     def send_section_strategy(self,initial_point,final_point):
         initial_position_x = initial_point[0]

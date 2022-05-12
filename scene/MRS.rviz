@@ -8,6 +8,7 @@ Panels:
         - /tf1/Frames1
         - /cola2_odom1/Shape1
         - /Marker1/Namespaces1
+        - /Polygon1
       Splitter Ratio: 0.5411764979362488
     Tree Height: 872
   - Class: rviz/Views
@@ -370,15 +371,15 @@ Visualization Manager:
       Marker Topic: /turbot/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        {}
+        /turbot/pilot: true
       Queue Size: 100
       Value: true
     - Alpha: 1
       Class: rviz/Polygon
-      Color: 25; 255; 0
+      Color: 239; 41; 41
       Enabled: true
       Name: Polygon
-      Topic: /mrs/polygon_area
+      Topic: /voronoi_polygons
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -429,7 +430,7 @@ Visualization Manager:
       Color: 25; 255; 0
       Enabled: true
       Name: Polygon
-      Topic: /polygon_area
+      Topic: /voronoi_offset_polygons
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -471,9 +472,9 @@ Visualization Manager:
           Color: 204; 51; 204
           Scale: 1
           Value: true
-        Value: true
+        Value: false
       Enabled: true
-      Keep: 100
+      Keep: 1000
       Name: Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
@@ -510,26 +511,21 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz/Orbit
-      Distance: 81.64578247070312
+      Angle: 1.09499990940094
+      Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Focal Point:
-        X: -12.638954162597656
-        Y: -2.9371540546417236
-        Z: 3.050184726715088
-      Focal Shape Fixed Size: false
-      Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8597972393035889
+      Scale: 5.679722785949707
       Target Frame: turbot/base_link
-      Value: Orbit (rviz)
-      Yaw: 5.882215976715088
+      Value: TopDownOrtho (rviz)
+      X: -64.6332778930664
+      Y: 20.051305770874023
     Saved: ~
 Window Geometry:
   Displays:

@@ -32,7 +32,7 @@ class area_partition:
         self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.offset_distance = 0
-        self.initial_offset = 1
+        self.fixed_offset = 1
         self.intersection_points =[]
         self.distance = []
 
@@ -55,6 +55,7 @@ class area_partition:
         self.read_file()
         self.extract_NED_positions()
         self.divide_polygon()
+        self.define_voronoi_offset_polygons(2)
         # self.define_path_coverage()
         # plt.show()
     def update_robot_position(self,msg):
@@ -65,6 +66,20 @@ class area_partition:
         polygon_points = self.voronoi_polygons[polygon]
         polygon_coords_x,polygon_coords_y = polygon_points.exterior.coords.xy
         return(polygon_coords_x,polygon_coords_y)
+
+    def get_offset_polygon_points(self,polygon):
+        polygon_points = self.voronoi_offset_polygons[polygon]
+        polygon_coords_x,polygon_coords_y = polygon_points.exterior.coords.xy
+        return(polygon_coords_x,polygon_coords_y)
+
+    def create_voronoi_offset_polygon(self,polygon,offset):
+        goal_polygon = self.voronoi_polygons[polygon]
+        offset_polygon = goal_polygon.buffer(offset)
+        return(offset_polygon)
+
+    def get_polygon_area(self,polygon):
+        polygon_area = self.voronoi_polygons[polygon].area
+        return(polygon_area)
 
     def get_polygon_number(self):
         polygon_number = len(self.voronoi_polygons)
@@ -80,11 +95,19 @@ class area_partition:
 
     def get_polygon_centroids(self):
         return(self.centroid_points)
+    
+    def get_voronoi_offset_polygons(self):
+        return(self.voronoi_offset_polygons)
 
     def define_path_coverage(self, polygon):
         #create the loop for the diferent voronoi polygons
-        self.find_largest_side(self.voronoi_polygons[polygon])
-        self.cover_lines(self.voronoi_polygons[polygon])
+
+        #setup to cover the original voronoi polygon without any offset
+        # self.find_largest_side(self.voronoi_polygons[polygon])
+        # self.cover_lines(self.voronoi_polygons[polygon])
+
+        self.find_largest_side(self.voronoi_offset_polygons[polygon])
+        self.cover_lines(self.voronoi_offset_polygons[polygon])
         return(self.goal_points)
 
     def distance_between_points(self,point_a, point_b):
@@ -130,13 +153,20 @@ class area_partition:
     def send_position(self, req):
         self.send_position = True
         return EmptyResponse()
+    
+    def define_voronoi_offset_polygons(self,offset):
+        # create voronoi_offset_polygons in order to ensure the complete coverage of the areas
+        for voronoi_polygon in range(len(self.voronoi_polygons)):
+            new_polygon = self.create_voronoi_offset_polygon(voronoi_polygon,offset)
+            self.voronoi_offset_polygons.append(new_polygon)
+
             
     
     def cover_lines(self, polygon):
         x,y = polygon.exterior.coords.xy
         slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
         y_coordinate =[]
-        x_threshold = 10
+        x_threshold = 50
 
         if(x[self.reference_points[0]] > x[self.reference_points[1]]):
             x_0 = x[self.reference_points[0]] + x_threshold
@@ -154,7 +184,7 @@ class area_partition:
         self.distance_point_to_line(line,polygon)
 
         while(self.offset_distance < self.max_distance):
-            self.offset_distance = self.initial_offset + self.offset_distance
+            self.offset_distance = self.offset_distance + self.fixed_offset
             offset = line.parallel_offset(self.offset_distance, 'left', join_style=1)
             self.find_intersection_points(polygon,offset)
             self.plot_line(offset)
@@ -292,6 +322,7 @@ class area_partition:
 
         # colorize
         self.voronoi_polygons = []
+        self.voronoi_offset_polygons = []
         self.voronoi_polygons_points = []
         for region in regions:
             polygon = vertices[region]
@@ -348,7 +379,6 @@ class area_partition:
                     continue
 
                 # Compute the missing endpoint of an infinite ridge
-
                 t = vor.points[p2] - vor.points[p1] # tangent
                 t /= np.linalg.norm(t)
                 n = np.array([-t[1], t[0]])  # normal
