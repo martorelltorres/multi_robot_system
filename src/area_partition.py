@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from operator import indexOf
+from pickle import NONE
 import roslib
 import rospy            
 from array import *
@@ -33,12 +34,12 @@ class area_partition:
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
-        self.offset_distance = 0
+        self.offset_distance = -self.offset_coverage_distance
         
-        self.offset_distance = 0
         self.fixed_offset = 1
-        self.intersection_points =[]
+        # self.intersection_points =[]
         self.distance = []
+        self.goal_points = []
 
         #Publishers
         self.goal_position = rospy.Publisher("/mrs/goal_position",
@@ -78,7 +79,7 @@ class area_partition:
 
     def create_voronoi_offset_polygon(self,polygon,offset):
         goal_polygon = self.voronoi_polygons[polygon]
-        offset_polygon = goal_polygon.buffer(offset)
+        offset_polygon = goal_polygon.buffer(offset,cap_style=3, join_style=2)
         return(offset_polygon)
 
     def get_polygon_area(self,polygon):
@@ -103,15 +104,16 @@ class area_partition:
     def get_voronoi_offset_polygons(self):
         return(self.voronoi_offset_polygons)
 
-    def define_path_coverage(self, polygon):
+    def define_path_coverage(self):
         #create the loop for the diferent voronoi polygons
+        for self.polygon_id in range(len(self.voronoi_offset_polygons)):
+            # print("-------------------------------------   POLYGON "+str(polygon)+"  ------------------------------------------------------------")
+            # print(self.voronoi_offset_polygons[polygon])
+            self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
+            self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
+            # print("GOAL POINTS")
+            # print(self.goal_points)
 
-        #setup to cover the original voronoi polygon without any offset
-        # self.find_largest_side(self.voronoi_polygons[polygon])
-        # self.cover_lines(self.voronoi_polygons[polygon])
-
-        self.find_largest_side(self.voronoi_offset_polygons[polygon])
-        self.cover_lines(self.voronoi_offset_polygons[polygon])
         return(self.goal_points)
 
     def distance_between_points(self,point_a, point_b):
@@ -184,19 +186,20 @@ class area_partition:
 
         y_1 = slope*(x_1-x[self.reference_points[0]]) + y[self.reference_points[0]]
         y_coordinate.append(y_1)
+
         line = LineString([(x_0, y_coordinate[0]), (x_1, y_coordinate[1])])
         self.distance_point_to_line(line,polygon)
-
+        self.offset_distance = 0
+        self.intersection_points = []
+        # print("The offset distance is : " +str(self.offset_distance)+ " and the max distance is : "+ str(self.max_distance))
         while(self.offset_distance < self.max_distance):
             offset = line.parallel_offset(self.offset_distance, 'left', join_style=1)
             self.offset_distance = self.offset_distance + self.offset_coverage_distance
             self.find_intersection_points(polygon,offset)
             self.plot_line(offset)
-
         # the goal_points array stores the diferent intersection points of each voronoi polygon, then print(self.goal_points[0])store the intersection points of the polygon 0
-        self.goal_points = []
-        for voronoi_polygon in range(len(self.voronoi_polygons)):
-            self.goal_points.append([[voronoi_polygon],self.intersection_points])
+        self.goal_points.append(self.intersection_points)
+
 
     def find_intersection_points(self, polygon,line):
         points = line.intersection(polygon)
@@ -232,7 +235,6 @@ class area_partition:
                 x_distance = x[i]-x[(i+1)]
                 y_distance = y[i]-y[(i+1)]
             
-
             cartesian_distance = np.sqrt(x_distance**2 + y_distance**2)
             self.distance.append(cartesian_distance)
 
@@ -241,7 +243,9 @@ class area_partition:
         # the reference_points contains the index of the two points of the major side
         self.reference_points =[]
         self.reference_points.append(index)
-        self.reference_points.append (index-1)      
+        self.reference_points.append (index-1)
+        # print("REFERENCE POINTS")
+        # print(self.reference_points)      
 
     def read_file(self):
         data = []

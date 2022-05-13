@@ -86,17 +86,88 @@ class MultiRobotSystem:
             goals = self.task_allocation_handler.task_allocation()
             # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
             self.goal_polygons = goals[self.robot_ID][1]
+            print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
+            self.goal_points = self.area_handler.define_path_coverage()
             self.robot_task_assignement()
 
     def robot_task_assignement(self):            
         for task in range(len(self.goal_polygons)):
-            polygon = self.goal_polygons[task]
-            print(polygon)
             if(self.first_time == True or self.move_to_next_goal == True):
                 self.first_time = False
-                self.mrs_coverage(polygon)
-                print("doing the coverage...")
-        
+                # print("The robot_"+str(self.robot_ID)+" is covering the "+str(polygon))+" polygon"
+                self.mrs_coverage(self.goal_polygons[task])
+
+    def wait_until_section_reached(self):
+        if(self.final_status==0):
+            self.success_result = True
+
+    def mrs_coverage(self,goal):
+        self.data_gattered = True
+        # obtain all the polygons goal_points
+
+        self.goal_points[goal].pop(0)
+        print("GOAL POINTS"+str(goal))
+        print(self.goal_points[goal])
+
+        section_points = self.goal_points[goal]
+
+        for self.section in range(len(section_points)):
+            # First section
+            if (self.section==0):
+                current_section = section_points[self.section]
+                initial_point = current_section[0]
+                final_point = current_section[1]
+                self.send_section_strategy(initial_point,final_point)
+                self.wait_until_section_reached()
+
+            #if is an odd number
+            elif(self.section%2==0 and self.success_result):
+                current_section = section_points[self.section]
+                initial_point = current_section[0]
+                final_point = current_section[1]
+                self.send_section_strategy(initial_point,final_point)
+                self.wait_until_section_reached()
+
+            #if is an even number
+            elif (self.section%2!=0 and self.success_result):
+                current_section = section_points[self.section]
+                initial_point = current_section[1]
+                final_point = current_section[0]
+                self.send_section_strategy(initial_point,final_point)
+                self.wait_until_section_reached()
+
+        self.move_to_next_goal = True
+
+
+    def send_section_strategy(self,initial_point,final_point):
+        initial_position_x = initial_point[0]
+        final_position_x = final_point[0]
+        initial_position_y = initial_point[1]
+        final_position_y = final_point[1]
+
+        section_req = WorldSectionGoal()
+        section_req.initial_position.x = initial_position_x
+        section_req.initial_position.y = initial_position_y
+        section_req.initial_position.z = 0.0
+        section_req.initial_yaw = self.yaw
+        section_req.final_position.x = final_position_x
+        section_req.final_position.y = final_position_y
+        section_req.final_position.z = 0.0
+        section_req.altitude_mode = False
+        section_req.tolerance.x = 20
+        section_req.tolerance.y = 20
+        section_req.tolerance.z = 20
+        section_req.controller_type = WorldSectionGoal.LOSCTE
+        section_req.priority = GoalDescriptor.PRIORITY_NORMAL
+        section_req.surge_velocity = 1
+        section_req.timeout = 6000
+
+        # send section goale using actionlib
+        self.success_result = False
+        self.section_strategy.send_goal(section_req)
+
+        #  Wait for result or cancel if timed out
+        self.section_strategy.wait_for_result()
 
     def print_polygon(self,event):
         if(self.data_gattered==True):      
@@ -153,75 +224,6 @@ class MultiRobotSystem:
                     self.polygon_offset_pub.publish(polygon_stamped_msg)
         else:
             rospy.logwarn("Unable to print polygon, data not gattered yet")  
-
-    def wait_until_section_reached(self):
-        if(self.final_status==0):
-            self.success_result = True
-
-        
-    def mrs_coverage(self,goal):
-        self.data_gattered = True
-        # obtain all the polygons goal_points
-        self.goal_points = self.area_handler.define_path_coverage(goal)
-        # print(self.goal_points[0])
-        polygon_goal_points = self.goal_points[goal]
-        all_sections = polygon_goal_points[1]
-
-        for self.section in range(len(all_sections)):
-           
-            # First section
-            if (self.section==0):
-                current_section = all_sections[self.section]
-                initial_point = current_section[0]
-                final_point = current_section[1]
-                self.send_section_strategy(initial_point,final_point)
-                self.wait_until_section_reached()
-
-            #if is an odd number
-            elif(self.section%2==0 and self.success_result):
-                current_section = all_sections[self.section]
-                initial_point = current_section[0]
-                final_point = current_section[1]
-                self.send_section_strategy(initial_point,final_point)
-                self.wait_until_section_reached()
-            #if is an even number
-            elif (self.section%2!=0 and self.success_result):
-                current_section = all_sections[self.section]
-                initial_point = current_section[1]
-                final_point = current_section[0]
-                self.send_section_strategy(initial_point,final_point)
-                self.wait_until_section_reached()
-
-
-    def send_section_strategy(self,initial_point,final_point):
-        initial_position_x = initial_point[0]
-        final_position_x = final_point[0]
-        initial_position_y = initial_point[1]
-        final_position_y = final_point[1]
-
-        section_req = WorldSectionGoal()
-        section_req.initial_position.x = initial_position_x
-        section_req.initial_position.y = initial_position_y
-        section_req.initial_position.z = 0.0
-        section_req.initial_yaw = self.yaw
-        section_req.final_position.x = final_position_x
-        section_req.final_position.y = final_position_y
-        section_req.final_position.z = 0.0
-        section_req.altitude_mode = False
-        section_req.tolerance.x = 2
-        section_req.tolerance.y = 2
-        section_req.tolerance.z = 2
-        section_req.controller_type = WorldSectionGoal.LOSCTE
-        section_req.priority = GoalDescriptor.PRIORITY_NORMAL
-        section_req.surge_velocity = 1
-        section_req.timeout = 6000
-
-        # send section goale using actionlib
-        self.success_result = False
-        self.section_strategy.send_goal(section_req)
-
-        #  Wait for result or cancel if timed out
-        self.section_strategy.wait_for_result()
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
