@@ -34,7 +34,7 @@ class area_partition:
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
-        self.offset_distance = -self.offset_coverage_distance
+        self.offset_distance = 0
         
         self.fixed_offset = 1
         # self.intersection_points =[]
@@ -107,13 +107,8 @@ class area_partition:
     def define_path_coverage(self):
         #create the loop for the diferent voronoi polygons
         for self.polygon_id in range(len(self.voronoi_offset_polygons)):
-            # print("-------------------------------------   POLYGON "+str(polygon)+"  ------------------------------------------------------------")
-            # print(self.voronoi_offset_polygons[polygon])
             self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
             self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
-            # print("GOAL POINTS")
-            # print(self.goal_points)
-
         return(self.goal_points)
 
     def distance_between_points(self,point_a, point_b):
@@ -190,8 +185,8 @@ class area_partition:
         line = LineString([(x_0, y_coordinate[0]), (x_1, y_coordinate[1])])
         self.distance_point_to_line(line,polygon)
         self.offset_distance = 0
-        self.intersection_points = []
-        # print("The offset distance is : " +str(self.offset_distance)+ " and the max distance is : "+ str(self.max_distance))
+        self.intersection_points = []     
+
         while(self.offset_distance < self.max_distance):
             offset = line.parallel_offset(self.offset_distance, 'left', join_style=1)
             self.offset_distance = self.offset_distance + self.offset_coverage_distance
@@ -223,6 +218,16 @@ class area_partition:
             x, y = part.xy
             plt.plot(x, y, linewidth=3, solid_capstyle='round', zorder=1)
         # plt.show()
+    
+    def get_initial_section(self, polygon):
+        polygons = self.get_voronoi_offset_polygons()
+        self.find_largest_side(polygons[polygon])
+        x,y = self.get_offset_polygon_points(polygon)
+        initial_point = Point(x[self.reference_points[0]],y[self.reference_points[0]])
+        final_point = Point(x[self.reference_points[1]],y[self.reference_points[1]])
+        initial_section = list(initial_point.coords),list(final_point.coords)
+        return(initial_section)
+
 
     def find_largest_side(self, polygon):
         x,y = polygon.exterior.coords.xy
@@ -244,8 +249,7 @@ class area_partition:
         self.reference_points =[]
         self.reference_points.append(index)
         self.reference_points.append (index-1)
-        # print("REFERENCE POINTS")
-        # print(self.reference_points)      
+        return(self.reference_points)
 
     def read_file(self):
         data = []

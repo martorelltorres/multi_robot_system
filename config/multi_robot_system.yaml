@@ -1,6 +1,8 @@
 # multi_robot_system parameters
 number_of_robots: 2
 # The offset_polygon_distance defines the offset distance in order to ensure an enought coverage area between the polygons
-offset_polygon_distance: 2
+offset_polygon_distance: 4
 # The offset_coverage_distance defines the distance between the coverage lines path
-offset_coverage_distance: 16
+offset_coverage_distance: 10
+# Section tolerance
+tolerance: 2

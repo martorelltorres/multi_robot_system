@@ -26,6 +26,7 @@ class MultiRobotSystem:
         self.name = name
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID',0)   
+        self.tolerance = self.get_param('tolerance',2)
         self.navigation_topic = self.get_param('~navigation_topic','/xiroi/navigator/navigation') 
         self.section_action = self.get_param('~section_action','/turbot/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
@@ -88,27 +89,31 @@ class MultiRobotSystem:
             self.goal_polygons = goals[self.robot_ID][1]
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
             self.goal_points = self.area_handler.define_path_coverage()
+
             self.robot_task_assignement()
 
     def robot_task_assignement(self):            
         for task in range(len(self.goal_polygons)):
             if(self.first_time == True or self.move_to_next_goal == True):
                 self.first_time = False
-                # print("The robot_"+str(self.robot_ID)+" is covering the "+str(polygon))+" polygon"
                 self.mrs_coverage(self.goal_polygons[task])
 
     def wait_until_section_reached(self):
         if(self.final_status==0):
             self.success_result = True
 
+    def send_first_section(self,initial_section):
+        initial_point = initial_section[0][0]
+        final_point = initial_section[1][0]
+        self.send_section_strategy(initial_point,final_point)
+        self.wait_until_section_reached()
+
     def mrs_coverage(self,goal):
         self.data_gattered = True
         # obtain all the polygons goal_points
-
         self.goal_points[goal].pop(0)
-        print("GOAL POINTS"+str(goal))
-        print(self.goal_points[goal])
-
+        initial_section = self.area_handler.get_initial_section(goal)
+        self.send_first_section(initial_section)
         section_points = self.goal_points[goal]
 
         for self.section in range(len(section_points)):
@@ -154,9 +159,9 @@ class MultiRobotSystem:
         section_req.final_position.y = final_position_y
         section_req.final_position.z = 0.0
         section_req.altitude_mode = False
-        section_req.tolerance.x = 20
-        section_req.tolerance.y = 20
-        section_req.tolerance.z = 20
+        section_req.tolerance.x = self.tolerance
+        section_req.tolerance.y = self.tolerance
+        section_req.tolerance.z = self.tolerance
         section_req.controller_type = WorldSectionGoal.LOSCTE
         section_req.priority = GoalDescriptor.PRIORITY_NORMAL
         section_req.surge_velocity = 1
