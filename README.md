@@ -4,5 +4,5 @@ The multi_robot_system is divided into three classes:
 - task_allocator: manages the task allocation according to the number of robots and tasks to be performed. The input parameters of the task allocator are the number of robots and the different tasks or sub polygons to cover.
 - robot: manages the information and orders of the robots.
 
-In order to simulate the robots the multi_robot_system package has been created to work with the cola2_architecture (https://iquarobotics.com/cola2).
+In order to simulate the robots the multi_robot_system package has been created to work with the cola2_architecture (https://iquarobotics.com/cola2). The hole process, the robot architecture simulation and the multi_robot_system strategies are handled from the MRS.launch.
 
