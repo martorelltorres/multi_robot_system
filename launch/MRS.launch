@@ -24,7 +24,6 @@
   <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
 
 
-  <!-- set as many robots as you have defined in the task_allocation.yaml -->
   <!-- Robot 0 -->
   <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multi_robot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="0"/>

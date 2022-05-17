@@ -16,19 +16,23 @@ class task_allocation:
 
         # read parameter from the parameter server
         self.number_of_robots = self.get_param('number_of_robots')
+        self.task_allocator = self.get_param('task_allocation')
 
-        # define variables
-        # self.robot1_init = False
-        # self.robot2_init = False
-        # self.system_init = False
-        # self.setup_start_points = False
-        # self.goal_polygon_robot1 = []
-        # self.goal_polygon_robot2 = []
         self.polygons = []
         self.central_polygon_defined=False
 
         # create atributes
         self.area = area_partition("area_partition")
+        # self.MAIN
+
+    # def MAIN(self):
+    #     if(self.task_allocator==1):
+    #         self.task_allocation_1
+    #     elif(self.task_allocator==2):
+    #         self.task_allocation_2
+
+    def task_allocation_2(self):
+        print("task_allocation_2")
 
     def task_allocation(self):
         polygon_number = self.area.get_polygon_number()

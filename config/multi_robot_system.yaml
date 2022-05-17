@@ -1,8 +1,13 @@
 # multi_robot_system parameters
 number_of_robots: 2
-# The offset_polygon_distance defines the offset distance in order to ensure an enought coverage area between the polygons
+# The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_polygon_distance: 4
-# The offset_coverage_distance defines the distance between the coverage lines path
+# The offset_coverage_distance set the distance between the coverage lines path
 offset_coverage_distance: 10
-# Section tolerance
+# Section strategy tolerance
 tolerance: 2
+#Task allocation strategy
+task_allocation: 1
+# 1 -->  Divide the tasks between the number of robots and assign tasks to each robot
+#       example:Tasks [0,1,2,3,4]-> r1_tasks[0,1,2], r2_tasks[3,4]
+# 2 --> 

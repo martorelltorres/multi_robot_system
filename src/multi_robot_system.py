@@ -33,7 +33,6 @@ class MultiRobotSystem:
 
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
-        self.goal_points = []
         self.check_current_position = True
         self.success_result = False
         self.data_gattered = False
@@ -111,7 +110,7 @@ class MultiRobotSystem:
     def mrs_coverage(self,goal):
         self.data_gattered = True
         # obtain all the polygons goal_points
-        self.goal_points[goal].pop(0)
+        # self.goal_points[goal].pop(0)
         initial_section = self.area_handler.get_initial_section(goal)
         self.send_first_section(initial_section)
         section_points = self.goal_points[goal]
