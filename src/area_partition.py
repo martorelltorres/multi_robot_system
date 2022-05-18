@@ -103,6 +103,12 @@ class area_partition:
     
     def get_voronoi_offset_polygons(self):
         return(self.voronoi_offset_polygons)
+    
+    # def get_central_polygon_id(self):
+    #     polygon_centroid = self.get_main_polygon_centroid
+    #     central_polygon = self.get_central_polygon(self.voronoi_offset_polygons,polygon_centroid)
+    #     return(central_polygon)
+
 
     def define_path_coverage(self):
         #create the loop for the diferent voronoi polygons

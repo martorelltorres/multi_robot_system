@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from email.errors import StartBoundaryNotFoundDefect
 import rospy
 import tf
 import matplotlib
@@ -11,7 +12,8 @@ from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,Wo
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Point, PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
-from visualization_msgs.msg import Marker
+from multi_robot_system.msg import TaskMonitoring
+
 #import classes
 from area_partition import area_partition
 from task_allocator import task_allocation
@@ -30,6 +32,7 @@ class MultiRobotSystem:
         self.navigation_topic = self.get_param('~navigation_topic','/xiroi/navigator/navigation') 
         self.section_action = self.get_param('~section_action','/turbot/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
+        self.number_of_robots = self.get_param('number_of_robots')
 
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
@@ -38,8 +41,12 @@ class MultiRobotSystem:
         self.data_gattered = False
         self.first_time = True
         self.move_to_next_goal = False
-        
-        
+        task_status = 0
+        self.task_monitoring = []
+                        # 0 --> not started
+                        # 1 --> running
+                        # 2 --> finished
+
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -58,8 +65,13 @@ class MultiRobotSystem:
         self.polygon_pub = rospy.Publisher("voronoi_polygons",
                                         PolygonStamped,
                                         queue_size=1)
+
         self.polygon_offset_pub = rospy.Publisher("voronoi_offset_polygons",
                                         PolygonStamped,
+                                        queue_size=1)
+
+        self.task_monitoring = rospy.Publisher("task_monitoring",
+                                        TaskMonitoring,
                                         queue_size=1)
         # Init periodic check timer
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
@@ -79,16 +91,31 @@ class MultiRobotSystem:
         # uint64 FAILURE=2
         # uint64 BUSY=3
 
+    def update_task_status(self,robot_id,task_id, status_update):
+        task_msg = TaskMonitoring()
+        task_msg.header.frame_id = "world_ned"
+        task_msg.header.stamp = rospy.Time.now()
+        task_msg.robot_name = "Robot_"+str(robot_id)
+        task_msg.robot_id = robot_id
+        task_msg.task = task_id
+        task_msg.status = status_update
+        self.task_monitoring.publish(task_msg)
+
+
     def update_robot_position(self,msg):
         self.yaw = msg.orientation.yaw
         if(self.check_current_position == True):
             self.check_current_position = False
-            goals = self.task_allocation_handler.task_allocation()
+            
+            goals,central_polygon = self.task_allocation_handler.task_allocation()
+            # self.task_allocation_handler.initialize_task_status()
+            self.update_task_status(self.robot_ID,2, 45)
             # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
             self.goal_polygons = goals[self.robot_ID][1]
+            print("The central polygon meeting point is the polygon: "+str(central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
+            
             self.goal_points = self.area_handler.define_path_coverage()
-
             self.robot_task_assignement()
 
     def robot_task_assignement(self):            
@@ -100,6 +127,8 @@ class MultiRobotSystem:
     def wait_until_section_reached(self):
         if(self.final_status==0):
             self.success_result = True
+    
+      
 
     def send_first_section(self,initial_section):
         initial_point = initial_section[0][0]
@@ -108,13 +137,12 @@ class MultiRobotSystem:
         self.wait_until_section_reached()
 
     def mrs_coverage(self,goal):
+        self.task_allocation_handler.update_task_status(self.robot_ID,goal,1)
         self.data_gattered = True
-        # obtain all the polygons goal_points
-        # self.goal_points[goal].pop(0)
         initial_section = self.area_handler.get_initial_section(goal)
         self.send_first_section(initial_section)
         section_points = self.goal_points[goal]
-
+        
         for self.section in range(len(section_points)):
             # First section
             if (self.section==0):
@@ -140,6 +168,7 @@ class MultiRobotSystem:
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
 
+        self.task_allocation_handler.update_task_status(self.robot_ID,goal,2)
         self.move_to_next_goal = True
 
 

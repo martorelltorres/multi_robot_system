@@ -20,19 +20,11 @@ class task_allocation:
 
         self.polygons = []
         self.central_polygon_defined=False
+        self.task_monitoring = []
 
         # create atributes
         self.area = area_partition("area_partition")
         # self.MAIN
-
-    # def MAIN(self):
-    #     if(self.task_allocator==1):
-    #         self.task_allocation_1
-    #     elif(self.task_allocator==2):
-    #         self.task_allocation_2
-
-    def task_allocation_2(self):
-        print("task_allocation_2")
 
     def task_allocation(self):
         polygon_number = self.area.get_polygon_number()
@@ -54,21 +46,39 @@ class task_allocation:
             self.tasks = [self.names,self.robot_goals[robot]]
             # robots_tasks array stores all the tasks arrays
             self.robots_tasks.append(self.tasks)
-        # print(self.robots_tasks)
-        return(self.robots_tasks)
+        return(self.robots_tasks,self.central_polygon_id)
+
+    def initialize_task_status(self):
+        for robot in range(self.number_of_robots):
+            for task in range(len(self.robots_tasks)):
+                # the self.robots_tasks has the following structure [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
+                robot_tasks = self.robots_tasks[robot]
+                tasks = robot_tasks[1]
+                self.task_monitoring.append([robot,tasks[task],0])
+        # The outpus is the following one, where the first element is the robot, the second the task and finally the status
+        # [[0, 0, 0], [0, 1, 0], [1, 2, 0], [1, 3, 0]]
+        return(self.task_monitoring)
     
+    def update_task_status(self,robot_id,task_id, status_update):
+        item_to_find = [robot_id,task_id,0]
+        if item_to_find in self.task_monitoring:
+            index = self.task_monitoring.index(item_to_find)  
+            self.task_monitoring[index] = [robot_id,task_id,status_update]
+            print(self.task_monitoring)
+        return(self.task_monitoring)
+
     def define_goal_task(self):
         n_robots = self.number_of_robots
         polygon_number = self.area.get_polygon_number()-1
         goal_task = math.trunc(polygon_number/n_robots)
-        return(goal_task)    
+        return(goal_task,)    
 
     def define_meeting_point(self):
         # find the central polygon
-        voronoi_polygons = self.area.get_voronoi_polygons()
+        self.voronoi_polygons = self.area.get_voronoi_polygons()
         main_polygon_centroid = self.area.get_main_polygon_centroid()
         # central_polygon_id shows the number of the center_polygon referenced to the voronoy_polygons
-        self.central_polygon_id = self.area.get_central_polygon(voronoi_polygons,main_polygon_centroid)
+        self.central_polygon_id = self.area.get_central_polygon(self.voronoi_polygons,main_polygon_centroid)
         central_polygon_index = self.polygons.index(self.central_polygon_id)
         self.update_area(central_polygon_index)
         self.central_polygon_defined = True
