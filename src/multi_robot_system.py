@@ -12,7 +12,7 @@ from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,Wo
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Point, PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
-from multi_robot_system.msg import TaskMonitoring
+# from multi_robot_system.msg import TaskMonitoring
 
 #import classes
 from area_partition import area_partition
@@ -70,9 +70,9 @@ class MultiRobotSystem:
                                         PolygonStamped,
                                         queue_size=1)
 
-        self.task_monitoring = rospy.Publisher("task_monitoring",
-                                        TaskMonitoring,
-                                        queue_size=1)
+        # self.task_monitoring = rospy.Publisher("task_monitoring",
+        #                                 TaskMonitoring,
+        #                                 queue_size=1)
         # Init periodic check timer
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
         rospy.Timer(rospy.Duration(1.0), self.print_offset_polygon)
@@ -109,7 +109,7 @@ class MultiRobotSystem:
             
             goals,central_polygon = self.task_allocation_handler.task_allocation()
             # self.task_allocation_handler.initialize_task_status()
-            self.update_task_status(self.robot_ID,2, 45)
+            # self.update_task_status(self.robot_ID,2, 45)
             # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
             self.goal_polygons = goals[self.robot_ID][1]
             print("The central polygon meeting point is the polygon: "+str(central_polygon))
