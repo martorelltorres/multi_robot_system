@@ -3,27 +3,15 @@ project(multi_robot_system)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
-find_package(catkin REQUIRED)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-   cola2_lib
-   ned_tools
-   cola2_msgs
-   dynamic_reconfigure
-   geometry_msgs
-   std_srvs
-   nav_msgs
-   roscpp
-   rospy
-   sensor_msgs
-   tf
-   tf_conversions
-   roscpp
-   rospy
-   std_msgs
-   message_generation
+  roscpp
+  rospy
+  std_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -63,7 +51,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   TaskMonitoring.msg
-#   Message2.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -83,8 +70,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-  #   auv_msgs#   cola2_msgs#   nav_msgs#   sensor_msgs
+  std_msgs
 )
 
 ################################################
@@ -118,8 +104,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES multi_robot_system
- CATKIN_DEPENDS message_runtime
+#  LIBRARIES link_quality
+#  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -131,12 +117,12 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-${catkin_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/multi_robot_system.cpp
+#   src/${PROJECT_NAME}/link_quality.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -147,7 +133,7 @@ ${catkin_INCLUDE_DIRS}
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/multi_robot_system_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/link_quality_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -211,7 +197,7 @@ ${catkin_INCLUDE_DIRS}
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_multi_robot_system.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_link_quality.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

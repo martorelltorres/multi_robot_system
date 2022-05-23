@@ -20,7 +20,6 @@ from cola2_lib.utils.ned import NED
 from geometry_msgs.msg import PointStamped
 import matplotlib.pyplot as plt
 from std_srvs.srv import Empty, EmptyRequest
-# from multi_robot_system.srv import GoalPoint
 from cola2_msgs.srv import Goto, GotoRequest
 from cola2_msgs.msg import  NavSts
 
