@@ -3,7 +3,7 @@ number_of_robots: 2
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_polygon_distance: 4
 # The offset_coverage_distance set the distance between the coverage lines path
-offset_coverage_distance: 10
+offset_coverage_distance: 15
 # Section strategy tolerance
 tolerance: 2
 #Task allocation strategy

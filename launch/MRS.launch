@@ -30,6 +30,7 @@
     <param name="navigation_topic" value="/xiroi/navigator/navigation"/>
     <param name="section_action" value="/turbot/pilot/world_section_req"/>
     <param name="section_result" value="/turbot/pilot/world_section_req/result"/>
+    <remap from="/task_monitoring" to="$(arg robot_0)/task_monitoring"/>
   </node>
 
   <!-- Robot 1 -->
@@ -38,6 +39,7 @@
     <param name="navigation_topic" value="/xiroi/navigator/navigation"/>
     <param name="section_action" value="/xiroi/pilot/world_section_req"/>
     <param name="section_result" value="/xiroi/pilot/world_section_req/result"/>
+    <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
   </node>
 
   <!-- RViz -->

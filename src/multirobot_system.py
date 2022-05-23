@@ -41,6 +41,8 @@ class MultiRobotSystem:
         self.first_time = True
         self.move_to_next_goal = False
         task_status = 0
+        self.finished_tasks = 0
+        self.central_polygon_covered=False
         self.task_monitoring = []
                         # 0 --> not started
                         # 1 --> running
@@ -75,6 +77,8 @@ class MultiRobotSystem:
         # Init periodic check timer
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
         rospy.Timer(rospy.Duration(1.0), self.print_offset_polygon)
+        rospy.Timer(rospy.Duration(1.0), self.task_monitoring_publisher)
+        self.update_task_status(self.robot_ID,"ND",0,0)
 
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
@@ -90,44 +94,46 @@ class MultiRobotSystem:
         # uint64 FAILURE=2
         # uint64 BUSY=3
 
-    def update_task_status(self,robot_id,task_id, status_update):
-        task_msg = TaskMonitoring()
-        task_msg.header.frame_id = "world_ned"
-        task_msg.header.stamp = rospy.Time.now()
-        task_msg.robot_name = "Robot_"+str(robot_id)
-        task_msg.robot_id = robot_id
-        task_msg.task = task_id
-        task_msg.status = status_update
-        self.task_monitoring.publish(task_msg)
+    def update_task_status(self,robot_id,task_id, status_update,central_polygon):
+        self.task_msg = TaskMonitoring()
+        self.task_msg.header.frame_id = "world_ned"
+        self.task_msg.header.stamp = rospy.Time.now()
+        self.task_msg.robot_name = "Robot_"+str(robot_id)
+        self.task_msg.central_polygon = central_polygon
+        self.task_msg.robot_id = robot_id
+        self.task_msg.task = task_id
+        self.task_msg.status = status_update
 
+    def task_monitoring_publisher(self,event):
+        self.task_monitoring.publish(self.task_msg)
 
     def update_robot_position(self,msg):
         self.yaw = msg.orientation.yaw
+        
         if(self.check_current_position == True):
             self.check_current_position = False
-            
-            goals,central_polygon = self.task_allocation_handler.task_allocation()
+            self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
             # self.task_allocation_handler.initialize_task_status()
-            self.update_task_status(self.robot_ID,2, 45)
             # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
-            self.goal_polygons = goals[self.robot_ID][1]
-            print("The central polygon meeting point is the polygon: "+str(central_polygon))
+            self.goal_polygons = self.goals[self.robot_ID][1]
+            print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
-            
             self.goal_points = self.area_handler.define_path_coverage()
             self.robot_task_assignement()
 
     def robot_task_assignement(self):            
         for task in range(len(self.goal_polygons)):
-            if(self.first_time == True or self.move_to_next_goal == True):
-                self.first_time = False
-                self.mrs_coverage(self.goal_polygons[task])
+            self.first_time = False
+            self.mrs_coverage(self.goal_polygons[task])
+            self.finished_tasks = self.finished_tasks +1
+            if(len(self.goal_polygons)==self.finished_tasks and self.central_polygon_covered==False):
+                self.central_polygon_covered = True
+                # cover the central_polygon
+                self.mrs_coverage(self.central_polygon)
 
     def wait_until_section_reached(self):
         if(self.final_status==0):
-            self.success_result = True
-    
-      
+            self.success_result = True      
 
     def send_first_section(self,initial_section):
         initial_point = initial_section[0][0]
@@ -136,10 +142,10 @@ class MultiRobotSystem:
         self.wait_until_section_reached()
 
     def mrs_coverage(self,goal):
-        self.task_allocation_handler.update_task_status(self.robot_ID,goal,1)
+        self.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
         initial_section = self.area_handler.get_initial_section(goal)
-        self.send_first_section(initial_section)
+        # self.send_first_section(initial_section)
         section_points = self.goal_points[goal]
         
         for self.section in range(len(section_points)):
@@ -148,6 +154,7 @@ class MultiRobotSystem:
                 current_section = section_points[self.section]
                 initial_point = current_section[0]
                 final_point = current_section[1]
+                self.update_task_status(self.robot_ID,goal,2,self.central_polygon)
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
 
@@ -156,6 +163,7 @@ class MultiRobotSystem:
                 current_section = section_points[self.section]
                 initial_point = current_section[0]
                 final_point = current_section[1]
+                self.update_task_status(self.robot_ID,goal,2,self.central_polygon)
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
 
@@ -164,10 +172,11 @@ class MultiRobotSystem:
                 current_section = section_points[self.section]
                 initial_point = current_section[1]
                 final_point = current_section[0]
+                self.update_task_status(self.robot_ID,goal,2,self.central_polygon)
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
 
-        self.task_allocation_handler.update_task_status(self.robot_ID,goal,2)
+        self.update_task_status(self.robot_ID,goal,3,self.central_polygon)
         self.move_to_next_goal = True
 
 
