@@ -45,6 +45,8 @@ class task_allocation:
         for polygon in range(polygon_number):
             self.polygons.append(polygon)
         self.central_polygon_id = self.define_meeting_point()
+        # add the central polygon to the tasks in order to cover the hole area
+        self.polygons.append(self.central_polygon_id)
         self.robot_goals = np.array_split(self.polygons,self.number_of_robots)
         # create a goal_polygons array for every robot
         robot_names = []

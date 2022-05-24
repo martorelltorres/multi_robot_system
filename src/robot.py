@@ -18,28 +18,20 @@ class robot:
         self.initial_offset = 1
         self.intersection_points =[]
         self.distance = []
-        self.first_time = True
         self.ns = rospy.get_namespace()
         robot_position_updated = False
 
         rospy.Subscriber(self.navigation_topic ,
                     NavSts,    
-                    self.update_robot_position,
+                    self.get_robot_position,
                     queue_size=1)
-
-    def robot_init(self,msg):
-        return(True)
-    
-    def update_robot_position(self,msg):
-        self.first_time = False
-        self.yaw = msg.orientation.yaw
-        self.north = msg.position.north
-        self.east = msg.position.east
-        self.depth = msg.position.depth
-        robot_position_updated = True
-        
-        if(self.first_time == True):
-            return(robot_position_updated)
+   
+    def get_robot_position(self,msg):
+        yaw = msg.orientation.yaw
+        north = msg.position.north
+        east = msg.position.east
+        depth = msg.position.depth
+        return(north,east,depth,yaw)
 
     def update_section_result(self,msg):
         final_status = msg.result.final_status

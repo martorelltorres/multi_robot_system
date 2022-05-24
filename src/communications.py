@@ -5,40 +5,53 @@ from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 from cola2_msgs.msg import  NavSts
+from robot import robot
+import numpy as np
+
 
 
 class communications:
 
     def __init__(self, name):
         self.name = name
-        self.ned_origin_lat = get_param(self,'/turbot/navigator/ned_latitude')
-        self.ned_origin_lon = get_param(self,'/turbot/navigator/ned_longitude')
+        self.navigation_topic_r0 = get_param(self,'~navigation_topic_r0')
+        self.navigation_topic_r1 = get_param(self,'~navigation_topic_r1')
         self.offset_distance = 0
         self.initial_offset = 1
         self.intersection_points =[]
         self.distance = []
         self.ns = rospy.get_namespace()
+        self.robot_handler = robot("robot")
+
+        #Subscribers
+        rospy.Subscriber(self.navigation_topic_r0,
+                         NavSts,    
+                         self.update_robot_position_r0,
+                         queue_size=1)
+
+        rospy.Subscriber(self.navigation_topic_r1,
+                        NavSts,    
+                        self.update_robot_position_r1,
+                        queue_size=1)
 
 
-    def robot_init(self,msg):
-        return(True)
+def update_robot_position_r0(self, msg):
+    self.r0_position_north = msg.position.north
+    self.r0_position_east = msg.position.east
+    self.r0_position_depth = msg.position.depth
+    self.r0_yaw = msg.orientation.yaw
 
-    def update_section_result(self,msg):
-        final_status = msg.result.final_status
-        return(final_status)
-        # Possible section ending conditions
-        # uint64 final_status
-        # uint64 SUCCESS=0
-        # uint64 TIMEOUT=1
-        # uint64 FAILURE=2
-        # uint64 BUSY=3
+def update_robot_position_r1(self, msg):
+    self.r1_position_north = msg.position.north
+    self.r1_position_east = msg.position.east
+    self.r1_position_depth = msg.position.depth
+    self.r1_yaw = msg.orientation.yaw
 
-    def get_robot_position(self,msg):
-        robot_position_north = msg.position.north
-        robot_position_east = msg.position.east
-        robot_position_depth = msg.position.depth
-        robot_orientation_yaw = msg.orientation.yaw 
-        return(robot_position_north,robot_position_east,robot_position_depth,robot_orientation_yaw)
+def distance_between_robots(self):
+    x_distance = abs(self.r1_position_north - self.r0_position_north)
+    y_distance = abs(self.r1_position_east - self.r0_position_east)
+    self.distance = np.sqrt(x_distance**2 + y_distance**2)
+    return(self.distance)
   
 def get_param(self, param_name, default = None):
     if rospy.has_param(param_name):

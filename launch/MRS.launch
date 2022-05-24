@@ -3,7 +3,7 @@
   <arg name="place" default="bendinat.yaml"/>
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
-  <arg name="enableRviz" default="true"/>
+  <arg name="enableRviz" default="false"/>
   <arg name="robot_0" default="turbot"/>
   <arg name="robot_1" default="xiroi"/>
 
@@ -22,7 +22,6 @@
   
    <!-- load the multi_robot_system.yaml parameters file -->
   <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
-
 
   <!-- Robot 0 -->
   <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
