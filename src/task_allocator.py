@@ -6,8 +6,10 @@ import random
 import matplotlib.pyplot as plt
 from cola2_msgs.msg import  NavSts
 from shapely.geometry import Point
+from multi_robot_system.msg import TaskMonitoring 
 #import classes
 from area_partition import *
+
 
 class task_allocation:
 
@@ -17,14 +19,25 @@ class task_allocation:
         # read parameter from the parameter server
         self.number_of_robots = self.get_param('number_of_robots')
         self.task_allocator = self.get_param('task_allocation')
+        self.robot_ID = self.get_param('~robot_ID',0) 
 
         self.polygons = []
+        self.task_monitoring = []
         self.central_polygon_defined=False
         self.task_monitoring = []
+                        # 0 --> not started
+                        # 1 --> running
+                        # 2 --> finished
 
         # create atributes
         self.area = area_partition("area_partition")
-        # self.MAIN
+        # publishers
+        self.task_monitoring = rospy.Publisher("task_monitoring",
+                                        TaskMonitoring,
+                                        queue_size=1)
+        # Timers
+        rospy.Timer(rospy.Duration(1.0), self.task_monitoring_publisher)
+        self.update_task_status(self.robot_ID,"ND",0,0)
 
     def task_allocation(self):
         polygon_number = self.area.get_polygon_number()
@@ -59,13 +72,21 @@ class task_allocation:
         # [[0, 0, 0], [0, 1, 0], [1, 2, 0], [1, 3, 0]]
         return(self.task_monitoring)
     
-    def update_task_status(self,robot_id,task_id, status_update):
-        item_to_find = [robot_id,task_id,0]
-        if item_to_find in self.task_monitoring:
-            index = self.task_monitoring.index(item_to_find)  
-            self.task_monitoring[index] = [robot_id,task_id,status_update]
-            print(self.task_monitoring)
-        return(self.task_monitoring)
+    def update_task_status(self,robot_id,task_id, status_update,central_polygon):
+        self.task_msg = TaskMonitoring()
+        self.task_msg.header.frame_id = "world_ned"
+        self.task_msg.header.stamp = rospy.Time.now()
+        self.task_msg.robot_name = "Robot_"+str(robot_id)
+        self.task_msg.central_polygon = central_polygon
+        # self.task_msg.initial_point = initial_point
+        # self.task_msg.final_point = final_point
+
+        self.task_msg.robot_id = robot_id
+        self.task_msg.task = task_id
+        self.task_msg.status = status_update
+
+    def task_monitoring_publisher(self,event):
+        self.task_monitoring.publish(self.task_msg)
 
     def define_goal_task(self):
         n_robots = self.number_of_robots
