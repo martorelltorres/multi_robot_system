@@ -27,7 +27,9 @@
   <!-- Robot 0 -->
   <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="0"/>
+    <!-- TODO: fix problem with the navigation_topic parameter -->
     <param name="navigation_topic" value="/xiroi/navigator/navigation"/>
+    <param name="position_topic" value="/turbot/navigator/navigation"/>
     <param name="section_action" value="/turbot/pilot/world_section_req"/>
     <param name="section_result" value="/turbot/pilot/world_section_req/result"/>
     <remap from="/task_monitoring" to="$(arg robot_0)/task_monitoring"/>

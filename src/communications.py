@@ -7,39 +7,21 @@ from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,Wo
 from cola2_msgs.msg import  NavSts
 
 
-class robot:
+class communications:
 
     def __init__(self, name):
         self.name = name
         self.ned_origin_lat = get_param(self,'/turbot/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/turbot/navigator/ned_longitude')
-        self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation')
         self.offset_distance = 0
         self.initial_offset = 1
         self.intersection_points =[]
         self.distance = []
-        self.first_time = True
         self.ns = rospy.get_namespace()
-        robot_position_updated = False
 
-        rospy.Subscriber(self.navigation_topic ,
-                    NavSts,    
-                    self.update_robot_position,
-                    queue_size=1)
 
     def robot_init(self,msg):
         return(True)
-    
-    def update_robot_position(self,msg):
-        self.first_time = False
-        self.yaw = msg.orientation.yaw
-        self.north = msg.position.north
-        self.east = msg.position.east
-        self.depth = msg.position.depth
-        robot_position_updated = True
-        
-        if(self.first_time == True):
-            return(robot_position_updated)
 
     def update_section_result(self,msg):
         final_status = msg.result.final_status
@@ -71,9 +53,11 @@ def get_param(self, param_name, default = None):
               
 if __name__ == '__main__':
     try:
-        rospy.init_node('robot')
+        rospy.init_node('communications')
         robot = robot(rospy.get_name())
         rospy.spin()
         
     except rospy.ROSInterruptException:
         pass
+
+

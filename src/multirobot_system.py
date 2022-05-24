@@ -9,7 +9,6 @@ import actionlib
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult,VehicleStatus
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Point, PolygonStamped, Point32, Polygon
-
 from cola2_msgs.msg import  NavSts
 from multi_robot_system.msg import TaskMonitoring 
 
@@ -28,7 +27,7 @@ class MultiRobotSystem:
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID',0)   
         self.tolerance = self.get_param('tolerance',2)
-        self.navigation_topic = self.get_param('~navigation_topic','/xiroi/navigator/navigation') 
+        self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
         self.section_action = self.get_param('~section_action','/turbot/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
         self.number_of_robots = self.get_param('number_of_robots')
@@ -100,6 +99,9 @@ class MultiRobotSystem:
         self.task_msg.header.stamp = rospy.Time.now()
         self.task_msg.robot_name = "Robot_"+str(robot_id)
         self.task_msg.central_polygon = central_polygon
+        # self.task_msg.initial_point = initial_point
+        # self.task_msg.final_point = final_point
+
         self.task_msg.robot_id = robot_id
         self.task_msg.task = task_id
         self.task_msg.status = status_update
@@ -119,17 +121,23 @@ class MultiRobotSystem:
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
             self.goal_points = self.area_handler.define_path_coverage()
+            # remove emply element from the goal_points array
+            self.points=[]
+            for element in range(len(self.goal_points)):
+                self.filtered_goal_points = filter(None,self.goal_points[element])
+                self.points.append(self.filtered_goal_points)
             self.robot_task_assignement()
 
     def robot_task_assignement(self):            
         for task in range(len(self.goal_polygons)):
             self.first_time = False
+            print("The robot_"+str(self.robot_ID)+" is covering the polygon: "+str(self.goal_polygons[task]))
             self.mrs_coverage(self.goal_polygons[task])
             self.finished_tasks = self.finished_tasks +1
-            if(len(self.goal_polygons)==self.finished_tasks and self.central_polygon_covered==False):
-                self.central_polygon_covered = True
-                # cover the central_polygon
-                self.mrs_coverage(self.central_polygon)
+            # if(len(self.goal_polygons)==self.finished_tasks and self.central_polygon_covered==False):
+            #     self.central_polygon_covered = True
+            #     # cover the central_polygon
+            #     self.mrs_coverage(self.central_polygon)
 
     def wait_until_section_reached(self):
         if(self.final_status==0):
@@ -146,9 +154,11 @@ class MultiRobotSystem:
         self.data_gattered = True
         initial_section = self.area_handler.get_initial_section(goal)
         # self.send_first_section(initial_section)
-        section_points = self.goal_points[goal]
-        
+        section_points = self.points[goal]
+        print(section_points)
+
         for self.section in range(len(section_points)):
+
             # First section
             if (self.section==0):
                 current_section = section_points[self.section]

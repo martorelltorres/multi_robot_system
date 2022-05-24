@@ -28,11 +28,11 @@ class area_partition:
 
     def __init__(self, name):
         self.name = name
-        # self.navigation_topic = get_param(self,'/xiroi/navigator/navigation')
         self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
+        self.navigation_topic = get_param(self,'~navigation_topic')
         self.offset_distance = 0
         
         self.fixed_offset = 1
@@ -45,17 +45,11 @@ class area_partition:
                                                 PointStamped,
                                                 queue_size=1)
         #Subscribers
-        rospy.Subscriber("/xiroi/navigator/navigation",
+        rospy.Subscriber(self.navigation_topic,
                          NavSts,    
                          self.update_robot_position,
                          queue_size=1)
-
-        rospy.Subscriber("/turbot/navigator/navigation",
-                         NavSts,    
-                         self.update_robot_position,
-                         queue_size=1)
-        
-
+      
         self.read_file()
         self.extract_NED_positions()
         self.divide_polygon()
@@ -428,7 +422,7 @@ def get_param(self, param_name, default = None):
         rospy.logfatal('[%s]: invalid parameters for %s in param server!', self.name, param_name)
         rospy.logfatal('[%s]: shutdown due to invalid config parameters!', self.name)
         exit(0)
-              
+
 if __name__ == '__main__':
     try:
         rospy.init_node('area_partition')
