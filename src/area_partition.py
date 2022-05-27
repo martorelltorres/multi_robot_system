@@ -104,11 +104,15 @@ class area_partition:
 
 
     def define_path_coverage(self):
-        #create the loop for the diferent voronoi polygons
-        for self.polygon_id in range(len(self.voronoi_offset_polygons)):
-            self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
-            self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
-        return(self.goal_points)
+        #create the loop for the diferent voronoi offset polygons
+        # for self.polygon_id in range(len(self.voronoi_offset_polygons)):
+        #     self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
+        #     goal_points = self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
+        # return(goal_points)
+        for self.polygon_id in range(len(self.voronoi_polygons)):
+            self.find_largest_side(self.voronoi_polygons[self.polygon_id])
+            goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
+        return(goal_points)
 
     def distance_between_points(self,point_a, point_b):
         distance = point_a.distance(point_b)
@@ -126,7 +130,7 @@ class area_partition:
         point = Point(x_position,y_position)
         #determine if the robots are in the predefined area
         is_in = self.main_polygon.contains(point)
-        #determine in which subpolygon are 
+        #determine in which subpolygon the robot is
         if (is_in == True):
             for voronoi_polygon in range(len(polygons)):
                 is_in = self.voronoi_polygons[voronoi_polygon].contains(point)
@@ -166,7 +170,7 @@ class area_partition:
         x,y = polygon.exterior.coords.xy
         slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
         y_coordinate =[]
-        x_threshold = 50
+        x_threshold = 100
 
         if(x[self.reference_points[0]] > x[self.reference_points[1]]):
             x_0 = x[self.reference_points[0]] + x_threshold
@@ -194,6 +198,29 @@ class area_partition:
         # the goal_points array stores the diferent intersection points of each voronoi polygon, then print(self.goal_points[0])store the intersection points of the polygon 0
         self.goal_points.append(self.intersection_points)
 
+        # insert the first section obtained using the reference_points in the goal_points array
+        initial_section = self.get_initial_section(self.polygon_id)
+        # initial_section_point = Point(initial_section[0])
+        # final_section_point = Point(initial_section[1])
+        # first_section = []
+        # first_section = [initial_section_point.coords.xy,final_section_point.coords.xy]
+        # print(initial_section_point.coords.xy)
+        # print(first_section)
+        # print(initial_section)
+        
+        # remove empty elements
+        # print(self.goal_points[self.polygon_id][0])
+        if(self.goal_points[self.polygon_id][0]== []):
+            self.goal_points[self.polygon_id][0]=initial_section
+
+        print("the initial section of the polygon "+str(self.polygon_id)+ " is: "+(str(initial_section)))
+        print("The goal points for the polygon "+str(self.polygon_id)+ " are: "+str(self.goal_points[self.polygon_id]))
+        print("----------------------------------------------------")
+        # initial_section = self.area_handler.get_initial_section(self.polygon_id)
+
+
+        return(self.goal_points)
+
 
     def find_intersection_points(self, polygon,line):
         points = line.intersection(polygon)
@@ -219,11 +246,13 @@ class area_partition:
         # plt.show()
     
     def get_initial_section(self, polygon):
-        polygons = self.get_voronoi_offset_polygons()
-        self.find_largest_side(polygons[polygon])
-        x,y = self.get_offset_polygon_points(polygon)
-        initial_point = Point(x[self.reference_points[0]],y[self.reference_points[0]])
-        final_point = Point(x[self.reference_points[1]],y[self.reference_points[1]])
+        # polygons = self.get_voronoi_offset_polygons()
+        polygons = self.get_voronoi_polygons()
+        reference_points = self.find_largest_side(polygons[polygon])
+        # x,y = self.get_offset_polygon_points(polygon)
+        x,y = self.get_polygon_points(polygon)
+        initial_point = Point(x[reference_points[0]],y[reference_points[0]])
+        final_point = Point(x[reference_points[1]],y[reference_points[1]])
         initial_section = list(initial_point.coords),list(final_point.coords)
         return(initial_section)
 

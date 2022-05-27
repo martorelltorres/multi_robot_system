@@ -37,6 +37,7 @@ class MultiRobotSystem:
         self.check_current_position = True
         self.success_result = False
         self.data_gattered = False
+        self.points = []
 
 
         # Show initialization message
@@ -80,7 +81,6 @@ class MultiRobotSystem:
     def update_robot_position(self,msg):
         self.yaw = msg.orientation.yaw
     
-    # def mrs(self,req):
         if(self.check_current_position == True):
             self.check_current_position = False
             self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
@@ -89,13 +89,20 @@ class MultiRobotSystem:
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
             self.goal_points = self.area_handler.define_path_coverage()
+            # print("GOAL POINTS")
+            # print(self.goal_points)
             # remove emply element from the goal_points array
-            self.points=[]
             for element in range(len(self.goal_points)):
-                self.filtered_goal_points = filter(None,self.goal_points[element])
-                self.points.append(self.filtered_goal_points)
+                print(element)
+                # self.filtered_goal_points = filter(None,self.goal_points[element])
+                # self.points.append(self.filtered_goal_points)
+                # print("The goal points for the polygon "+str(element)+ " are: "+str(self.goal_points[element]))
+                # initial_section = self.area_handler.get_initial_section(element)
+                # print("the initial section of the polygon "+str(element)+ " is: "+(str(initial_section)))
                 # the self.points arrays stores the different goal points used to send section strategy
-            self.robot_task_assignement()
+            # print("FILTERED GOAL POINTS")
+            # print(self.points)
+            # self.robot_task_assignement()
 
     def robot_task_assignement(self):            
         for task in range(len(self.goal_polygons)):
@@ -104,13 +111,21 @@ class MultiRobotSystem:
 
     def wait_until_section_reached(self):
         if(self.final_status==0):
-            self.success_result = True      
+            self.success_result = True    
+
+    def send_first_section(self,initial_section):
+        initial_point = initial_section[0][0]
+        final_point = initial_section[1][0]
+        self.send_section_strategy(initial_point,final_point)
+        self.wait_until_section_reached()
 
     def mrs_coverage(self,goal):
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
-        initial_section = self.area_handler.get_initial_section(goal)
+        # initial_section = self.area_handler.get_initial_section(goal)
+        # self.send_first_section(initial_section)
         section_points = self.points[goal]
+        print("The polygon"+str(goal)+" has the following goal points: "+str(section_points))
 
         for self.section in range(len(section_points)):
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
