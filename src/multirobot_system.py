@@ -89,20 +89,7 @@ class MultiRobotSystem:
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
             self.goal_points = self.area_handler.define_path_coverage()
-            # print("GOAL POINTS")
-            # print(self.goal_points)
-            # remove emply element from the goal_points array
-            for element in range(len(self.goal_points)):
-                print(element)
-                # self.filtered_goal_points = filter(None,self.goal_points[element])
-                # self.points.append(self.filtered_goal_points)
-                # print("The goal points for the polygon "+str(element)+ " are: "+str(self.goal_points[element]))
-                # initial_section = self.area_handler.get_initial_section(element)
-                # print("the initial section of the polygon "+str(element)+ " is: "+(str(initial_section)))
-                # the self.points arrays stores the different goal points used to send section strategy
-            # print("FILTERED GOAL POINTS")
-            # print(self.points)
-            # self.robot_task_assignement()
+            self.robot_task_assignement()
 
     def robot_task_assignement(self):            
         for task in range(len(self.goal_polygons)):
@@ -122,32 +109,31 @@ class MultiRobotSystem:
     def mrs_coverage(self,goal):
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
-        # initial_section = self.area_handler.get_initial_section(goal)
-        # self.send_first_section(initial_section)
-        section_points = self.points[goal]
-        print("The polygon"+str(goal)+" has the following goal points: "+str(section_points))
+        section_points = self.goal_points[goal]
+        print("The polygon "+str(goal)+" has the following goal points: "+str(section_points))
 
-        for self.section in range(len(section_points)):
+        for section in range(len(section_points)):
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
             # First section
-            if (self.section==0):
-                current_section = section_points[self.section]
+            if (section==0):
+                print("I'm the robot "+str(self.robot_ID))
+                current_section = section_points[section]
                 initial_point = current_section[0]
                 final_point = current_section[1]
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
 
             #if is an odd number
-            elif(self.section%2==0 and self.success_result):
-                current_section = section_points[self.section]
+            elif(section%2==0 and self.success_result):
+                current_section = section_points[section]
                 initial_point = current_section[0]
                 final_point = current_section[1]
                 self.send_section_strategy(initial_point,final_point)
                 self.wait_until_section_reached()
 
             #if is an even number
-            elif (self.section%2!=0 and self.success_result):
-                current_section = section_points[self.section]
+            elif (section%2!=0 and self.success_result):
+                current_section = section_points[section]
                 initial_point = current_section[1]
                 final_point = current_section[0]
                 self.send_section_strategy(initial_point,final_point)

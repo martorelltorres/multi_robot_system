@@ -200,24 +200,11 @@ class area_partition:
 
         # insert the first section obtained using the reference_points in the goal_points array
         initial_section = self.get_initial_section(self.polygon_id)
-        # initial_section_point = Point(initial_section[0])
-        # final_section_point = Point(initial_section[1])
-        # first_section = []
-        # first_section = [initial_section_point.coords.xy,final_section_point.coords.xy]
-        # print(initial_section_point.coords.xy)
-        # print(first_section)
-        # print(initial_section)
+        initial_section = [initial_section[0][0],initial_section[1][0]]
         
-        # remove empty elements
-        # print(self.goal_points[self.polygon_id][0])
+        # remove empty elements and add first_section 
         if(self.goal_points[self.polygon_id][0]== []):
             self.goal_points[self.polygon_id][0]=initial_section
-
-        print("the initial section of the polygon "+str(self.polygon_id)+ " is: "+(str(initial_section)))
-        print("The goal points for the polygon "+str(self.polygon_id)+ " are: "+str(self.goal_points[self.polygon_id]))
-        print("----------------------------------------------------")
-        # initial_section = self.area_handler.get_initial_section(self.polygon_id)
-
 
         return(self.goal_points)
 
