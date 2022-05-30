@@ -32,8 +32,10 @@ class area_partition:
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
+        self.surge_velocity = get_param(self,'surge_velocity')
         self.offset_distance = 0
         
+        self.coverage_distance = 0
         self.fixed_offset = 1
         self.distance = []
         self.goal_points = []
@@ -90,6 +92,48 @@ class area_partition:
     #     central_polygon = self.get_central_polygon(self.voronoi_offset_polygons,polygon_centroid)
     #     return(central_polygon)
 
+    def get_sections_number(self):
+        goal_points = self.define_path_coverage()
+        number_of_sections = []
+        for polygon in range(len(self.voronoi_offset_polygons)):
+            # take into account that for example in case of 4 sections there will be only 3 turns
+            number_of_sections.append(len(goal_points[polygon])-1)
+        return(number_of_sections)
+
+
+    def get_sections_time(self):
+        goal_points = self.define_path_coverage()
+        polygon_distances =[]
+        distances = []
+        for polygon in range(len(self.voronoi_offset_polygons)):
+            section_points = goal_points[polygon]
+
+            for points_pair in range(len(section_points)):
+                point = section_points[points_pair]
+                first_point = Point(point[0])
+                second_point = Point(point[1])
+                distance_btw_points = self.distance_between_points(first_point,second_point)
+                self.coverage_distance = self.coverage_distance + distance_btw_points
+            polygon_distances.append(self.coverage_distance)
+            self.coverage_distance = 0
+        distances.append(polygon_distances)
+        return (distances)
+
+    def get_estimated_polygon_coverage_time(self):
+        estimated_coverage_time=[]
+        sections_distance = self.get_sections_time()
+        sections_number = self.get_sections_number()
+        sections_distance = sections_distance[0]
+
+        for polygon_id in range(len(self.voronoi_offset_polygons)):
+            distance = sections_distance[polygon_id]
+            turns = sections_number[polygon_id]
+            sections_time = distance/self.surge_velocity
+            # set an experimental predefined time to perform the turns of the coverage
+            turning_time = turns*15
+            total_time = turning_time + sections_time
+            estimated_coverage_time.append(total_time)
+        return(estimated_coverage_time)
 
     def define_path_coverage(self):
         #create the loop for the diferent voronoi offset polygons

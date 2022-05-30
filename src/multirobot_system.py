@@ -30,6 +30,7 @@ class MultiRobotSystem:
         self.section_action = self.get_param('~section_action','/turbot/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
         self.number_of_robots = self.get_param('number_of_robots')
+        self.surge_velocity = self.get_param('surge_velocity',0.5)
 
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
@@ -93,6 +94,8 @@ class MultiRobotSystem:
             self.goal_polygons = self.goals[self.robot_ID][1]
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
+            times = self.area_handler.get_estimated_polygon_coverage_time()
+            print(times)
             self.goal_points = self.area_handler.define_path_coverage()
             self.robot_task_assignement()
 
@@ -155,7 +158,7 @@ class MultiRobotSystem:
         section_req.tolerance.z = self.tolerance
         section_req.controller_type = WorldSectionGoal.LOSCTE
         section_req.priority = GoalDescriptor.PRIORITY_NORMAL
-        section_req.surge_velocity = 1
+        section_req.surge_velocity = self.surge_velocity
         section_req.timeout = 6000
 
         # send section goale using actionlib

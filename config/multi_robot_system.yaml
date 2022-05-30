@@ -4,7 +4,8 @@ number_of_robots: 2
 offset_polygon_distance: 4
 # The offset_coverage_distance set the distance between the coverage lines path
 offset_coverage_distance: 5
-# Section strategy tolerance
+# Section strategy parameters
+surge_velocity: 0.8
 tolerance: 2
 #Task allocation strategy
 task_allocation: 1
