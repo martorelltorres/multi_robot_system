@@ -130,7 +130,7 @@ class area_partition:
             turns = sections_number[polygon_id]
             sections_time = distance/self.surge_velocity
             # set an experimental predefined time to perform the turns of the coverage
-            turning_time = turns*15
+            turning_time = turns*35
             total_time = turning_time + sections_time
             estimated_coverage_time.append(total_time)
         return(estimated_coverage_time)

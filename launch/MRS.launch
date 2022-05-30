@@ -3,7 +3,7 @@
   <arg name="place" default="bendinat.yaml"/>
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
-  <arg name="enableRviz" default="true"/>
+  <arg name="enableRviz" default="false"/>
   <arg name="robot_0" default="turbot"/>
   <arg name="robot_1" default="xiroi"/>
 
@@ -21,6 +21,18 @@
   
    <!-- load the multi_robot_system.yaml parameters file -->
   <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
+
+  <!-- Communications module -->
+  <node name="communications" pkg="multi_robot_system" type="communications.py" output="screen" respawn="true">
+    <param name="r0_navigation_topic" value="/turbot/navigator/navigation"/>
+    <param name="r1_navigation_topic" value="/xiroi/navigator/navigation"/>
+    <param name="low_noise" value= "0.9"/>
+    <param name="medium_noise" value="0.6"/>
+    <param name="high_noise" value="0.3"/>
+    <param name="low_distance" value= "10"/>
+    <param name="medium_distance" value="40"/>
+    <param name="large_distance" value="80"/>
+  </node>
 
   <!-- Robot 0 -->
   <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
