@@ -15,8 +15,7 @@ from cola2_msgs.msg import  NavSts
 #import classes
 from area_partition import area_partition
 from task_allocator import task_allocation
-
-
+from robot import robot
 
 class MultiRobotSystem:
     
@@ -34,7 +33,9 @@ class MultiRobotSystem:
 
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
-        self.check_current_position = True
+        self.robot_handler = robot("robot")
+
+        self.system_initialization = True
         self.success_result = False
         self.data_gattered = False
         self.points = []
@@ -62,10 +63,6 @@ class MultiRobotSystem:
         self.polygon_offset_pub = rospy.Publisher("voronoi_offset_polygons",
                                         PolygonStamped,
                                         queue_size=1)
-        # Sevice server
-        # self.start_srv = rospy.Service('mrs/mrs_start',
-        #                                Empty,
-        #                                self.mrs)
 
         # Init periodic check timer
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
@@ -75,14 +72,22 @@ class MultiRobotSystem:
         self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
         self.section_strategy.wait_for_server()
 
+        self.initialization()
+
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
 
     def update_robot_position(self,msg):
-        self.yaw = msg.orientation.yaw
+        self.robot_position_north = msg.position.north
+        self.robot_position_east = msg.position.east
+        self.robot_position_depth = msg.position.depth
+        self.robot_orientation_yaw = msg.orientation.yaw 
     
-        if(self.check_current_position == True):
-            self.check_current_position = False
+    def initialization(self): 
+        # wait 4 seconds in order to initialize the different robot architectures
+        rospy.sleep(4)
+        if(self.system_initialization==True):
+            self.system_initialization = False 
             self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
             # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
             self.goal_polygons = self.goals[self.robot_ID][1]
@@ -100,24 +105,33 @@ class MultiRobotSystem:
         if(self.final_status==0):
             self.success_result = True    
 
-    def send_first_section(self,initial_section):
-        initial_point = initial_section[0][0]
-        final_point = initial_section[1][0]
-        self.send_section_strategy(initial_point,final_point)
-        self.wait_until_section_reached()
-
     def mrs_coverage(self,goal):
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
         section_points = self.goal_points[goal]
-        print("The polygon "+str(goal)+" has the following goal points: "+str(section_points))
 
         for section in range(len(section_points)):
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
+            current_section = section_points[section]
+
+            # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
+            # robot_north, robot_east = self.robot_handler.get_robot_position()
+            # first_point = current_section[0]
+            # first_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,first_point[0],first_point[1])
+            # second_point = current_section[1]
+            # second_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,second_point[0],second_point[1])
+
+            # if(first_point_distance < second_point_distance):
+            #     initial_point = first_point
+            #     final_point = second_point
+            # else:
+            #     initial_point = second_point
+            #     final_point = first_point
+
             # First section
             if (section==0):
-                print("I'm the robot "+str(self.robot_ID))
                 current_section = section_points[section]
+                print("I'm the robot "+str(self.robot_ID)+" and I'm trying to reach the following section "+ str(section)+ " : "+str(current_section))
                 initial_point = current_section[0]
                 final_point = current_section[1]
                 self.send_section_strategy(initial_point,final_point)
@@ -126,6 +140,7 @@ class MultiRobotSystem:
             #if is an odd number
             elif(section%2==0 and self.success_result):
                 current_section = section_points[section]
+                print("I'm the robot "+str(self.robot_ID)+" and I'm trying to reach the following section "+ str(section)+ " : "+str(current_section))
                 initial_point = current_section[0]
                 final_point = current_section[1]
                 self.send_section_strategy(initial_point,final_point)
@@ -134,6 +149,7 @@ class MultiRobotSystem:
             #if is an even number
             elif (section%2!=0 and self.success_result):
                 current_section = section_points[section]
+                print("I'm the robot "+str(self.robot_ID)+" and I'm trying to reach the following section "+ str(section)+ " : "+str(current_section))
                 initial_point = current_section[1]
                 final_point = current_section[0]
                 self.send_section_strategy(initial_point,final_point)
@@ -152,7 +168,9 @@ class MultiRobotSystem:
         section_req.initial_position.x = initial_position_x
         section_req.initial_position.y = initial_position_y
         section_req.initial_position.z = 0.0
-        section_req.initial_yaw = self.yaw
+        # obtain the yaw of each robot
+        
+        section_req.initial_yaw = self.robot_orientation_yaw
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
         section_req.final_position.z = 0.0

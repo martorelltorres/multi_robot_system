@@ -32,7 +32,6 @@ class area_partition:
         self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
-        self.navigation_topic = get_param(self,'~navigation_topic')
         self.offset_distance = 0
         
         self.fixed_offset = 1
@@ -45,20 +44,13 @@ class area_partition:
                                                 PointStamped,
                                                 queue_size=1)
         #Subscribers
-        rospy.Subscriber(self.navigation_topic,
-                         NavSts,    
-                         self.update_robot_position,
-                         queue_size=1)
-      
         self.read_file()
         self.extract_NED_positions()
         self.divide_polygon()
         self.define_voronoi_offset_polygons(self.offset_polygon_distance)
         # self.define_path_coverage()
         # plt.show()
-    def update_robot_position(self,msg):
-        self.position_north = msg.position.north
-        self.position_east = msg.position.east
+
     
     def get_polygon_points(self,polygon):
         polygon_points = self.voronoi_polygons[polygon]
@@ -105,14 +97,14 @@ class area_partition:
 
     def define_path_coverage(self):
         #create the loop for the diferent voronoi offset polygons
-        # for self.polygon_id in range(len(self.voronoi_offset_polygons)):
-        #     self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
-        #     goal_points = self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
-        # return(goal_points)
-        for self.polygon_id in range(len(self.voronoi_polygons)):
-            self.find_largest_side(self.voronoi_polygons[self.polygon_id])
-            goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
+        for self.polygon_id in range(len(self.voronoi_offset_polygons)):
+            self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
+            goal_points = self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
         return(goal_points)
+        # for self.polygon_id in range(len(self.voronoi_polygons)):
+        #     self.find_largest_side(self.voronoi_polygons[self.polygon_id])
+        #     goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
+        # return(goal_points)
 
     def distance_between_points(self,point_a, point_b):
         distance = point_a.distance(point_b)
@@ -230,17 +222,18 @@ class area_partition:
         for part in parts:
             x, y = part.xy
             plt.plot(x, y, linewidth=3, solid_capstyle='round', zorder=1)
-        # plt.show()
+        plt.show()
     
     def get_initial_section(self, polygon):
-        # polygons = self.get_voronoi_offset_polygons()
-        polygons = self.get_voronoi_polygons()
+        polygons = self.get_voronoi_offset_polygons()
+        # polygons = self.get_voronoi_polygons()
         reference_points = self.find_largest_side(polygons[polygon])
-        # x,y = self.get_offset_polygon_points(polygon)
-        x,y = self.get_polygon_points(polygon)
-        initial_point = Point(x[reference_points[0]],y[reference_points[0]])
-        final_point = Point(x[reference_points[1]],y[reference_points[1]])
+        polygon_coords_x,polygon_coords_y = self.get_offset_polygon_points(polygon)
+        # x,y = self.get_polygon_points(polygon)
+        initial_point = Point(polygon_coords_x[reference_points[0]],polygon_coords_y[reference_points[0]])
+        final_point = Point(polygon_coords_x[reference_points[1]],polygon_coords_y[reference_points[1]])
         initial_section = list(initial_point.coords),list(final_point.coords)
+        # print("Polygon "+str(polygon)+" has the following initial_section: "+str(initial_section))
         return(initial_section)
 
 
@@ -317,7 +310,6 @@ class area_partition:
         self.local_coords=[]
         for i in range(len(self.north_position)):
             self.local_points.append([self.north_position[i],self.east_position[i]])
-
 
         # Define the main polygon object
         self.main_polygon = Polygon(self.local_points)
