@@ -7,12 +7,11 @@
   <arg name="robot_0" default="turbot"/>
   <arg name="robot_1" default="xiroi"/>
 
-  <!-- Launch the Simulation -->
+  <!-- Launch the Turbot Simulation -->
   <include  file="$(find cola2_turbot)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaAUV)"/>
     <arg name="place" value="$(arg place)"/>
-  </include>
-
+  </include> 
 
   <!-- Launch the Xiroi Simulation -->
   <include  file="$(find cola2_xiroi)/launch/simulation.launch">
@@ -26,7 +25,6 @@
   <!-- Robot 0 -->
   <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="0"/>
-    <!-- TODO: fix problem with the navigation_topic parameter -->
     <param name="navigation_topic" value="/turbot/navigator/navigation"/>
     <param name="position_topic" value="/turbot/navigator/navigation"/>
     <param name="section_action" value="/turbot/pilot/world_section_req"/>

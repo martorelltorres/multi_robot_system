@@ -35,7 +35,6 @@ class area_partition:
         self.offset_distance = 0
         
         self.fixed_offset = 1
-        # self.intersection_points =[]
         self.distance = []
         self.goal_points = []
 
@@ -48,9 +47,6 @@ class area_partition:
         self.extract_NED_positions()
         self.divide_polygon()
         self.define_voronoi_offset_polygons(self.offset_polygon_distance)
-        # self.define_path_coverage()
-        # plt.show()
-
     
     def get_polygon_points(self,polygon):
         polygon_points = self.voronoi_polygons[polygon]

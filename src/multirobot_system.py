@@ -64,7 +64,7 @@ class MultiRobotSystem:
                                         PolygonStamped,
                                         queue_size=1)
 
-        # Init periodic check timer
+        # Init periodic timers
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
         rospy.Timer(rospy.Duration(1.0), self.print_offset_polygon)
 
@@ -115,45 +115,20 @@ class MultiRobotSystem:
             current_section = section_points[section]
 
             # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
-            # robot_north, robot_east = self.robot_handler.get_robot_position()
-            # first_point = current_section[0]
-            # first_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,first_point[0],first_point[1])
-            # second_point = current_section[1]
-            # second_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,second_point[0],second_point[1])
+            first_point = current_section[0]
+            first_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,first_point[0],first_point[1])
+            second_point = current_section[1]
+            second_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,second_point[0],second_point[1])
 
-            # if(first_point_distance < second_point_distance):
-            #     initial_point = first_point
-            #     final_point = second_point
-            # else:
-            #     initial_point = second_point
-            #     final_point = first_point
+            if(first_point_distance < second_point_distance):
+                initial_point = first_point
+                final_point = second_point
+            else:
+                initial_point = second_point
+                final_point = first_point
 
-            # First section
-            if (section==0):
-                current_section = section_points[section]
-                print("I'm the robot "+str(self.robot_ID)+" and I'm trying to reach the following section "+ str(section)+ " : "+str(current_section))
-                initial_point = current_section[0]
-                final_point = current_section[1]
-                self.send_section_strategy(initial_point,final_point)
-                self.wait_until_section_reached()
-
-            #if is an odd number
-            elif(section%2==0 and self.success_result):
-                current_section = section_points[section]
-                print("I'm the robot "+str(self.robot_ID)+" and I'm trying to reach the following section "+ str(section)+ " : "+str(current_section))
-                initial_point = current_section[0]
-                final_point = current_section[1]
-                self.send_section_strategy(initial_point,final_point)
-                self.wait_until_section_reached()
-
-            #if is an even number
-            elif (section%2!=0 and self.success_result):
-                current_section = section_points[section]
-                print("I'm the robot "+str(self.robot_ID)+" and I'm trying to reach the following section "+ str(section)+ " : "+str(current_section))
-                initial_point = current_section[1]
-                final_point = current_section[0]
-                self.send_section_strategy(initial_point,final_point)
-                self.wait_until_section_reached()
+            self.send_section_strategy(initial_point,final_point)
+            self.wait_until_section_reached()
 
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon)
 
