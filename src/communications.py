@@ -3,6 +3,7 @@
 import rospy
 from cola2_msgs.msg import  NavSts
 import numpy as np
+from multi_robot_system.msg import Communication
 
 class communications:
 
@@ -11,18 +12,18 @@ class communications:
         # navigation
         self.r0_navigation_topic = self.get_param('~r0_navigation_topic','/turbot/navigator/navigation') 
         self.r1_navigation_topic = self.get_param('~r1_navigation_topic','/xiroi/navigator/navigation') 
-        # communication noise 
-        self.low_noise = self.get_param('~low_noise','0.9') 
-        self.medium_noise = self.get_param('~medium','0.6') 
-        self.high_noise = self.get_param('~high_noise','0.3') 
+        # communication noise frequency 
+        self.low_noise = self.get_param('~low_noise','1') 
+        self.medium_noise = self.get_param('~medium_noise','0.5') 
+        self.high_noise = self.get_param('~high_noise','0.1') 
         # distance
         self.low_distance = self.get_param('~low_distance','10') 
         self.medium_distance = self.get_param('~medium_distance','40') 
         self.large_distance = self.get_param('~large_distance','80') 
 
-        self.communication_freq = 0
         self.r1_init = False
         self.r0_init = False
+        self.system_init = False
 
         #Subscribers
         rospy.Subscriber(self.r0_navigation_topic,
@@ -34,16 +35,18 @@ class communications:
                         NavSts,    
                         self.update_r1_position,
                         queue_size=1)
-
-        self.communication_noise()                
-
-
+        #Publishers
+        self.communication_pub = rospy.Publisher("communication",
+                                        Communication,
+                                        queue_size=1)
+                
     def update_r0_position(self, msg):
         self.r0_position_north = msg.position.north
         self.r0_position_east = msg.position.east
         self.r0_position_depth = msg.position.depth
         self.r0_yaw = msg.orientation.yaw
         self.r0_init = True
+        self.initialization()
 
     def update_r1_position(self, msg):
         self.r1_position_north = msg.position.north
@@ -51,40 +54,59 @@ class communications:
         self.r1_position_depth = msg.position.depth
         self.r1_yaw = msg.orientation.yaw
         self.r1_init = True
+        self.initialization()
+    
+    def initialization(self):
+        if(self.r1_init==True and self.r0_init==True):
+            self.system_init = True
+            self.communication_noise()  
+        else:
+            self.system_init = False
 
     def distance_between_robots(self):
         x_distance = self.r1_position_north - self.r0_position_north
         y_distance = self.r1_position_east - self.r0_position_east
         self.distance = np.sqrt(x_distance**2 + y_distance**2)
-        print("The distance between robots is: "+ str(self.distance))
-
+        self.distance = round(self.distance, 2)
 
     def communication_noise(self):
-
-        if(self.r0_init==True and self.r1_init==True):
+        if(self.system_init==True):
             self.distance_between_robots()
-
+            
             if(self.distance < self.low_distance):
-                noise = self.low_noise
+                self.noise = self.low_noise
+                self.distance_range = "low_distance"
                 self.communication_freq = 1
+                self.rate = rospy.Rate(self.communication_freq)
+                self.communication()
 
-            elif(self.low_distance < self.distance < self.medium_distance):
-                noise = self.medium_noise
-                self.communication_freq = 3
-
+            elif(self.low_distance <= self.distance <= self.medium_distance):
+                self.distance_range = "medium_distance"
+                self.noise = self.medium_noise
+                self.communication_freq = 0.5
+                self.rate = rospy.Rate(self.communication_freq)
+                self.communication()
             else:
-                noise = self.high_noise
-                self.communication_freq = 6
-            
-            # Init periodic timers
-            rospy.Timer(rospy.Duration(self.communication_freq), self.comunicate)
-            
+                self.noise = self.high_noise
+                self.communication_freq = 0.1  
+                self.distance_range = "large_distance"
+                self.rate = rospy.Rate(self.communication_freq)
+                self.communication()        
+           
         else:
             rospy.logwarn("Communication module is not init yet...")
 
-    def comunicate(self,event):
-        print("INNNNN")
-    
+    def communication(self):
+        communication_msg = Communication()
+        communication_msg.header.frame_id = "multi_robot_system"
+        communication_msg.header.stamp = rospy.Time.now()
+        communication_msg.distance = self.distance
+        communication_msg.distance_range = self.distance_range
+        communication_msg.noise_level = self.noise
+        communication_msg.communication_freq = self.communication_freq
+        self.communication_pub.publish(communication_msg)
+        self.rate.sleep()
+       
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
             param_value = rospy.get_param(param_name)
