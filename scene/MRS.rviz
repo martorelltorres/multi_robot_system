@@ -491,10 +491,18 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /xiroi/pilot/waypoint_marker
+      Marker Topic: /anchorRadius
       Name: Marker
       Namespaces:
-        /xiroi/pilot: true
+        turbot: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /repulsionRadius
+      Name: Marker
+      Namespaces:
+        turbot: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -520,11 +528,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 4.842111587524414
+      Scale: 17.093891143798828
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: -68.22906494140625
-      Y: 44.04438400268555
+      X: -17.122299194335938
+      Y: 10.35035514831543
     Saved: ~
 Window Geometry:
   Displays:

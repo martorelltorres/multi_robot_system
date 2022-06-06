@@ -112,12 +112,15 @@ class MultiRobotSystem:
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
         section_points = self.goal_points[goal]
+        self.new_goal = goal
 
         for section in range(len(section_points)):
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
             current_section = section_points[section]
-            self.generate_initial_section(self.robot_position_north,self.robot_position_east,current_section)
-
+            if(self.new_goal==goal):
+                self.generate_initial_section(self.robot_position_north,self.robot_position_east,current_section)
+                self.new_goal = 1000     
+                
             # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
             first_point = current_section[0]
             first_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,first_point[0],first_point[1])
