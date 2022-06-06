@@ -1,14 +1,15 @@
 #!/usr/bin/env python
-from setuptools import setup
 import rospy 
 import math
+import numpy as np
 import random           
 import matplotlib.pyplot as plt
 from cola2_msgs.msg import  NavSts
 from shapely.geometry import Point
 from multi_robot_system.msg import TaskMonitoring 
 #import classes
-from area_partition import *
+from area_partition import area_partition
+from robot import robot
 
 
 class task_allocation:
@@ -17,20 +18,29 @@ class task_allocation:
         self.name = name
 
         # read parameter from the parameter server
+        self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
         self.number_of_robots = self.get_param('number_of_robots')
         self.task_allocator = self.get_param('task_allocation')
         self.robot_ID = self.get_param('~robot_ID',0) 
+        self.robot_init = False
 
         self.polygons = []
         self.task_monitoring = []
-        self.central_polygon_defined=False
+        self.central_polygon_defined = False
+        self.first_robot = True
         self.task_monitoring = []
                         # 0 --> not started
                         # 1 --> running
                         # 2 --> finished
 
-        # create atributes
-        self.area = area_partition("area_partition")
+        self.area_handler = area_partition("area_partition")
+        self.robot_handler = robot("robot")
+
+        # subscribers
+        rospy.Subscriber(self.navigation_topic ,
+                         NavSts,    
+                         self.update_robot_position,
+                         queue_size=1)
         # publishers
         self.task_monitoring = rospy.Publisher("task_monitoring",
                                         TaskMonitoring,
@@ -39,28 +49,73 @@ class task_allocation:
         rospy.Timer(rospy.Duration(1.0), self.task_monitoring_publisher)
         self.update_task_status(self.robot_ID,"ND",0,0)
 
+    def update_robot_position(self,msg):
+        self.robot_position_north = msg.position.north
+        self.robot_position_east = msg.position.east
+        self.robot_position_depth = msg.position.depth
+        self.robot_orientation_yaw = msg.orientation.yaw 
+        self.robot_id = self.robot_ID
+        self.robot_init = True
+
     def task_allocation(self):
-        polygon_number = self.area.get_polygon_number()
-        # create an array with the goal polygon_ids, from 0 to n
-        for polygon in range(polygon_number):
-            self.polygons.append(polygon)
-        self.central_polygon_id = self.define_meeting_point()
-        # add the central polygon to the tasks in order to cover the hole area
-        # self.polygons.append(self.central_polygon_id)
-        self.robot_goals = np.array_split(self.polygons,self.number_of_robots)
-        # create a goal_polygons array for every robot
-        robot_names = []
-        self.tasks =[]
-        self.names = []
-        self.robots_tasks = []
-        for robot in range(self.number_of_robots):
-            name = "Robot_"+str(robot)
-            robot_names.append(name)
-            self.names = robot_names[robot]
-            # tasks array stores the specific robot name and tasks:[['Robot_0', [0, 1, 2, 3]]
-            self.tasks = [self.names,self.robot_goals[robot]]
-            # robots_tasks array stores all the tasks arrays
-            self.robots_tasks.append(self.tasks)
+
+        # task_allocator==1 --> Split the tasks depending of the number of robots
+        if(self.task_allocator==1):
+            polygon_number = self.area_handler.get_polygon_number()
+            # create an array with the goal polygon_ids, from 0 to n
+            for polygon in range(polygon_number):
+                self.polygons.append(polygon)
+            self.central_polygon_id = self.define_meeting_point()
+            # add the central polygon to the tasks in order to cover the hole area
+            # self.polygons.append(self.central_polygon_id)
+            self.robot_goals = np.array_split(self.polygons,self.number_of_robots)
+            # create a goal_polygons array for every robot
+            robot_names = []
+            self.tasks =[]
+            self.names = []
+            self.robots_tasks = []
+            for robot in range(self.number_of_robots):
+                name = "Robot_"+str(robot)
+                robot_names.append(name)
+                self.names = robot_names[robot]
+                # tasks array stores the specific robot name and tasks:[['Robot_0', [0, 1, 2, 3]]
+                self.tasks = [self.names,self.robot_goals[robot]]
+                # robots_tasks array stores all the tasks arrays
+                self.robots_tasks.append(self.tasks)
+
+        # task_allocator==2 --> Assign non consecutive random tasks 
+        elif(self.task_allocator==2 and self.robot_init==True):
+            polygon_number = self.area_handler.get_polygon_number()
+            voronoy_polygons = self.area_handler.get_voronoi_offset_polygons()
+            robot_tasks=[]
+
+            # create an array with the goal polygon_ids, from 0 to n
+            for polygon in range(polygon_number):
+                self.polygons.append(polygon)
+
+            for robot in range(self.number_of_robots):
+                if(self.robot_id==robot and self.first_robot == True):
+                    current_nearest_polygon = self.area_handler.determine_nearest_polygon(self.robot_position_north,self.robot_position_east,voronoy_polygons)
+                    
+                    if(current_nearest_polygon == self.nearest_polygon and self.first_robot == False):
+                        self.polygons[self.nearest_polygon]
+
+                    self.nearest_polygon = current_nearest_polygon
+                    robot_tasks[self.robot_id].append(self.nearest_polygon)
+
+            if(self.robot_id==0):
+                self.nearest_polygon = self.area_handler.determine_nearest_polygon(self.robot_position_north,self.robot_position_east,voronoy_polygons)
+                robot_tasks[self.robot_id].append(self.nearest_polygon)
+
+            for robot in range(self.number_of_robots):
+                for task in range(polygon_number-1):
+
+                    robot_tasks[self.robot_id].append(self.nearest_polygon)
+
+
+
+          
+
         return(self.robots_tasks,self.central_polygon_id)
 
     def initialize_task_status(self):
@@ -92,16 +147,16 @@ class task_allocation:
 
     def define_goal_task(self):
         n_robots = self.number_of_robots
-        polygon_number = self.area.get_polygon_number()-1
+        polygon_number = self.area_handler.get_polygon_number()-1
         goal_task = math.trunc(polygon_number/n_robots)
         return(goal_task,)    
 
     def define_meeting_point(self):
         # find the central polygon
-        self.voronoi_polygons = self.area.get_voronoi_polygons()
-        main_polygon_centroid = self.area.get_main_polygon_centroid()
+        self.voronoi_polygons = self.area_handler.get_voronoi_polygons()
+        main_polygon_centroid = self.area_handler.get_main_polygon_centroid()
         # central_polygon_id shows the number of the center_polygon referenced to the voronoy_polygons
-        self.central_polygon_id = self.area.get_central_polygon(self.voronoi_polygons,main_polygon_centroid)
+        self.central_polygon_id = self.area_handler.get_central_polygon(self.voronoi_polygons,main_polygon_centroid)
         central_polygon_index = self.polygons.index(self.central_polygon_id)
         self.update_area(central_polygon_index)
         self.central_polygon_defined = True
@@ -117,16 +172,16 @@ class task_allocation:
         # self.centroids.pop(polygon)
     
     def find_start_polygons(self):
-        voronoy_polygons = self.area.get_voronoi_polygons()
-        self.centroids = self.area.get_polygon_centroids()
-        goal_polygon_1 = self.area.determine_nearest_polygon(self.robot2_position_north,self.robot2_position_east,voronoy_polygons)
+        voronoy_polygons = self.area_handler.get_voronoi_polygons()
+        self.centroids = self.area_handler.get_polygon_centroids()
+        goal_polygon_1 = self.area_handler.determine_nearest_polygon(self.robot2_position_north,self.robot2_position_east,voronoy_polygons)
 
         # find the maximum distance between the goal_polygon and the other polygons
         point_A = Point(self.centroids[goal_polygon_1])
         centroids_distance =[]
         for centroid in self.centroids:
                 point_B = Point(centroid)
-                distance_btw_centroids = self.area.distance_between_points(point_A,point_B)
+                distance_btw_centroids = self.area_handler.distance_between_points(point_A,point_B)
                 centroids_distance.append(distance_btw_centroids)
 
         # find the maximum distance in order to keep the vehicles safe

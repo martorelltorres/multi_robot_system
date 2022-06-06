@@ -3,7 +3,7 @@
   <arg name="place" default="bendinat.yaml"/>
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
-  <arg name="enableRviz" default="false"/>
+  <arg name="enableRviz" default="true"/>
   <arg name="robot_0" default="turbot"/>
   <arg name="robot_1" default="xiroi"/>
 

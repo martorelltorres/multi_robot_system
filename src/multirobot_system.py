@@ -5,10 +5,11 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import datetime
 from numpy import *
+from shapely.geometry import Polygon,LineString,Point
 import actionlib
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult,VehicleStatus
 from std_srvs.srv import Empty
-from geometry_msgs.msg import Point, PolygonStamped, Point32, Polygon
+from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
 
 
@@ -40,7 +41,6 @@ class MultiRobotSystem:
         self.success_result = False
         self.data_gattered = False
         self.points = []
-
 
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -86,7 +86,7 @@ class MultiRobotSystem:
     
     def initialization(self): 
         # wait 4 seconds in order to initialize the different robot architectures
-        rospy.sleep(4)
+        rospy.sleep(5)
         if(self.system_initialization==True):
             self.system_initialization = False 
             self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
@@ -94,7 +94,7 @@ class MultiRobotSystem:
             self.goal_polygons = self.goals[self.robot_ID][1]
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
-            times = self.area_handler.get_estimated_polygon_coverage_time()
+            times = self.area_handler.get_estimated_polygons_coverage_time()
             print(times)
             self.goal_points = self.area_handler.define_path_coverage()
             self.robot_task_assignement()
@@ -116,6 +116,7 @@ class MultiRobotSystem:
         for section in range(len(section_points)):
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
             current_section = section_points[section]
+            self.generate_initial_section(self.robot_position_north,self.robot_position_east,current_section)
 
             # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
             first_point = current_section[0]
@@ -134,7 +135,13 @@ class MultiRobotSystem:
             self.wait_until_section_reached()
 
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon)
-
+    
+    def generate_initial_section(self,position_north,position_east,section_points):
+        initial_point = Point(position_north,position_east)
+        initial_point = list(initial_point.coords)[0]
+        final_point = section_points[0]
+        self.send_section_strategy(initial_point,final_point)
+        self.wait_until_section_reached()
 
     def send_section_strategy(self,initial_point,final_point):
         initial_position_x = initial_point[0]

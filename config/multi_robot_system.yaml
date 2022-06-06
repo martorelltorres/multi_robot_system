@@ -7,8 +7,11 @@ offset_coverage_distance: 5
 # Section strategy parameters
 surge_velocity: 0.8
 tolerance: 2
-#Task allocation strategy
+#Task allocation strategies
 task_allocation: 1
+
 # 1 -->  Divide the tasks between the number of robots and assign tasks to each robot
 #       example:Tasks [0,1,2,3,4]-> r1_tasks[0,1,2], r2_tasks[3,4]
-# 2 --> 
+
+# 2 --> Assign the nearest polygon to the robot_0, and decide wich is the task for the robot_1. Tasks mustn't be consecutive.
+        # example:Tasks [0,1,2,3,4]-> r1_tasks[3,4,0], r2_tasks[1,2]

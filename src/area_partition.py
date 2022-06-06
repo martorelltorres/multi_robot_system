@@ -11,7 +11,6 @@ import math
 import os
 import pprint
 import re
-import geopandas as gpd
 from shapely.geometry import Polygon,LineString,Point
 from std_srvs.srv import Empty, EmptyResponse
 from scipy.spatial import Voronoi, voronoi_plot_2d
@@ -119,7 +118,7 @@ class area_partition:
         distances.append(polygon_distances)
         return (distances)
 
-    def get_estimated_polygon_coverage_time(self):
+    def get_estimated_polygons_coverage_time(self):
         estimated_coverage_time=[]
         sections_distance = self.get_sections_time()
         sections_number = self.get_sections_number()

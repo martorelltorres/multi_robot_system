@@ -16,6 +16,7 @@ class robot:
         self.ned_origin_lat = self.get_param(self,'/turbot/navigator/ned_latitude')
         self.ned_origin_lon = self.get_param(self,'/turbot/navigator/ned_longitude')
         self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
+        self.robot_ID = self.get_param('~robot_ID',0)
         self.offset_distance = 0
         self.initial_offset = 1
         self.intersection_points =[]
@@ -43,7 +44,8 @@ class robot:
         robot_position_east = msg.position.east
         robot_position_depth = msg.position.depth
         robot_orientation_yaw = msg.orientation.yaw 
-        return(robot_position_north,robot_position_east,robot_position_depth,robot_orientation_yaw)
+        robot_id = self.robot_ID
+        return(robot_position_north,robot_position_east,robot_position_depth,robot_orientation_yaw,robot_id)
     
     def get_robot_distance_to_point(self,robot_north, robot_east, point_x, point_y):
         x_distance = robot_north - point_x
