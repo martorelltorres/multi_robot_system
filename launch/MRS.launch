@@ -4,9 +4,11 @@
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
+  <arg name="enableCollisonAvoidance" default="true"/>
+
+  <!-- general robot information -->
   <arg name="robot_0" default="turbot"/>
   <arg name="robot_1" default="xiroi"/>
-  <!-- navigation topics -->
   <arg name="navigation_topic_robot_0" default="/turbot/navigator/navigation"/>
   <arg name="navigation_topic_robot_1" default="/xiroi/navigator/navigation"/>
 
@@ -38,21 +40,10 @@
     <param name="large_distance" value="80"/>
   </node>
 
-  <!-- Collision avoidance module -->
-  <node name="collision_avoidance" pkg="multi_robot_system" type="collision_avoidance.py" output="screen" respawn="true">
-    <param name="r0_navigation_topic" value="$(arg navigation_topic_robot_0)"/>
-    <param name="r1_navigation_topic" value="$(arg navigation_topic_robot_1)"/>
-    <!-- Set the robot_1 as a slave -->
-    <param name="robot_slave_name" value="/xiroi/"/>
-    <param name="r1_bvr_topic" value="/xiroi/controller/body_velocity_req"/>
-    <param name="repulsion_radius" value="10"/>
-    <param name="anchor_radius" value="20"/>
-  </node>
-
-
   <!-- Robot 0 -->
   <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="0"/>
+    <param name="robot_name" value="turbot"/>
     <param name="navigation_topic" value="$(arg navigation_topic_robot_0)"/>
     <param name="position_topic" value="$(arg navigation_topic_robot_0)"/>
     <param name="section_action" value="/turbot/pilot/world_section_req"/>
@@ -63,10 +54,24 @@
   <!-- Robot 1 -->
   <node name="multi_robot_system_$(arg robot_1)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="1"/>
+    <param name="robot_name" value="xiroi"/>
     <param name="navigation_topic" value="$(arg navigation_topic_robot_1)"/>
     <param name="section_action" value="/xiroi/pilot/world_section_req"/>
     <param name="section_result" value="/xiroi/pilot/world_section_req/result"/>
     <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
+  </node>
+
+  <!-- Collision avoidance module -->
+  <node if="$(arg enableCollisonAvoidance)" name="collision_avoidance" pkg="multi_robot_system" type="collision_avoidance.py" output="screen" respawn="true">
+    <param name="r0_navigation_topic" value="$(arg navigation_topic_robot_0)"/>
+    <param name="r1_navigation_topic" value="$(arg navigation_topic_robot_1)"/>
+    <param name="repulsion_radius" value="10"/>
+    <param name="anchor_radius" value="20"/>
+    <!-- Set the robot_1 as a slave -->
+    <param name="robot_ID" value="1"/>
+    <param name="robot_slave_name" value="/xiroi/"/>
+    <param name="r1_bvr_topic" value="/xiroi/controller/body_velocity_req"/>
+
   </node>
 
   <!-- RViz -->

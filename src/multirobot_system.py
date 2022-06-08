@@ -7,31 +7,29 @@ import datetime
 from numpy import *
 from shapely.geometry import Polygon,LineString,Point
 import actionlib
-from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult,VehicleStatus
+from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
+from multi_robot_system.msg import AvoidCollision
 
 
 #import classes
 from area_partition import area_partition
 from task_allocator import task_allocation
 from robot import robot
+from collision_avoidance import CollisionAvoidance
 
 class MultiRobotSystem:
     
     def __init__(self, name):
         """ Init the class """
-       
         self.name = name
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID',0)   
-        self.tolerance = self.get_param('tolerance',2)
+        self.robot_name = self.get_param('~robot_name','turbot') 
         self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
-        self.section_action = self.get_param('~section_action','/turbot/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
-        self.number_of_robots = self.get_param('number_of_robots')
-        self.surge_velocity = self.get_param('surge_velocity',0.5)
 
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
@@ -56,6 +54,11 @@ class MultiRobotSystem:
                          self.update_robot_position,
                          queue_size=1)
 
+        rospy.Subscriber('/collission_avoidance_info' ,
+                         AvoidCollision,    
+                         self.collision_avoidance,
+                         queue_size=1)
+
         #Publishers
         self.polygon_pub = rospy.Publisher("voronoi_polygons",
                                         PolygonStamped,
@@ -69,10 +72,6 @@ class MultiRobotSystem:
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
         rospy.Timer(rospy.Duration(1.0), self.print_offset_polygon)
 
-        #Actionlib section client
-        self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
-        self.section_strategy.wait_for_server()
-
         self.initialization()
 
     def update_section_result(self,msg):
@@ -83,7 +82,27 @@ class MultiRobotSystem:
         self.robot_position_east = msg.position.east
         self.robot_position_depth = msg.position.depth
         self.robot_orientation_yaw = msg.orientation.yaw 
-    
+
+    def collision_avoidance(self, msg):
+        self.distance = msg.distance
+        self.enable_section = msg.enable_section
+        self.cancel_section = msg.cancel_section 
+        self.stop_robot = msg.stop_robot
+        self.robot_repulsion = msg.robot_repulsion
+
+        if(msg.enable_section == True):
+            print("perform the coverage")  
+
+        elif(msg.cancel_section == True and msg.stop_robot==True):
+            print("cancel section and stop the robot")
+            self.robot_handler.cancel_section_strategy(self.robot_name)
+            self.robot_handler.disable_thrusters(self.robot_name)
+
+        elif(msg.cancel_section == True and  msg.robot_repulsion == True):
+            print("repulsion strategy")
+            self.robot_handler.cancel_section_strategy(self.robot_name)
+            self.robot_handler.disable_thrusters(self.robot_name)
+  
     def initialization(self): 
         # wait 4 seconds in order to initialize the different robot architectures
         rospy.sleep(5)
@@ -120,7 +139,7 @@ class MultiRobotSystem:
             if(self.new_goal==goal):
                 self.generate_initial_section(self.robot_position_north,self.robot_position_east,current_section)
                 self.new_goal = 1000     
-                
+
             # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
             first_point = current_section[0]
             first_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,first_point[0],first_point[1])
@@ -134,49 +153,19 @@ class MultiRobotSystem:
                 initial_point = second_point
                 final_point = first_point
 
-            self.send_section_strategy(initial_point,final_point)
+            self.robot_handler.send_section_strategy(initial_point,final_point)
+
             self.wait_until_section_reached()
 
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon)
     
     def generate_initial_section(self,position_north,position_east,section_points):
+        self.section_id = -1
         initial_point = Point(position_north,position_east)
         initial_point = list(initial_point.coords)[0]
         final_point = section_points[0]
-        self.send_section_strategy(initial_point,final_point)
+        self.robot_handler.send_section_strategy(initial_point,final_point)
         self.wait_until_section_reached()
-
-    def send_section_strategy(self,initial_point,final_point):
-        initial_position_x = initial_point[0]
-        final_position_x = final_point[0]
-        initial_position_y = initial_point[1]
-        final_position_y = final_point[1]
-
-        section_req = WorldSectionGoal()
-        section_req.initial_position.x = initial_position_x
-        section_req.initial_position.y = initial_position_y
-        section_req.initial_position.z = 0.0
-        # obtain the yaw of each robot
-        
-        section_req.initial_yaw = self.robot_orientation_yaw
-        section_req.final_position.x = final_position_x
-        section_req.final_position.y = final_position_y
-        section_req.final_position.z = 0.0
-        section_req.altitude_mode = False
-        section_req.tolerance.x = self.tolerance
-        section_req.tolerance.y = self.tolerance
-        section_req.tolerance.z = self.tolerance
-        section_req.controller_type = WorldSectionGoal.LOSCTE
-        section_req.priority = GoalDescriptor.PRIORITY_NORMAL
-        section_req.surge_velocity = self.surge_velocity
-        section_req.timeout = 6000
-
-        # send section goale using actionlib
-        self.success_result = False
-        self.section_strategy.send_goal(section_req)
-
-        #  Wait for result or cancel if timed out
-        self.section_strategy.wait_for_result()
 
     def print_polygon(self,event):
         if(self.data_gattered==True):      

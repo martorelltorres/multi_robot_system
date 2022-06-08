@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from pickle import TRUE
 import roslib
 import rospy
 from sensor_msgs.msg import Imu, MagneticField
@@ -25,17 +26,18 @@ from cola2_lib.utils.ned import NED
 from std_srvs.srv import Empty, EmptyRequest
 from cola2_lib.rosutils import param_loader
 from cola2_lib.rosutils.param_loader import get_ros_params
-
+from multi_robot_system.msg import AvoidCollision
+#import classes
+from robot import robot
 
 class CollisionAvoidance:
     
-
     def __init__(self, name):
         """ Init the class """
         # Initialize some parameters
         self.asv_data = False
         self.auv_data = False
-        self.tracking = True
+
         # self.first_repulsion = False
         self.initialized = False
         self.radius= -1
@@ -46,14 +48,16 @@ class CollisionAvoidance:
 
         self.r0_navigation_topic = rospy.get_param('~r0_navigation_topic',default='/turbot/navigator/navigation') 
         self.r1_navigation_topic = rospy.get_param('~r1_navigation_topic',default='/xiroi/navigator/navigation') 
+
         self.r1_bvr_topic = rospy.get_param('~r1_bvr_topic',default='/xiroi/controller/body_velocity_req') 
         self.robot_slave_name = rospy.get_param('~robot_slave_name',default='/xiroi')
-        
+        self.robot_id = rospy.get_param('~robot_id',default='1')
+
+        self.robot_handler = robot("robot")
+       
         # Get config parameters
         self.name = name
         self.ns = rospy.get_namespace()
-
-        # Services clients
               
         # enable thrusters service
         rospy.wait_for_service(str(self.robot_slave_name)+'controller/enable_thrusters', 10)
@@ -71,8 +75,7 @@ class CollisionAvoidance:
                         Empty)
         except rospy.ServiceException, e:
             rospy.logwarn("%s: Service call failed: %s", self.name, e)
-                       
-       
+
         #Subscribers
         rospy.Subscriber(self.r1_navigation_topic,
                          NavSts,    
@@ -96,11 +99,11 @@ class CollisionAvoidance:
         self.markerPub_anchor = rospy.Publisher('anchorRadius',
                                                 Marker,
                                                 queue_size=1)
-        
-        # Init periodic check timer
+        self.collision_avoidance_pub = rospy.Publisher('collission_avoidance_info',
+                                            AvoidCollision,
+                                            queue_size=1)
         rospy.Timer(rospy.Duration(0.01), self.check_distance)
-
-
+        
     def update_asv_nav_sts(self, msg):
         self.asv_position_north = msg.position.north
         self.asv_position_east = msg.position.east
@@ -114,24 +117,51 @@ class CollisionAvoidance:
         self.auv_yaw = msg.orientation.yaw
         self.anchor_marker()
         self.repulsion_marker()
-        self.auv_data = True
+        self.auv_data = True      
  
     def check_distance(self,event):
-        if(self.auv_data and self.asv_data and self.tracking) :
+        if(self.auv_data and self.asv_data) :
             self.x_distance = self.auv_position_north-self.asv_position_north
             self.y_distance = self.auv_position_east-self.asv_position_east
             self.radius = sqrt((self.x_distance)**2 + (self.y_distance)**2)
             self.initialized = True
             # rospy.loginfo(self.radius)
 
-        if(self.repulsion_radius <= self.radius <= self.anchor_radius and self.tracking):
-            rospy.loginfo("----------------- ADRIFT STRATEGY -----------------")
+        if(self.radius > self.anchor_radius):
+            # rospy.loginfo("----------------- COVERAGE STRATEGY -----------------")
+            self.cancel_section = False
+            self.enable_section = True
+            self.stop_robot = False
+            self.robot_repulsion = False
+            self.send_collision_avoidance_info()
 
-        elif(self.radius <= self.repulsion_radius and self.initialized and self.tracking):
-            rospy.loginfo("----------------- REPULSION STRATEGY -----------------")
-            self.enable_thrusters_srv()
-            self.extract_safety_position()
-            self.repulsion_strategy(self.x, self.y)
+        if(self.repulsion_radius <= self.radius <= self.anchor_radius):
+            # rospy.loginfo("----------------- ADRIFT STRATEGY -----------------")
+            self.cancel_section = True
+            self.enable_section = False
+            self.stop_robot = True
+            self.robot_repulsion = False
+            self.send_collision_avoidance_info()
+            
+        elif(self.radius <= self.repulsion_radius and self.initialized):
+            self.cancel_section = True
+            self.enable_section = False
+            self.stop_robot = False
+            self.robot_repulsion = True
+            self.send_collision_avoidance_info()
+            # self.extract_safety_position()
+            # self.repulsion_strategy(self.x, self.y)
+
+    def send_collision_avoidance_info(self):
+        collision_msg = AvoidCollision()
+        collision_msg.header.frame_id = "multi_robot_system"
+        collision_msg.header.stamp = rospy.Time.now()
+        collision_msg.distance = self.radius
+        collision_msg.cancel_section = self.cancel_section
+        collision_msg.enable_section = self.enable_section
+        collision_msg.stop_robot = self.stop_robot
+        collision_msg.robot_repulsion = self.robot_repulsion
+        self.collision_avoidance_pub.publish(collision_msg)
 
     def extract_safety_position(self):
         self.m =-(1/ (self.auv_position_east-self.asv_position_east)/(self.auv_position_north-self.asv_position_north))
@@ -144,8 +174,8 @@ class CollisionAvoidance:
         self.y = self.m*(self.x - self.pointy) + self.pointx 
 
     def repulsion_strategy(self, position_x, position_y):
-        constant_linear_velocity = 4
-        constant_angular_velocity = 2 
+        constant_linear_velocity = 1
+        constant_angular_velocity = 0.3
         linear_velocity = constant_linear_velocity
         alpha_ref = atan2(position_y,position_x)
         #obtain the minimum agle between both robots
@@ -182,7 +212,7 @@ class CollisionAvoidance:
         bvr.twist.angular.x    = 0.0
         bvr.twist.angular.y    = 0.0
         bvr.twist.angular.z    = corrected_angular_z
-        bvr.goal.priority      = 60
+        bvr.goal.priority      = 40
         self.corrected_bvr.publish(bvr)
 
     def anchor_marker(self):
