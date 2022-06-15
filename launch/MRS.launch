@@ -1,10 +1,13 @@
 <launch>
  <!-- Params -->
   <arg name="place" default="bendinat.yaml"/>
+  <arg name="turbot1_name" default="turbot"/>
+  <arg name="turbot2_name" default="turbot2"/>
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
-  <arg name="enableCollisonAvoidance" default="true"/>
+  <arg name="enableCollisonAvoidance" default="false"/>
+
 
   <!-- general robot information -->
   <arg name="robot_0" default="turbot"/>
@@ -14,10 +17,7 @@
 
 
   <!-- Launch the Turbot Simulation -->
-  <include  file="$(find cola2_turbot)/launch/simulation.launch">
-    <arg name="enableIqua" value="$(arg enableIquaAUV)"/>
-    <arg name="place" value="$(arg place)"/>
-  </include> 
+  <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch"/>
 
   <!-- Launch the Xiroi Simulation -->
   <include  file="$(find cola2_xiroi)/launch/simulation.launch">
@@ -69,7 +69,7 @@
     <param name="anchor_radius" value="20"/>
     <!-- Set the robot_1 as a slave -->
     <param name="robot_ID" value="1"/>
-    <param name="robot_slave_name" value="/xiroi/"/>
+    <param name="robot_slave_name" value="xiroia"/>
     <param name="r1_bvr_topic" value="/xiroi/controller/body_velocity_req"/>
 
   </node>

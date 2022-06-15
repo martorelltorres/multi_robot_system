@@ -50,7 +50,7 @@ class CollisionAvoidance:
         self.r1_navigation_topic = rospy.get_param('~r1_navigation_topic',default='/xiroi/navigator/navigation') 
 
         self.r1_bvr_topic = rospy.get_param('~r1_bvr_topic',default='/xiroi/controller/body_velocity_req') 
-        self.robot_slave_name = rospy.get_param('~robot_slave_name',default='/xiroi')
+        self.robot_slave_name = rospy.get_param('~robot_slave_name',default='xiroi')
         self.robot_id = rospy.get_param('~robot_id',default='1')
 
         self.robot_handler = robot("robot")
@@ -60,18 +60,18 @@ class CollisionAvoidance:
         self.ns = rospy.get_namespace()
               
         # enable thrusters service
-        rospy.wait_for_service(str(self.robot_slave_name)+'controller/enable_thrusters', 10)
+        rospy.wait_for_service(str(self.robot_slave_name)+'/controller/enable_thrusters', 10)
         try:
             self.enable_thrusters_srv = rospy.ServiceProxy(
-                        str(self.robot_slave_name) + 'controller/enable_thrusters', Empty)
+                        str(self.robot_slave_name) + '/controller/enable_thrusters', Empty)
         except rospy.ServiceException, e:
             rospy.logwarn("%s: Service call failed: %s", self.name, e)
 
         # disable thrusters service
-        rospy.wait_for_service(str(self.robot_slave_name)+'controller/disable_thrusters', 10)
+        rospy.wait_for_service(str(self.robot_slave_name)+'/controller/disable_thrusters', 10)
         try:
             self.disable_thrusters_srv = rospy.ServiceProxy(
-                        str(self.robot_slave_name)+ 'controller/disable_thrusters', 
+                        str(self.robot_slave_name)+ '/controller/disable_thrusters', 
                         Empty)
         except rospy.ServiceException, e:
             rospy.logwarn("%s: Service call failed: %s", self.name, e)
@@ -173,11 +173,12 @@ class CollisionAvoidance:
             self.x = self.asv_position_north+1
         self.y = self.m*(self.x - self.pointy) + self.pointx 
 
-    def repulsion_strategy(self, position_x, position_y):
+    def repulsion_strategy(self):
+        self.extract_safety_position()
         constant_linear_velocity = 1
         constant_angular_velocity = 0.3
         linear_velocity = constant_linear_velocity
-        alpha_ref = atan2(position_y,position_x)
+        alpha_ref = atan2(self.y,self.x)
         #obtain the minimum agle between both robots
         angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
         self.angular_velocity = constant_angular_velocity * angle_error

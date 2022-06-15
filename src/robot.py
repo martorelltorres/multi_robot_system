@@ -23,6 +23,7 @@ class robot:
         self.section_result = self.get_param('~section_result','/xiroi/pilot/world_section_req/result') 
         self.robot_ID = self.get_param('~robot_ID',0)
         self.robot_name = self.get_param('~robot_name','turbot')
+        self.robot_slave_name = rospy.get_param('~robot_slave_name',default='xiroi')
         self.distance = []
         self.is_section_actionlib_running = False
         self.ns = rospy.get_namespace()
@@ -56,11 +57,11 @@ class robot:
         self.section_strategy.wait_for_server()
 
     def disable_thrusters(self,robot_name):
-        if(robot_name =="xiroi"):
+        if(robot_name == self.robot_slave_name):
             self.disable_thrusters_srv()
 
     def enable_thrusters(self,robot_name):
-        if(robot_name =="xiroi"):
+        if(robot_name == self.robot_slave_name):
             self.enable_thrusters_srv()
     
     def send_section_strategy(self,initial_point,final_point):
