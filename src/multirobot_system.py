@@ -118,7 +118,7 @@ class MultiRobotSystem:
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
             times = self.area_handler.get_estimated_polygons_coverage_time()
-            print(times)
+            # print(times)
             self.goal_points = self.area_handler.define_path_coverage()
             self.robot_task_assignement()
 

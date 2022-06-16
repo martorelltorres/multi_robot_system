@@ -1,6 +1,6 @@
 <launch>
     <!-- Params -->
-    <arg name="place" default="illetes.yaml"/>
+    <arg name="place" default="bendinat.yaml"/>
     <arg name="robot1_name" default="turbot"/>
     <arg name="robot2_name" default="turbot2"/>
     
@@ -56,8 +56,8 @@
 
     </group>
 
+    <!-- ROBOT 2 -->
     <group if="$(arg robot2)">
- 
         <include file="$(find cola2_turbot)/launch/robot.launch">
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot2_name)"/>
@@ -93,19 +93,18 @@
     </group>
 
     <!-- Run Simulator -->
-
-    <!-- <include file="$(find cola2_turbot)/launch/modules/stonefish.launch">
+    <include file="$(find cola2_turbot)/launch/modules/stonefish.launch">
         <arg name="simulation_data" value="$(find cola2_turbot)/config/simulation"/>
         <arg name="scenario_description" value="$(find multi_robot_system)/config/multi_robot_scenario.scn"/>
         <arg name="simulation_rate" value="$(arg simulation_rate)"/>
-        <arg name="graphics_resolution" value="200 50"/>
+        <arg name="graphics_resolution" value="50 50"/>
         <arg name="graphics_quality" value="$(arg graphics_quality)"/>
-    </include> -->
+    </include>
 
-    <include file="$(find cola2_turbot)/launch/modules/stonefish_nogpu.launch">
+    <!-- <include file="$(find cola2_turbot)/launch/modules/stonefish_nogpu.launch">
         <arg name="simulation_data" value="$(find cola2_turbot)/config/simulation"/>
         <arg name="scenario_description" value="$(find multi_robot_system)/config/multi_robot_scenario.scn"/>
         <arg name="simulation_rate" value="$(arg simulation_rate)"/>
-    </include>
+    </include> -->
 
 </launch>
