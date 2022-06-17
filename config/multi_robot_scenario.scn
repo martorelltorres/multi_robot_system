@@ -224,7 +224,7 @@
 		<actuator name="ThrusterHeave" type="thruster">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 1.571 0.0" xyz="0.0 0.0 0.07"/>
-			<specs thrust_coeff="0.7" thrust_coeff_backward="0.5" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/>
+			<specs thrust_coeff="0.537" thrust_coeff_backward="0.278" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/>
 			<propeller diameter="0.08" right="true">
 				<mesh filename="turbot/propeller.obj" scale="1.0"/>
 				<material name="Neutral"/>
@@ -235,8 +235,9 @@
 		<actuator name="ThrusterSurgeStarboard" type="thruster">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="-0.573 0.167 0.0"/>
-			<specs thrust_coeff="0.5" thrust_coeff_backward="0.35" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/>
-			<propeller diameter="0.08" right="false">
+			<!-- <specs thrust_coeff="0.698" thrust_coeff_backward="0.293" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/> -->
+			<specs thrust_coeff="0.68" thrust_coeff_backward="0.28" torque_coeff="0.01" max_rpm="4000.0"/>
+			<propeller diameter="0.08" right="true">
 				<mesh filename="turbot/propeller.obj" scale="1.0"/>
 				<material name="Neutral"/>
 				<look name="white"/>
@@ -246,9 +247,10 @@
 		<actuator name="ThrusterSurgePort" type="thruster">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="-0.573 -0.167 0.0"/>
-			<specs thrust_coeff="0.5" thrust_coeff_backward="0.35" torque_coeff="0.01" max_rpm="4000.0"/>
-			<propeller diameter="0.08" right="true">
-				<mesh filename="turbot/propeller.obj" scale="1.0"/>
+			<!-- <specs thrust_coeff="0.698" thrust_coeff_backward="0.293" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/> -->
+			<specs thrust_coeff="0.68" thrust_coeff_backward="0.28" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/>
+			<propeller diameter="0.08" right="false">
+				<mesh filename="turbot/propeller.obj" scale="1.0"/>>
 				<material name="Neutral"/>
 				<look name="white"/>
 			</propeller>
