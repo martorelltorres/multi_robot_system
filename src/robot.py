@@ -28,22 +28,22 @@ class robot:
         self.is_section_actionlib_running = False
         self.ns = rospy.get_namespace()
         
-         # enable thrusters service
-        rospy.wait_for_service(str(self.robot_name)+'/controller/enable_thrusters', 10)
-        try:
-            self.enable_thrusters_srv = rospy.ServiceProxy(
-                        str(self.robot_name) + '/controller/enable_thrusters', Empty)
-        except rospy.ServiceException, e:
-            rospy.logwarn("%s: Service call failed: %s", self.name, e)
+        #  # enable thrusters service
+        # rospy.wait_for_service(str(self.robot_name)+'/controller/enable_thrusters', 10)
+        # try:
+        #     self.enable_thrusters_srv = rospy.ServiceProxy(
+        #                 str(self.robot_name) + '/controller/enable_thrusters', Empty)
+        # except rospy.ServiceException, e:
+        #     rospy.logwarn("%s: Service call failed: %s", self.name, e)
 
-        # disable thrusters service
-        rospy.wait_for_service(str(self.robot_name)+'/controller/disable_thrusters', 10)
-        try:
-            self.disable_thrusters_srv = rospy.ServiceProxy(
-                        str(self.robot_name)+ '/controller/disable_thrusters', 
-                        Empty)
-        except rospy.ServiceException, e:
-            rospy.logwarn("%s: Service call failed: %s", self.name, e)
+        # # disable thrusters service
+        # rospy.wait_for_service(str(self.robot_name)+'/controller/disable_thrusters', 10)
+        # try:
+        #     self.disable_thrusters_srv = rospy.ServiceProxy(
+        #                 str(self.robot_name)+ '/controller/disable_thrusters', 
+        #                 Empty)
+        # except rospy.ServiceException, e:
+        #     rospy.logwarn("%s: Service call failed: %s", self.name, e)
 
 
         # subscribers
@@ -60,9 +60,9 @@ class robot:
         if(robot_name == self.robot_slave_name):
             self.disable_thrusters_srv()
 
-    def enable_thrusters(self,robot_name):
-        if(robot_name == self.robot_slave_name):
-            self.enable_thrusters_srv()
+    # def enable_thrusters(self,robot_name):
+    #     if(robot_name == self.robot_slave_name):
+    #         self.enable_thrusters_srv()
     
     def send_section_strategy(self,initial_point,final_point):
         initial_position_x = initial_point[0]

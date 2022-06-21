@@ -4,3 +4,6 @@ bool cancel_section
 bool enable_section
 bool stop_robot
 bool robot_repulsion
+string robot_master
+uint8 first_robot_id
+uint8 second_robot_id

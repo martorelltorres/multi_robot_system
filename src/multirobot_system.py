@@ -18,7 +18,7 @@ from multi_robot_system.msg import AvoidCollision
 from area_partition import area_partition
 from task_allocator import task_allocation
 from robot import robot
-from collision_avoidance import CollisionAvoidance
+# from collision_avoidance import CollisionAvoidance
 
 class MultiRobotSystem:
     
@@ -35,7 +35,7 @@ class MultiRobotSystem:
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = robot("robot")
-        self.collision_avoidance_handler = CollisionAvoidance("collision_avoidance_handler")
+        # self.collision_avoidance_handler = CollisionAvoidance("collision_avoidance_handler")
 
         self.system_initialization = True
         self.success_result = False
@@ -91,22 +91,9 @@ class MultiRobotSystem:
         self.cancel_section = msg.cancel_section 
         self.stop_robot = msg.stop_robot
         self.robot_repulsion = msg.robot_repulsion
-
-        # if(msg.enable_section == True):
-        #     print("perform the coverage")  
-
-        # elif(msg.cancel_section == True and msg.stop_robot==True):
-        #     print("cancel section and stop the robot")
-        #     self.robot_handler.cancel_section_strategy(self.robot_name)
-        #     self.robot_handler.disable_thrusters(self.robot_name)
-
-        # elif(msg.cancel_section == True and  msg.robot_repulsion == True):
-        #     print("repulsion strategy")
-        #     self.robot_handler.cancel_section_strategy(self.robot_name)
-        #     self.collision_avoidance_handler.repulsion_strategy()
-    
-    
-  
+        self.first_robot_id = msg.first_robot_id
+        self.second_robot_id = msg.second_robot_id
+ 
     def initialization(self): 
         # wait 4 seconds in order to initialize the different robot architectures
         rospy.sleep(4)
@@ -130,17 +117,33 @@ class MultiRobotSystem:
     def wait_until_section_reached(self):
         if(self.final_status==0):
             self.success_result = True    
+    
+    def avoid_collisions(self):
+        if(self.enable_section == True):
+            print("perform the coverage")  
+
+        elif(self.cancel_section == True and self.stop_robot==True):
+            print("cancel section and stop the robot")
+            self.robot_handler.cancel_section_strategy(self.robot_name)
+            self.robot_handler.disable_thrusters(self.robot_name)
+
+        elif(self.cancel_section == True and  self.robot_repulsion == True):
+            print("repulsion strategy")
+            self.robot_handler.cancel_section_strategy(self.robot_name)
+            self.collision_avoidance_handler.repulsion_strategy(self.first_robot_id,self.second_robot_id)
 
     def mrs_coverage(self,goal):
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
         section_points = self.goal_points[goal]
-        print("-------------------------"+str(section_points)+"---------------------------------")
+        # print("-------------------------"+str(section_points)+"---------------------------------")
         self.section_id = goal
-
+        
         for section in range(len(section_points)):
+
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
             current_section = section_points[section]
+            # self.avoid_collisions()
             if(self.section_id==goal):
                 self.generate_initial_section(self.robot_position_north,self.robot_position_east,current_section)
                 self.section_id = 100000 #TODO:find a better way     
