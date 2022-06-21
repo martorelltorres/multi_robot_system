@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /tf1/Frames1
         - /cola2_odom1/Shape1
-        - /Marker1/Namespaces1
       Splitter Ratio: 0.5411764979362488
     Tree Height: 845
   - Class: rviz/Views
@@ -27,69 +26,53 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        turbot/base_link:
-          Value: false
-        turbot/depth:
-          Value: false
-        turbot/depth_map_origin:
+        turbot1/base_link:
           Value: true
-        turbot/depth_odom_origin:
+        turbot1/depth:
           Value: true
-        turbot/dvl:
-          Value: false
-        turbot/dvl_altitude:
-          Value: false
-        turbot/echosounder:
-          Value: false
-        turbot/gps:
-          Value: false
-        turbot/gps_origin:
+        turbot1/dvl:
           Value: true
-        turbot/imu:
-          Value: false
-        turbot/imu_filter:
-          Value: false
-        turbot/modem:
-          Value: false
-        turbot/modem_origin:
+        turbot1/dvl_altitude:
           Value: true
-        turbot/odom:
+        turbot1/dynamics:
           Value: true
-        turbot/pressure:
-          Value: false
-        turbot/thruster_0:
-          Value: false
-        turbot/thruster_1:
-          Value: false
-        turbot/thruster_2:
-          Value: false
+        turbot1/echosounder:
+          Value: true
+        turbot1/gps:
+          Value: true
+        turbot1/imu:
+          Value: true
+        turbot1/imu_filter:
+          Value: true
+        turbot1/modem:
+          Value: true
+        turbot1/pressure:
+          Value: true
+        turbot1/thruster_0:
+          Value: true
+        turbot1/thruster_1:
+          Value: true
+        turbot1/thruster_2:
+          Value: true
         turbot2/base_link:
           Value: true
         turbot2/depth:
-          Value: true
-        turbot2/depth_map_origin:
-          Value: true
-        turbot2/depth_odom_origin:
           Value: true
         turbot2/dvl:
           Value: true
         turbot2/dvl_altitude:
           Value: true
+        turbot2/dynamics:
+          Value: true
         turbot2/echosounder:
           Value: true
         turbot2/gps:
-          Value: true
-        turbot2/gps_origin:
           Value: true
         turbot2/imu:
           Value: true
         turbot2/imu_filter:
           Value: true
         turbot2/modem:
-          Value: true
-        turbot2/modem_origin:
-          Value: true
-        turbot2/odom:
           Value: true
         turbot2/pressure:
           Value: true
@@ -129,70 +112,56 @@ Visualization Manager:
       Tree:
         world:
           world_ned:
-            turbot/depth_map_origin:
-              {}
-            turbot/gps_origin:
-              {}
-            turbot/modem_origin:
-              {}
-            turbot/odom:
-              turbot/base_link:
-                turbot/dvl:
-                  turbot/dvl_altitude:
-                    {}
-                turbot/echosounder:
+            turbot1/base_link:
+              turbot1/dvl:
+                turbot1/dvl_altitude:
                   {}
-                turbot/gps:
-                  {}
-                turbot/imu:
-                  {}
-                turbot/imu_filter:
-                  {}
-                turbot/modem:
-                  {}
-                turbot/pressure:
-                  turbot/depth:
-                    {}
-                turbot/thruster_0:
-                  {}
-                turbot/thruster_1:
-                  {}
-                turbot/thruster_2:
-                  {}
-              turbot/depth_odom_origin:
+              turbot1/echosounder:
                 {}
-            turbot2/depth_map_origin:
-              {}
-            turbot2/gps_origin:
-              {}
-            turbot2/modem_origin:
-              {}
-            turbot2/odom:
-              turbot2/base_link:
-                turbot2/dvl:
-                  turbot2/dvl_altitude:
-                    {}
-                turbot2/echosounder:
-                  {}
-                turbot2/gps:
-                  {}
-                turbot2/imu:
-                  {}
-                turbot2/imu_filter:
-                  {}
-                turbot2/modem:
-                  {}
-                turbot2/pressure:
-                  turbot2/depth:
-                    {}
-                turbot2/thruster_0:
-                  {}
-                turbot2/thruster_1:
-                  {}
-                turbot2/thruster_2:
-                  {}
-              turbot2/depth_odom_origin:
+              turbot1/gps:
                 {}
+              turbot1/imu:
+                {}
+              turbot1/imu_filter:
+                {}
+              turbot1/modem:
+                {}
+              turbot1/pressure:
+                turbot1/depth:
+                  {}
+              turbot1/thruster_0:
+                {}
+              turbot1/thruster_1:
+                {}
+              turbot1/thruster_2:
+                {}
+            turbot1/dynamics:
+              {}
+            turbot2/base_link:
+              turbot2/dvl:
+                turbot2/dvl_altitude:
+                  {}
+              turbot2/echosounder:
+                {}
+              turbot2/gps:
+                {}
+              turbot2/imu:
+                {}
+              turbot2/imu_filter:
+                {}
+              turbot2/modem:
+                {}
+              turbot2/pressure:
+                turbot2/depth:
+                  {}
+              turbot2/thruster_0:
+                {}
+              turbot2/thruster_1:
+                {}
+              turbot2/thruster_2:
+                {}
+            turbot2/dynamics:
+              {}
             xiroi/dynamics:
               {}
             xiroi/odom:
@@ -232,6 +201,368 @@ Visualization Manager:
       Radius: 0.10000000149011612
       Reference Frame: turbot/base_link_map_origin
       Value: false
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: false
+      Keep: 1000
+      Name: ekf_odom
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 245; 121; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /turbot/navigator/ekf_odom/odometry
+      Unreliable: false
+      Value: false
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: false
+      Keep: 10000
+      Name: ekf_map
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 78; 154; 6
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /turbot/navigator/ekf_map/odometry
+      Unreliable: false
+      Value: false
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: false
+      Keep: 10000
+      Name: cola2_odom
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 46; 52; 54
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /turbot/navigator/odometry
+      Unreliable: false
+      Value: false
+    - Alpha: 1
+      Class: rviz/Polygon
+      Color: 136; 138; 133
+      Enabled: true
+      Name: Polygon
+      Topic: /voronoi_polygons
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/Polygon
+      Color: 25; 255; 0
+      Enabled: true
+      Name: Polygon
+      Topic: /voronoi_offset_polygons
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 255; 25; 0
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Radius: 1
+      Topic: /xiroi/pilot/goal
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 252; 233; 79
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Radius: 1
+      Topic: /turbot2/pilot/goal
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 252; 233; 79
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Radius: 1
+      Topic: /turbot1/pilot/goal
+      Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /anchorRadius
+      Name: Marker
+      Namespaces:
+        robot1: true
+        robot2: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /repulsionRadius
+      Name: Marker
+      Namespaces:
+        robot1: true
+        robot2: true
+      Queue Size: 100
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /turbot2/navigator/ekf_map/odometry
+      Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /xiroi/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /xiroi/pilot: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /turbot1/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /turbot1/pilot: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /turbot2/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /turbot2/pilot: true
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        turbot2/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turbot2/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot2/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: /turbot2/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        turbot1/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        turbot1/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        turbot1/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: /turbot1/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -277,75 +608,6 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        turbot/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        turbot/depth:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/dvl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/dvl_altitude:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/echosounder:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/gps:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/imu_filter:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/modem:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/pressure:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/thruster_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/thruster_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        turbot/thruster_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-      Name: robot_model
-      Robot Description: turbot/robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
     - Angle Tolerance: 0.10000000149011612
       Class: rviz/Odometry
       Covariance:
@@ -364,20 +626,20 @@ Visualization Manager:
           Value: true
         Value: false
       Enabled: true
-      Keep: 1000
-      Name: ekf_odom
+      Keep: 100
+      Name: Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
         Alpha: 1
         Axes Length: 1
         Axes Radius: 0.10000000149011612
-        Color: 245; 121; 0
+        Color: 255; 25; 0
         Head Length: 0.30000001192092896
         Head Radius: 0.10000000149011612
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /turbot/navigator/ekf_odom/odometry
+      Topic: /turbot1/navigator/odometry
       Unreliable: false
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -398,144 +660,20 @@ Visualization Manager:
           Value: true
         Value: false
       Enabled: true
-      Keep: 10000
-      Name: ekf_map
+      Keep: 100
+      Name: Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
         Alpha: 1
         Axes Length: 1
         Axes Radius: 0.10000000149011612
-        Color: 78; 154; 6
+        Color: 255; 25; 0
         Head Length: 0.30000001192092896
         Head Radius: 0.10000000149011612
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /turbot/navigator/ekf_map/odometry
-      Unreliable: false
-      Value: true
-    - Angle Tolerance: 0.10000000149011612
-      Class: rviz/Odometry
-      Covariance:
-        Orientation:
-          Alpha: 0.5
-          Color: 255; 255; 127
-          Color Style: Unique
-          Frame: Local
-          Offset: 1
-          Scale: 1
-          Value: true
-        Position:
-          Alpha: 0.30000001192092896
-          Color: 204; 51; 204
-          Scale: 1
-          Value: true
-        Value: false
-      Enabled: true
-      Keep: 10000
-      Name: cola2_odom
-      Position Tolerance: 0.10000000149011612
-      Shape:
-        Alpha: 1
-        Axes Length: 1
-        Axes Radius: 0.10000000149011612
-        Color: 46; 52; 54
-        Head Length: 0.30000001192092896
-        Head Radius: 0.10000000149011612
-        Shaft Length: 1
-        Shaft Radius: 0.05000000074505806
-        Value: Arrow
-      Topic: /turbot/navigator/odometry
-      Unreliable: false
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /turbot/pilot/waypoint_marker
-      Name: Marker
-      Namespaces:
-        /turbot/pilot: true
-      Queue Size: 100
-      Value: true
-    - Alpha: 1
-      Class: rviz/Polygon
-      Color: 136; 138; 133
-      Enabled: true
-      Name: Polygon
-      Topic: /voronoi_polygons
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic: /turbot/captain/trajectory_path
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 255; 25; 0
-      Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Radius: 1
-      Topic: /xiroi/pilot/goal
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 0; 0; 0
-      Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Radius: 1
-      Topic: /turbot/pilot/goal
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Class: rviz/Polygon
-      Color: 25; 255; 0
-      Enabled: true
-      Name: Polygon
-      Topic: /voronoi_offset_polygons
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic: /xiroi/captain/trajectory_path
+      Topic: /turbot2/navigator/odometry
       Unreliable: false
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -572,74 +710,6 @@ Visualization Manager:
       Topic: /xiroi/ekf_map/odometry
       Unreliable: false
       Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /anchorRadius
-      Name: Marker
-      Namespaces:
-        turbot: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /turbot2/pilot/waypoint_marker
-      Name: Marker
-      Namespaces:
-        /turbot2/pilot: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /xiroi/pilot/waypoint_marker
-      Name: Marker
-      Namespaces:
-        /xiroi/pilot: true
-      Queue Size: 100
-      Value: true
-    - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 204; 41; 204
-      Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Radius: 1
-      Topic: /turbot2/pilot/goal
-      Unreliable: false
-      Value: true
-    - Angle Tolerance: 0.10000000149011612
-      Class: rviz/Odometry
-      Covariance:
-        Orientation:
-          Alpha: 0.5
-          Color: 255; 255; 127
-          Color Style: Unique
-          Frame: Local
-          Offset: 1
-          Scale: 1
-          Value: true
-        Position:
-          Alpha: 0.30000001192092896
-          Color: 204; 51; 204
-          Scale: 1
-          Value: true
-        Value: false
-      Enabled: true
-      Keep: 100
-      Name: Odometry
-      Position Tolerance: 0.10000000149011612
-      Shape:
-        Alpha: 1
-        Axes Length: 1
-        Axes Radius: 0.10000000149011612
-        Color: 255; 25; 0
-        Head Length: 0.30000001192092896
-        Head Radius: 0.10000000149011612
-        Shaft Length: 1
-        Shaft Radius: 0.05000000074505806
-        Value: Arrow
-      Topic: /turbot2/navigator/ekf_map/odometry
-      Unreliable: false
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 165; 165; 165
@@ -663,11 +733,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 10.913890838623047
+      Scale: 9.596671104431152
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: 56.17680740356445
-      Y: 0.27197885513305664
+      X: -43.349205017089844
+      Y: 74.06144714355469
     Saved: ~
 Window Geometry:
   Displays:

@@ -118,7 +118,7 @@ class MultiRobotSystem:
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
             times = self.area_handler.get_estimated_polygons_coverage_time()
-            # print(times)
+            # print("--------------------------------------"+str(times)+"---------------------------------")
             self.goal_points = self.area_handler.define_path_coverage()
             self.robot_task_assignement()
 
@@ -135,6 +135,7 @@ class MultiRobotSystem:
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
         section_points = self.goal_points[goal]
+        print("-------------------------"+str(section_points)+"---------------------------------")
         self.section_id = goal
 
         for section in range(len(section_points)):

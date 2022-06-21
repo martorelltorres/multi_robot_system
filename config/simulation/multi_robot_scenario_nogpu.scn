@@ -29,44 +29,6 @@
 		</friction_table>
 	</materials>
 
-	<looks>
-		<look name="white" gray="1.0" roughness="0.2"/>
-		<look name="Yellow" rgb="1.0 0.9 0.0" roughness="0.3"/>
-		<look name="Blue" rgb="0.0 0.0 1.0" roughness="0.3"/>
-		<look name="black" gray="0.05" roughness="0.2"/>
-		<look name="hull" gray="1.0" roughness="0.3" texture="turbot/hull_tex.png"/>
-		<look name="seabed" gray="0.05" roughness="0.2" texture="terrain/illetes_sq_texture_rot.jpg"/>
-		<!-- <look name="posidonia" gray="0.1" roughness="0.0" texture="caterina_blender/posidonia_recort.png"/>  -->
-		<!-- <look name="posidonia" gray="0.1" roughness="0.0" texture="caterina_blender/posidonia2.png"/> 
-		<look name="posidonia_verda" gray="0.1" roughness="0.0" texture="caterina_blender/posidonia_verda.png"/>  -->
-		<!-- <look name="seabed3" gray="0.1" roughness="0.0" texture="terrain/rock_texture.jpeg"/>  -->
-		<look name="mosaic" gray="0.05" roughness="0.2" texture="terrain/mosaic1.jpg"/>
-		<look name="arena" gray="0.05" roughness="0.2" texture="caterina_blender/sand_texture.jpg"/>
-		<look name="mosaic_invhali" gray="0.05" roughness="0.2" texture="terrain/mosaic_invhali_dense_port_2021.jpg"/>
-		<look name="seabed2" rgb="0.7 0.7 0.5" roughness="0.9"/>
-		<look name="grey" gray="0.5" roughness="0.5" metalness="0.8"/>
-		<look name="Gray" gray="0.3" roughness="0.4" metalness="0.5"/>
-	</looks>
-	
-<!-- 
-	<static name="plano_posidonia" type="model">
-		<physical>
-			<mesh filename="caterina_blender/posidonia_verda_2_matas.obj" scale="1.0"/>
-			<origin rpy="0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-		</physical>
-		<material name="Rock_test"/>
-		<look name="posidonia_verda"/> 
-		<world_transform rpy="0.0 0.0 0.0" xyz="0.0 0.0 5.5"/>
-	</static>
-	<static name="Arena" type="terrain"> 
-		<material name="Rock"/>
-		<look name="arena"/>
-		<height_map filename="caterina_blender/pos_sand_simple_gt.png"/>
-		<dimensions scalex="1" scaley="1" height="0.2"/>
-		<world_transform rpy="0.0 0.0 0.0" xyz="0.0 0.0 5.5"/>
-	</static> -->
-
-	
 
 	<robot name="turbot" fixed="false" self_collisions="false">
 		<base_link name="Vehicle" type="compound" physics="submerged">
@@ -214,13 +176,6 @@
 			<ros_publisher topic="/turbot/navigator/gps_raw"/>
 		</sensor>
 
-		<sensor name="stereo_down/left" type="camera" rate="2.0">
-			<link name="Vehicle"/>
-			<origin rpy="0.0 0.0 1.571" xyz="0.4 -0.4 0.2"/>
-			<specs resolution_x="480" resolution_y="360" horizontal_fov="26.0"/>
-			<ros_publisher topic="/turbot/stereo_down/left"/>
-		</sensor>
-
 		<actuator name="ThrusterHeave" type="thruster">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 1.571 0.0" xyz="0.0 0.0 0.07"/>
@@ -235,8 +190,8 @@
 		<actuator name="ThrusterSurgeStarboard" type="thruster">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="-0.573 0.167 0.0"/>
-			<!-- <specs thrust_coeff="0.698" thrust_coeff_backward="0.293" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/> -->
-			<specs thrust_coeff="0.68" thrust_coeff_backward="0.28" torque_coeff="0.01" max_rpm="4000.0"/>
+			<!-- <specs thrust_coeff="0.698" thrust_coeff_backward="0.293" torque_coeff="0.01" max_rpm="4000.0" /> -->
+			<specs thrust_coeff="0.8" thrust_coeff_backward="0.4" torque_coeff="0.01" max_rpm="4000.0"/>
 			<propeller diameter="0.08" right="true">
 				<mesh filename="turbot/propeller.obj" scale="1.0"/>
 				<material name="Neutral"/>
@@ -248,7 +203,7 @@
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="-0.573 -0.167 0.0"/>
 			<!-- <specs thrust_coeff="0.698" thrust_coeff_backward="0.293" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/> -->
-			<specs thrust_coeff="0.68" thrust_coeff_backward="0.28" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/>
+			<specs thrust_coeff="0.8" thrust_coeff_backward="0.4" torque_coeff="0.01" max_rpm="4000.0" inverted="true"/>
 			<propeller diameter="0.08" right="false">
 				<mesh filename="turbot/propeller.obj" scale="1.0"/>>
 				<material name="Neutral"/>
@@ -261,7 +216,7 @@
 		<ros_subscriber thrusters="/turbot/controller/thruster_setpoints"/> 
     </robot>
     
-    <include file="$(find cola2_turbot)/config/simulation/scenarios/turbot2.scn">
+    <include file="$(find multi_robot_system)/config/simulation/turbot2_nogpu.scn">
         <arg name="position" value="-2.0 -2.0 1.0"/>
     </include>
 
