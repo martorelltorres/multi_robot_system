@@ -356,6 +356,7 @@ Visualization Manager:
       Namespaces:
         robot1: true
         robot2: true
+        robot3: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -365,6 +366,7 @@ Visualization Manager:
       Namespaces:
         robot1: true
         robot2: true
+        robot3: true
       Queue Size: 100
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -733,11 +735,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 9.596671104431152
+      Scale: 7.431661605834961
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: -43.349205017089844
-      Y: 74.06144714355469
+      X: -39.14842987060547
+      Y: 52.25851058959961
     Saved: ~
 Window Geometry:
   Displays:

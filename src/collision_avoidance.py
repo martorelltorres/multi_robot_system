@@ -59,17 +59,23 @@ class CollisionAvoidance:
         self.robot2_name = rospy.get_param('~/robot2_name',default='turbot2')
         self.robot3_name = rospy.get_param('~/robot3_name',default='xiroi') 
 
-        self.r1_bvr_topic = rospy.get_param('~r1_bvr_topic',default='/xiroi/controller/body_velocity_req') 
-        self.robot_slave_name = rospy.get_param('~robot_slave_name',default='xiroi')
-        self.robot_id = rospy.get_param('~robot_id',default='1')
 
         self.robot_handler = robot("robot")
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
+
+        # get general info from robots
+        self.coverage_times = self.area_handler.get_estimated_polygons_coverage_time()
+        self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
        
         # Get config parameters
         self.name = name
         self.ns = rospy.get_namespace()
+
+        self.robot_names =[]
+        self.robot_names.append(self.robot1_name)
+        self.robot_names.append(self.robot2_name)
+        self.robot_names.append(self.robot3_name)
 
         #Subscribers
         rospy.Subscriber(self.r1_navigation_topic,
@@ -91,10 +97,6 @@ class CollisionAvoidance:
                          queue_size=1)
 
         #Publishers
-        self.corrected_bvr = rospy.Publisher(self.r1_bvr_topic,
-                                                BodyVelocityReq,
-                                                queue_size=1)
-
         self.markerPub_repulsion = rospy.Publisher('repulsionRadius',
                                                     Marker,
                                                     queue_size=1)
@@ -106,8 +108,7 @@ class CollisionAvoidance:
         self.collision_avoidance_pub = rospy.Publisher('collission_avoidance_info',
                                             AvoidCollision,
                                             queue_size=1)
-
-    
+  
     def update_nav_status(self,msg,robot):
 
         if(robot==1):
@@ -152,13 +153,12 @@ class CollisionAvoidance:
     def get_robot_position(self,robot_id):
 
         if(robot_id == 1):
-            return(self.robot1_position_north,self.robot1_position_east,self.robot1_position_depth)
+            return(self.robot1_position_north,self.robot1_position_east,self.robot1_position_depth,self.robot1_yaw)
         elif(robot_id == 2):
-            return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth)
+            return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth,self.robot2_yaw)
         elif(robot_id == 3):
-            return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth)
+            return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth,self.robot3_yaw)
 
-    
     def set_services(self,robot_name):
         # enable thrusters service
         rospy.wait_for_service("/"+str(robot_name)+'/controller/enable_thrusters', 10)
@@ -185,9 +185,6 @@ class CollisionAvoidance:
             self.collision_avoidance()
             
     def assign_priorities(self):
-        # get general info from robots
-        self.coverage_times = self.area_handler.get_estimated_polygons_coverage_time()
-        self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
         # In order to assign the priority we have been take into account the tasks assigned to each 
         # robot and the estimated time to finish the coverage of each assigned areas 
         robot_priorities=[]      
@@ -201,9 +198,9 @@ class CollisionAvoidance:
         # The higher time_task_coverage the higher priority
         # TODO: change the method for more than one robot_master
         max_priority = max(robot_priorities)
-        robot_id = robot_priorities.index(max_priority)
+        self.robot_master_id = robot_priorities.index(max_priority)
         #remove 
-        return(robot_id)
+        return(self.robot_master_id)
 
     def collision_avoidance(self):
 
@@ -242,24 +239,21 @@ class CollisionAvoidance:
         # rospy.loginfo(self.radius)
 
         if(self.radius > self.anchor_radius):
-            self.cancel_section = False
-            self.enable_section = True
-            self.stop_robot = False
-            self.robot_repulsion = False
+            self.coverage = True
+            self.adrift = False
+            self.repulsion = False
             self.send_collision_avoidance_info(robot_1,robot_2)
 
         if(self.repulsion_radius <= self.radius <= self.anchor_radius):
-            self.cancel_section = True
-            self.enable_section = False
-            self.stop_robot = True
-            self.robot_repulsion = False
+            self.adrift = True
+            self.repulsion = False
+            self.coverage = False
             self.send_collision_avoidance_info(robot_1,robot_2)
             
         elif(self.radius <= self.repulsion_radius and self.initialized):
-            self.cancel_section = True
-            self.enable_section = False
-            self.stop_robot = False
-            self.robot_repulsion = True
+            self.repulsion = True
+            self.adrift = False
+            self.coverage = False
             self.send_collision_avoidance_info(robot_1,robot_2)
 
     def send_collision_avoidance_info(self,robot_1,robot_2):
@@ -269,41 +263,80 @@ class CollisionAvoidance:
         collision_msg.first_robot_id = robot_1
         collision_msg.second_robot_id = robot_2
         collision_msg.distance = self.radius
-        collision_msg.cancel_section = self.cancel_section
-        collision_msg.enable_section = self.enable_section
-        collision_msg.stop_robot = self.stop_robot
-        collision_msg.robot_repulsion = self.robot_repulsion
-        collision_msg.robot_master = "robot"+str(self.robot_master +1) 
+        collision_msg.robot_master_id = self.robot_master_id
+        collision_msg.repulsion = self.repulsion
+        collision_msg.adrift = self.adrift
+        collision_msg.coverage = self.coverage
+
+        collision_msg.robot_master = self.robot_names[self.robot_master]
+
+        if(robot_1>robot_2):
+            collision_msg.robot_slave = self.robot_names[robot_1-1]
+        else:
+            collision_msg.robot_slave = self.robot_names[robot_2-1]
+
         self.collision_avoidance_pub.publish(collision_msg)
 
-    def extract_safety_position(self,robot_1,robot_2):
-        robot1_north,robot1_east,robot1_depth = self.get_robot_position(robot_1)
-        robot2_north,robot2_east,robot2_depth = self.get_robot_position(robot_2)
-        self.m =-(1/ (robot1_east-robot2_east)/(robot1_north-robot2_north))
-        self.pointx = robot2_north
-        self.pointy = robot2_east
+    def extract_safety_position(self,current_robot,master_robot,robot):
+        robot1_north,robot1_east,robot1_depth, self.robot1_yaw = self.get_robot_position(current_robot)
+        robot2_north,robot2_east,robot2_depth, self.robot2_yaw = self.get_robot_position(robot)
+        master_north,master_east,master_depth, self.master_yaw = self.get_robot_position(master_robot)
 
-        if (robot1_north > robot2_north):
-            self.x = robot2_north-1
+        if(robot1_north>robot2_north):
+            vector_r1_r2 = [(-robot1_north+robot2_north),(-robot1_east+robot2_east)]
         else:
-            self.x = robot2_north+1
+            vector_r1_r2 = [(-robot1_north-robot2_north),(-robot1_east-robot2_east)]
+        
+        if(robot1_north>master_north):
+            vector_r1_master = [(-robot1_north+master_north),(-robot1_north+master_east)]
+        else:
+            vector_r1_master = [(-robot1_north-master_north),(-robot1_north-master_east)]
+
+        final_vector = [(vector_r1_master[0]+vector_r1_r2[0]),(vector_r1_master[1]+vector_r1_r2[1])]
+
+        self.m =-(1/ (robot1_east-final_vector[1])/(robot1_north-final_vector[0]))
+        self.pointx = robot1_north
+        self.pointy = robot1_east
+
+        if (robot1_north > final_vector[0]):
+            self.x = final_vector[0]-1
+        else:
+            self.x = final_vector[0]+1
         self.y = self.m*(self.x - self.pointy) + self.pointx 
 
-    def repulsion_strategy(self,robot_1,robot_2):
-        self.extract_safety_position(robot_1,robot_2)
+
+    # def extract_safety_position(self,robot_1,robot_2):
+    #     robot1_north,robot1_east,robot1_depth, self.robot1_yaw = self.get_robot_position(robot_1)
+    #     robot2_north,robot2_east,robot2_depth,self.robot2_yaw = self.get_robot_position(robot_2)
+    #     self.m =-(1/ (robot1_east-(robot2_east+0.01))/(robot1_north-(robot2_north+0.01)))
+    #     self.pointx = robot2_north
+    #     self.pointy = robot2_east
+
+    #     if (robot1_north > robot2_north):
+    #         self.x = robot2_north-1
+    #     else:
+    #         self.x = robot2_north+1
+    #     self.y = self.m*(self.x - self.pointy) + self.pointx 
+
+    def repulsion_strategy(self,current_robot,master_robot,robot,robot_bvr_pub):
+        self.extract_safety_position(current_robot,master_robot,robot)
+        robot_north,robot_east,robot_depth, self.robot_yaw = self.get_robot_position(current_robot)
         constant_linear_velocity = 1
         constant_angular_velocity = 0.3
         linear_velocity = constant_linear_velocity
         alpha_ref = atan2(self.y,self.x)
         #obtain the minimum agle between both robots
-        angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
+        angle_error = atan2(sin(alpha_ref-self.robot_yaw), cos(alpha_ref-self.robot_yaw))
         self.angular_velocity = constant_angular_velocity * angle_error
         self.xr = linear_velocity*cos(angle_error)
         self.yr = linear_velocity*sin(angle_error)
-        self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
+        self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity,robot_bvr_pub)
 
     
-    def corrected_bvr_pusblisher(self,corrected_velocity_x,corrected_velocity_y,corrected_angular_z):
+    def corrected_bvr_pusblisher(self,corrected_velocity_x,corrected_velocity_y,corrected_angular_z,robot_bvr_pub):
+        self.corrected_bvr = rospy.Publisher(robot_bvr_pub,
+                                        BodyVelocityReq,
+                                        queue_size=1)
         # NEW PRIORITY DEFINITIONS
         # PRIORITY_TELEOPERATION_LOW = 0
         # PRIORITY_SAFETY_LOW = 5
@@ -314,7 +347,7 @@ class CollisionAvoidance:
         # PRIORITY_SAFETY_HIGH  = 50
         # PRIORITY_TELEOPERATION_HIGH = 60 
         bvr = BodyVelocityReq()
-        bvr.header.frame_id    = "/xiroi/base_link"
+        bvr.header.frame_id    = "multi_robot_system"
         bvr.header.stamp       = rospy.Time.now()
         bvr.goal.requester     =  self.name
         bvr.disable_axis.x     = False

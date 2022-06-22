@@ -18,7 +18,7 @@ from multi_robot_system.msg import AvoidCollision
 from area_partition import area_partition
 from task_allocator import task_allocation
 from robot import robot
-# from collision_avoidance import CollisionAvoidance
+from collision_avoidance import CollisionAvoidance
 
 class MultiRobotSystem:
     
@@ -29,18 +29,20 @@ class MultiRobotSystem:
         self.robot_ID = self.get_param('~robot_ID',0)   
         self.robot_name = self.get_param('~robot_name','turbot') 
         self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
+        self.robot_bvr_topic = self.get_param('~robot_bvr_topic','/turbot/pilot/world_section_req/result') 
         self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
         self.number_of_robots = self.get_param('number_of_robots')
 
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = robot("robot")
-        # self.collision_avoidance_handler = CollisionAvoidance("collision_avoidance_handler")
+        self.collision_avoidance_handler = CollisionAvoidance("collision_avoidance_handler")
 
         self.system_initialization = True
         self.success_result = False
         self.data_gattered = False
         self.points = []
+        self.section_cancelled = False
 
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -87,20 +89,22 @@ class MultiRobotSystem:
 
     def collision_avoidance(self, msg):
         self.distance = msg.distance
-        self.enable_section = msg.enable_section
-        self.cancel_section = msg.cancel_section 
-        self.stop_robot = msg.stop_robot
-        self.robot_repulsion = msg.robot_repulsion
+        self.coverage = msg.coverage
+        self.repulsion = msg.repulsion 
+        self.adrift = msg.adrift
         self.first_robot_id = msg.first_robot_id
         self.second_robot_id = msg.second_robot_id
+        self.robot_master_id = msg.robot_master_id
+        self.robot_master = msg.robot_master
+        self.robot_slave = msg.robot_slave
+        self.avoid_collisions()
  
     def initialization(self): 
-        # wait 4 seconds in order to initialize the different robot architectures
-        rospy.sleep(4)
+        # wait 3 seconds in order to initialize the different robot architectures
+        rospy.sleep(3)
         if(self.system_initialization==True):
             self.system_initialization = False 
             self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
-            # [['Robot_0', array([0, 1])], ['Robot_1', array([2, 3])]]
             self.goal_polygons = self.goals[self.robot_ID][1]
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
@@ -119,39 +123,48 @@ class MultiRobotSystem:
             self.success_result = True    
     
     def avoid_collisions(self):
-        if(self.enable_section == True):
-            print("perform the coverage")  
+        # avoid colisions method only affects robot_slaves
+        print("master id: "+str(self.robot_master_id)+ "robot_id: "+str(self.robot_ID))
 
-        elif(self.cancel_section == True and self.stop_robot==True):
-            print("cancel section and stop the robot")
-            self.robot_handler.cancel_section_strategy(self.robot_name)
-            self.robot_handler.disable_thrusters(self.robot_name)
+        if(self.robot_master_id!=self.robot_ID):
+            if(self.repulsion == True):
 
-        elif(self.cancel_section == True and  self.robot_repulsion == True):
-            print("repulsion strategy")
-            self.robot_handler.cancel_section_strategy(self.robot_name)
-            self.collision_avoidance_handler.repulsion_strategy(self.first_robot_id,self.second_robot_id)
+                if((self.robot_master_id==0 and self.robot_ID==1) or (self.robot_master_id==1 and self.robot_ID==0)):
+                    robot2_slave = 2
+                elif((self.robot_master_id==1 and self.robot_ID==2) or (self.robot_master_id==2 and self.robot_ID==1)):
+                    robot2_slave = 0
+                elif((self.robot_master_id==0 and self.robot_ID==2) or (self.robot_master_id==2 and self.robot_ID==0)):
+                    robot2_slave = 1
+                self.robot_master = self.robot_master_id +1
+                self.collision_avoidance_handler.repulsion_strategy(self.robot_ID,self.robot_master,robot2_slave,self.robot_bvr_topic)
+
+            elif(self.adrift == True):
+                # self.section_cancelled=False
+                print("cancel section and stop the robot")
+                # self.robot_handler.cancel_section_strategy(self.robot_slave)
+                # self.robot_handler.disable_thrusters(self.robot_slave)
+
+
+
 
     def mrs_coverage(self,goal):
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
         section_points = self.goal_points[goal]
-        # print("-------------------------"+str(section_points)+"---------------------------------")
-        self.section_id = goal
-        
-        for section in range(len(section_points)):
 
+        self.section_id = goal
+        for section in range(len(section_points)):
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
-            current_section = section_points[section]
-            # self.avoid_collisions()
+            self.current_section = section_points[section]
+            
             if(self.section_id==goal):
-                self.generate_initial_section(self.robot_position_north,self.robot_position_east,current_section)
+                self.generate_initial_section(self.robot_position_north,self.robot_position_east,self.current_section)
                 self.section_id = 100000 #TODO:find a better way     
 
             # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
-            first_point = current_section[0]
+            first_point = self.current_section[0]
             first_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,first_point[0],first_point[1])
-            second_point = current_section[1]
+            second_point = self.current_section[1]
             second_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,second_point[0],second_point[1])
 
             if(first_point_distance < second_point_distance):
@@ -162,6 +175,7 @@ class MultiRobotSystem:
                 final_point = first_point
 
             self.robot_handler.send_section_strategy(initial_point,final_point)
+            # self.avoid_collisions()
 
             self.wait_until_section_reached()
 

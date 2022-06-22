@@ -1,9 +1,11 @@
 Header header
 float64 distance
-bool cancel_section
-bool enable_section
-bool stop_robot
-bool robot_repulsion
 string robot_master
+string robot_slave
+uint8 robot_master_id
 uint8 first_robot_id
 uint8 second_robot_id
+bool repulsion
+bool adrift
+bool coverage
+

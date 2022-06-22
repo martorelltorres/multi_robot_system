@@ -4,7 +4,7 @@
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
-  <arg name="enableCollisonAvoidance" default="false"/>
+  <arg name="enableCollisonAvoidance" default="true"/>
   <arg name="enableCommunicationModule" default="false"/>
 
   <!-- general robot information -->
@@ -37,6 +37,7 @@
     <param name="navigation_topic" value="$(arg navigation_topic_robot_1)"/>
     <param name="section_action" value="/$(arg robot_1)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_1)/pilot/world_section_req/result"/>
+    <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
     <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
   </node>
 
@@ -47,6 +48,7 @@
     <param name="navigation_topic" value="$(arg navigation_topic_robot_2)"/>
     <param name="section_action" value="/$(arg robot_2)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_2)/pilot/world_section_req/result"/>
+    <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
     <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/>
   </node>
 
@@ -57,23 +59,17 @@
     <param name="navigation_topic" value="$(arg navigation_topic_robot_3)"/>
     <param name="section_action" value="/$(arg robot_3)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_3)/pilot/world_section_req/result"/>
+    <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
     <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
   </node>
 
   <!-- Collision avoidance module -->
   <node if="$(arg enableCollisonAvoidance)" name="collision_avoidance" pkg="multi_robot_system" type="collision_avoidance.py" output="screen" respawn="true">
-    <!-- <param name="r0_navigation_topic" value="$(arg navigation_topic_robot_1)"/>
-    <param name="r1_navigation_topic" value="$(arg navigation_topic_robot_2)"/>
-    <param name="r2_navigation_topic" value="$(arg navigation_topic_robot_3)"/> -->
     <param name="robot1_name" value="$(arg robot_1)"/>
     <param name="robot2_name" value="$(arg robot_2)"/>
     <param name="robot3_name" value="$(arg robot_3)"/>
     <param name="repulsion_radius" value="10"/>
     <param name="anchor_radius" value="20"/>
-
-    <param name="robot_ID" value="1"/>
-    <param name="robot_slave_name" value="xiroi"/>
-    <param name="r1_bvr_topic" value="/xiroi/controller/body_velocity_req"/>
   </node>
 
   <!-- Communications module -->

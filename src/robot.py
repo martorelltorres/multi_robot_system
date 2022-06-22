@@ -87,7 +87,7 @@ class robot:
         section_req.surge_velocity = self.surge_velocity
         section_req.timeout = 6000
 
-        # send section goale using actionlib
+        # send section goal using actionlib
         self.success_result = False
         self.is_section_actionlib_running = True
         self.section_strategy.send_goal(section_req)
@@ -98,9 +98,12 @@ class robot:
     def get_robot_id(self):
         return(self.robot_ID)
 
-    def cancel_section_strategy(self,robot_name):
-        if(robot_name =="xiroi"):
+    def cancel_section_strategy(self,section):
+        if self.is_section_actionlib_running==True:
+            # print("------------------------" + str(section) +"-----------------------------")
             self.section_strategy.cancel_goal()
+            section_cancelled = True
+        return(section_cancelled)
    
     def update_section_result(self,msg):
         final_status = msg.result.final_status
