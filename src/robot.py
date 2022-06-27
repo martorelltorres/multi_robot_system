@@ -6,6 +6,7 @@ from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 from cola2_msgs.msg import  NavSts
+from cola2_msgs.srv import Goto, GotoRequest
 import numpy as np
 from std_srvs.srv import Empty, EmptyResponse
 
@@ -22,7 +23,7 @@ class robot:
         self.section_action = self.get_param('~section_action','/xiroi/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/xiroi/pilot/world_section_req/result') 
         self.robot_ID = self.get_param('~robot_ID',0)
-        self.robot_name = self.get_param('~robot_name','turbot')
+        self.robot_name = self.get_param('~robot_name','turbot1')
         self.robot_slave_name = rospy.get_param('~robot_slave_name',default='xiroi')
         self.distance = []
         self.is_section_actionlib_running = False
@@ -45,6 +46,15 @@ class robot:
         # except rospy.ServiceException, e:
         #     rospy.logwarn("%s: Service call failed: %s", self.name, e)
 
+        # enable goto
+        try:
+            rospy.wait_for_service('/'+str(self.robot_name)+'/captain/enable_goto', 20)
+            self.goto_srv = rospy.ServiceProxy(
+                        '/'+str(self.robot_name)+'/captain/enable_goto', Goto)
+        except rospy.exceptions.ROSException:
+            rospy.logerr('%s: error creating client to goto service',
+                         self.name)
+            rospy.signal_shutdown('Error creating client to goto service')
 
         # subscribers
         rospy.Subscriber(self.navigation_topic ,
@@ -63,6 +73,32 @@ class robot:
     # def enable_thrusters(self,robot_name):
     #     if(robot_name == self.robot_slave_name):
     #         self.enable_thrusters_srv()
+
+    def send_goto_strategy(self, position_x, position_y,linear_velocity):
+        """Goto to position x, y, z, at velocity vel."""
+        # // Define waypoint attributes
+        goto_req = GotoRequest()
+        goto_req.altitude = 0
+        goto_req.altitude_mode = False
+        goto_req.linear_velocity.x = linear_velocity
+        goto_req.position.x = position_x
+        goto_req.position.y = position_y
+        goto_req.position.z = 0.0
+        goto_req.position_tolerance.x = 2
+        goto_req.position_tolerance.y = 2
+        goto_req.position_tolerance.z = 2
+        goto_req.blocking = True
+        goto_req.keep_position = False
+        goto_req.disable_axis.x = False
+        goto_req.disable_axis.y = True
+        goto_req.disable_axis.z = False
+        goto_req.disable_axis.roll = True
+        goto_req.disable_axis.yaw = False
+        goto_req.disable_axis.pitch = True
+        goto_req.priority = 10
+        goto_req.reference = 0 #REFERENCE_NED=0  REFERENCE_GLOBAL=1 REFERENCE_VEHICLE=2
+        self.goto_srv(goto_req)
+        rospy.sleep(1.0)
     
     def send_section_strategy(self,initial_point,final_point):
         initial_position_x = initial_point[0]

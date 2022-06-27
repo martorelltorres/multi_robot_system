@@ -11,7 +11,7 @@
 
     <!-- Common Flags -->
     <arg name="cola2_nav" default="true"/>
-    <arg name="enableSafety" default="false"/>
+    <arg name="enableSafety" default="true"/>
     <arg name="openLoopTeleoperation" default="false"/>
     <arg name="enableUSBLloc" default="false"/>   
     <arg name="enableRviz" default="false"/>

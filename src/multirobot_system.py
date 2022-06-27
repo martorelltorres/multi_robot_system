@@ -109,7 +109,6 @@ class MultiRobotSystem:
             print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
             print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
             times = self.area_handler.get_estimated_polygons_coverage_time()
-            # print("--------------------------------------"+str(times)+"---------------------------------")
             self.goal_points = self.area_handler.define_path_coverage()
             self.robot_task_assignement()
 
@@ -124,23 +123,26 @@ class MultiRobotSystem:
     
     def avoid_collisions(self):
         # avoid colisions method only affects robot_slaves
-        print("master id: "+str(self.robot_master_id)+ "robot_id: "+str(self.robot_ID))
+        # print("master id: "+str(self.robot_master_id)+ "robot_id: "+str(self.robot_ID))
 
         if(self.robot_master_id!=self.robot_ID):
             if(self.repulsion == True):
-
                 if((self.robot_master_id==0 and self.robot_ID==1) or (self.robot_master_id==1 and self.robot_ID==0)):
-                    robot2_slave = 2
+                    robot_slave = 2
                 elif((self.robot_master_id==1 and self.robot_ID==2) or (self.robot_master_id==2 and self.robot_ID==1)):
-                    robot2_slave = 0
+                    robot_slave = 0
                 elif((self.robot_master_id==0 and self.robot_ID==2) or (self.robot_master_id==2 and self.robot_ID==0)):
-                    robot2_slave = 1
-                self.robot_master = self.robot_master_id +1
-                self.collision_avoidance_handler.repulsion_strategy(self.robot_ID,self.robot_master,robot2_slave,self.robot_bvr_topic)
+                    robot_slave = 1
+                # print ("-------------------------------------------")
+                # print("Robot id: "+str(self.robot_ID))
+                # print("Robot master id: "+str(self.robot_master_id))
+                # print("Robot slave id: "+str(robot_slave))
+
+                self.collision_avoidance_handler.repulsion_strategy(self.robot_ID,self.robot_master_id,robot_slave,self.robot_bvr_topic)
 
             elif(self.adrift == True):
-                # self.section_cancelled=False
-                print("cancel section and stop the robot")
+                self.section_cancelled=False
+                print("********************cancel section and stop the robot************************************")
                 # self.robot_handler.cancel_section_strategy(self.robot_slave)
                 # self.robot_handler.disable_thrusters(self.robot_slave)
 

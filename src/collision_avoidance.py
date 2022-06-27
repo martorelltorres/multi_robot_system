@@ -81,19 +81,19 @@ class CollisionAvoidance:
         rospy.Subscriber(self.r1_navigation_topic,
                          NavSts,
                          self.update_nav_status,
-                         1,#send a robot id to the callback function
+                         0,#send a robot id to the callback function
                          queue_size=1)   
 
         rospy.Subscriber(self.r2_navigation_topic,
                          NavSts,
                          self.update_nav_status,
-                         2,
+                         1,
                          queue_size=1)         
 
         rospy.Subscriber(self.r3_navigation_topic,
                          NavSts,
                          self.update_nav_status,
-                         3,
+                         2,
                          queue_size=1)
 
         #Publishers
@@ -111,7 +111,7 @@ class CollisionAvoidance:
   
     def update_nav_status(self,msg,robot):
 
-        if(robot==1):
+        if(robot==0):
             if(self.robot1_data == False):
                 robot_name = self.robot1_name
                 self.set_services(robot_name)
@@ -124,7 +124,7 @@ class CollisionAvoidance:
             self.repulsion_marker(self.robot1_position_north,self.robot1_position_east,robot)
             self.system_init()
 
-        elif(robot==2):
+        elif(robot==1):
             if(self.robot2_data == False):
                 robot_name = self.robot2_name
                 self.set_services(robot_name)
@@ -137,7 +137,7 @@ class CollisionAvoidance:
             self.repulsion_marker(self.robot2_position_north,self.robot2_position_east,robot)
             self.system_init()
 
-        elif(robot==3):
+        elif(robot==2):
             if(self.robot3_data == False):
                 robot_name = self.robot3_name
                 self.set_services(robot_name)
@@ -152,11 +152,11 @@ class CollisionAvoidance:
 
     def get_robot_position(self,robot_id):
 
-        if(robot_id == 1):
+        if(robot_id == 0):
             return(self.robot1_position_north,self.robot1_position_east,self.robot1_position_depth,self.robot1_yaw)
-        elif(robot_id == 2):
+        elif(robot_id == 1):
             return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth,self.robot2_yaw)
-        elif(robot_id == 3):
+        elif(robot_id == 2):
             return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth,self.robot3_yaw)
 
     def set_services(self,robot_name):
@@ -277,93 +277,33 @@ class CollisionAvoidance:
 
         self.collision_avoidance_pub.publish(collision_msg)
 
-    def extract_safety_position(self,current_robot,master_robot,robot):
-        robot1_north,robot1_east,robot1_depth, self.robot1_yaw = self.get_robot_position(current_robot)
-        robot2_north,robot2_east,robot2_depth, self.robot2_yaw = self.get_robot_position(robot)
-        master_north,master_east,master_depth, self.master_yaw = self.get_robot_position(master_robot)
+    def extract_safety_position(self,current_robot,robot_master,robot_slave):
+        print("The current robot is "+str(current_robot)+" the slave robot is: "+str(robot_slave)+" and the master_robot is: "+str(robot_master))
+        rospy.sleep(1)
+        current_north,current_east,current_depth, self.robot1_yaw = self.get_robot_position(current_robot)
+        slave_north,slave_east,slave_depth, self.robot2_yaw = self.get_robot_position(robot_slave)
+        master_north,master_east,master_depth, self.master_yaw = self.get_robot_position(robot_master)
 
-        if(robot1_north>robot2_north):
-            vector_r1_r2 = [(-robot1_north+robot2_north),(-robot1_east+robot2_east)]
-        else:
-            vector_r1_r2 = [(-robot1_north-robot2_north),(-robot1_east-robot2_east)]
+
+        current_slave_vector = [(slave_north-current_north),(slave_east-current_east)]
+        current_master_vector = [(master_north-current_north),(master_east-current_east)]
+        sum_vector = [-(current_master_vector[0]+current_slave_vector[0]),-(current_master_vector[1]+current_slave_vector[1])]
+
+        final_position = [(current_north+sum_vector[0]),(current_east+sum_vector[1])]
         
-        if(robot1_north>master_north):
-            vector_r1_master = [(-robot1_north+master_north),(-robot1_north+master_east)]
-        else:
-            vector_r1_master = [(-robot1_north-master_north),(-robot1_north-master_east)]
+        self.x = final_position[0]
+        self.y = final_position[1]
 
-        final_vector = [(vector_r1_master[0]+vector_r1_r2[0]),(vector_r1_master[1]+vector_r1_r2[1])]
-
-        self.m =-(1/ (robot1_east-final_vector[1])/(robot1_north-final_vector[0]))
-        self.pointx = robot1_north
-        self.pointy = robot1_east
-
-        if (robot1_north > final_vector[0]):
-            self.x = final_vector[0]-1
-        else:
-            self.x = final_vector[0]+1
-        self.y = self.m*(self.x - self.pointy) + self.pointx 
+        initial_point = [current_north,current_east]
+        final_point = [self.x, self.y]
+        self.robot_handler.send_section_strategy(initial_point,final_point)
+        # self.robot_handler.send_goto_strategy(self.x,self.y,1)
 
 
-    # def extract_safety_position(self,robot_1,robot_2):
-    #     robot1_north,robot1_east,robot1_depth, self.robot1_yaw = self.get_robot_position(robot_1)
-    #     robot2_north,robot2_east,robot2_depth,self.robot2_yaw = self.get_robot_position(robot_2)
-    #     self.m =-(1/ (robot1_east-(robot2_east+0.01))/(robot1_north-(robot2_north+0.01)))
-    #     self.pointx = robot2_north
-    #     self.pointy = robot2_east
-
-    #     if (robot1_north > robot2_north):
-    #         self.x = robot2_north-1
-    #     else:
-    #         self.x = robot2_north+1
-    #     self.y = self.m*(self.x - self.pointy) + self.pointx 
-
-    def repulsion_strategy(self,current_robot,master_robot,robot,robot_bvr_pub):
-        self.extract_safety_position(current_robot,master_robot,robot)
-        robot_north,robot_east,robot_depth, self.robot_yaw = self.get_robot_position(current_robot)
-        constant_linear_velocity = 1
-        constant_angular_velocity = 0.3
-        linear_velocity = constant_linear_velocity
-        alpha_ref = atan2(self.y,self.x)
-        #obtain the minimum agle between both robots
-        angle_error = atan2(sin(alpha_ref-self.robot_yaw), cos(alpha_ref-self.robot_yaw))
-        self.angular_velocity = constant_angular_velocity * angle_error
-        self.xr = linear_velocity*cos(angle_error)
-        self.yr = linear_velocity*sin(angle_error)
-        self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity,robot_bvr_pub)
+    def repulsion_strategy(self,current_robot,master_robot,robot_slave,robot_bvr_pub):
+        self.extract_safety_position(current_robot,master_robot,robot_slave)
 
     
-    def corrected_bvr_pusblisher(self,corrected_velocity_x,corrected_velocity_y,corrected_angular_z,robot_bvr_pub):
-        self.corrected_bvr = rospy.Publisher(robot_bvr_pub,
-                                        BodyVelocityReq,
-                                        queue_size=1)
-        # NEW PRIORITY DEFINITIONS
-        # PRIORITY_TELEOPERATION_LOW = 0
-        # PRIORITY_SAFETY_LOW = 5
-        # PRIORITY_NORMAL = 10
-        # PRIORITY_NORMAL_HIGH = 20
-        # PRIORITY_TELEOPERATION = 40
-        # PRIORITY_SAFETY = 45
-        # PRIORITY_SAFETY_HIGH  = 50
-        # PRIORITY_TELEOPERATION_HIGH = 60 
-        bvr = BodyVelocityReq()
-        bvr.header.frame_id    = "multi_robot_system"
-        bvr.header.stamp       = rospy.Time.now()
-        bvr.goal.requester     =  self.name
-        bvr.disable_axis.x     = False
-        bvr.disable_axis.y     = False
-        bvr.disable_axis.z     = True
-        bvr.disable_axis.roll  = True
-        bvr.disable_axis.pitch = True
-        bvr.disable_axis.yaw   = False
-        bvr.twist.linear.x     = corrected_velocity_x
-        bvr.twist.linear.y     = corrected_velocity_y
-        bvr.twist.linear.z     = 0.0
-        bvr.twist.angular.x    = 0.0
-        bvr.twist.angular.y    = 0.0
-        bvr.twist.angular.z    = corrected_angular_z
-        bvr.goal.priority      = 40
-        self.corrected_bvr.publish(bvr)
 
     def anchor_marker(self,position_north,position_east,robot ):
         self.anchor = Marker()
