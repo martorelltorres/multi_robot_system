@@ -3,7 +3,7 @@ number_of_robots: 3
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_polygon_distance: 4
 # The offset_coverage_distance set the distance between the coverage lines path
-offset_coverage_distance: 5
+offset_coverage_distance: 25
 # Section strategy parameters
 surge_velocity: 0.8
 tolerance: 2

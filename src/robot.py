@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 from cola2_msgs.msg import  NavSts
 from cola2_msgs.srv import Goto, GotoRequest
+from sensor_msgs.msg import BatteryState
 import numpy as np
 from std_srvs.srv import Empty, EmptyResponse
 
@@ -20,13 +21,19 @@ class robot:
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
+        self.battery_topic = self.get_param('~battery_topic','/turbot1/batteries/status')
         self.section_action = self.get_param('~section_action','/xiroi/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/xiroi/pilot/world_section_req/result') 
+        self.number_of_robots = self.get_param('number_of_robots')
         self.robot_ID = self.get_param('~robot_ID',0)
         self.robot_name = self.get_param('~robot_name','turbot1')
         self.robot_slave_name = rospy.get_param('~robot_slave_name',default='xiroi')
         self.distance = []
+        self.robot0_bat = False
+        self.robot1_bat = False
+        self.robot2_bat = False
         self.is_section_actionlib_running = False
+        self.battery_status = [0,0,0]
         self.ns = rospy.get_namespace()
         
         #  # enable thrusters service
@@ -62,9 +69,19 @@ class robot:
                     self.get_robot_position,
                     queue_size=1)
 
+        rospy.Subscriber(self.battery_topic ,
+                    BatteryState,    
+                    self.update_battery_status,
+                    queue_size=1)
+
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
         self.section_strategy.wait_for_server()
+    
+    def simulation_task_time (self,init_time, final_time):
+        spend_time = (final_time - init_time)/1000000000
+        return(spend_time)
+
 
     def disable_thrusters(self,robot_name):
         if(robot_name == self.robot_slave_name):
@@ -140,7 +157,15 @@ class robot:
             self.section_strategy.cancel_goal()
             section_cancelled = True
         return(section_cancelled)
-   
+
+    def update_battery_status(self, msg):
+        self.battery_charge = msg.charge
+        self.get_battery_status()
+    
+    def get_battery_status(self):
+        self.battery_status[self.robot_ID] =  self.battery_charge
+        return(self.battery_charge)
+         
     def update_section_result(self,msg):
         final_status = msg.result.final_status
         return(final_status)

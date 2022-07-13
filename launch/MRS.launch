@@ -4,13 +4,16 @@
   <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
-  <arg name="enableCollisonAvoidance" default="true"/>
+  <arg name="enableCollisonAvoidance" default="false"/>
   <arg name="enableCommunicationModule" default="false"/>
 
   <!-- general robot information -->
   <arg name="robot_1" default="turbot1"/>
   <arg name="robot_2" default="turbot2"/>
   <arg name="robot_3" default="xiroi"/>
+  <arg name="robot1_AUV" default="true"/>
+  <arg name="robot2_AUV" default="true"/>
+  <arg name="robot3_AUV" default="false"/>
   <arg name="navigation_topic_robot_1" default="/$(arg robot_1)/navigator/navigation"/>
   <arg name="navigation_topic_robot_2" default="/$(arg robot_2)/navigator/navigation"/>
   <arg name="navigation_topic_robot_3" default="/$(arg robot_3)/navigator/navigation"/>
@@ -34,7 +37,9 @@
   <node name="multi_robot_system_$(arg robot_1)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="0"/>
     <param name="robot_name" value="$(arg robot_1)"/>
-    <param name="navigation_topic" value="$(arg navigation_topic_robot_1)"/>
+    <param name="AUV" value="$(arg robot1_AUV)"/>
+    <param name="navigation_topic" value="/$(arg robot_1)/navigator/navigation"/>
+    <param name="battery_topic" value="/$(arg robot_1)/batteries/status"/>
     <param name="section_action" value="/$(arg robot_1)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_1)/pilot/world_section_req/result"/>
     <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
@@ -45,7 +50,9 @@
   <node name="multi_robot_system_$(arg robot_2)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="1"/>
     <param name="robot_name" value="$(arg robot_2)"/>
-    <param name="navigation_topic" value="$(arg navigation_topic_robot_2)"/>
+    <param name="AUV" value="$(arg robot2_AUV)"/>
+    <param name="navigation_topic" value="/$(arg robot_2)/navigator/navigation"/>
+    <param name="battery_topic" value="/$(arg robot_2)/batteries/status"/>
     <param name="section_action" value="/$(arg robot_2)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_2)/pilot/world_section_req/result"/>
     <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
@@ -56,7 +63,9 @@
   <node name="multi_robot_system_$(arg robot_3)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="2"/>
     <param name="robot_name" value= "$(arg robot_3)"/>
-    <param name="navigation_topic" value="$(arg navigation_topic_robot_3)"/>
+    <param name="AUV" value="$(arg robot3_AUV)"/>
+    <param name="navigation_topic" value="/$(arg robot_3)/navigator/navigation"/>
+    <param name="battery_topic" value="/$(arg robot_3)/batteries/status"/>
     <param name="section_action" value="/$(arg robot_3)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_3)/pilot/world_section_req/result"/>
     <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
@@ -83,6 +92,13 @@
     <param name="medium_distance" value="40"/>
     <param name="large_distance" value="80"/>
   </node>
+
+  <!-- Task Allocation module -->
+  <!-- <node name="task_allocation" pkg="multi_robot_system" type="task_allocator.py" output="screen" respawn="true">
+      <param name="battery1_topic" value="/$(arg robot_1)/batteries/status"/>
+      <param name="battery2_topic" value="/$(arg robot_2)/batteries/status"/>
+      <param name="battery3_topic" value="/$(arg robot_3)/batteries/status"/>
+  </node> -->
 
   <!-- RViz -->
   <node if="$(arg enableRviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find multi_robot_system)/scene/MRS.rviz"/>

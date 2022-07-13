@@ -354,9 +354,7 @@ Visualization Manager:
       Marker Topic: /anchorRadius
       Name: Marker
       Namespaces:
-        robot0: true
-        robot1: true
-        robot2: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -364,9 +362,7 @@ Visualization Manager:
       Marker Topic: /repulsionRadius
       Name: Marker
       Namespaces:
-        robot0: true
-        robot1: true
-        robot2: true
+        {}
       Queue Size: 100
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -628,7 +624,7 @@ Visualization Manager:
           Value: true
         Value: false
       Enabled: true
-      Keep: 100
+      Keep: 1000
       Name: Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
@@ -662,7 +658,7 @@ Visualization Manager:
           Value: true
         Value: false
       Enabled: true
-      Keep: 100
+      Keep: 1000
       Name: Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
@@ -725,7 +721,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.9200000762939453
+      Angle: 1.119999885559082
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -735,11 +731,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 23.081615447998047
+      Scale: 9.684273719787598
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: 3.3486111164093018
-      Y: 7.371868133544922
+      X: -61.09811782836914
+      Y: 53.84710693359375
     Saved: ~
 Window Geometry:
   Displays:
