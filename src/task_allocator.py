@@ -118,8 +118,8 @@ class task_allocation:
 
                     robot_tasks[self.robot_id].append(self.nearest_polygon)
 
-        #*********************************** Hungarian algorithm**************************************************
 
+        #*********************************** Hungarian algorithm**************************************************
         elif(self.task_allocator==3):
             tasks_number = self.area_handler.get_polygon_number()
             estimated_time_tasks = self.area_handler.get_estimated_polygons_coverage_time()
@@ -166,24 +166,7 @@ class task_allocation:
                 
                 cost_matrix = cost_matrix.reshape(self.number_of_robots,self.number_of_robots)
 
-            print("The cost_matrix values are: " +str(cost_matrix))
-            # print(cost_matrix)
-
-            # ----------------------------------------------
-            # cost_matrix = [
-            #     [4, 2, 8],
-            #     [4, 3, 7],
-            #     [3, 1, 6]]
-            # hungarian = Hungarian(cost_matrix)
-            # print('calculating...')
-            # hungarian.calculate()
-            # print("Expected value:\t\t12")
-            # print("Calculated value:\t", hungarian.get_total_potential())  # = 12
-            # print("Expected results:\n\t[(0, 1), (1, 0), (2, 2)]")
-            # print("Results:\n\t", hungarian.get_results())
-            # print("-" * 80)
-            # ------------------------------------------------
-            
+            print("The cost_matrix values are: " +str(cost_matrix))         
             self.hungarian_algortithm = Hungarian(cost_matrix)
             hungarian_output = self.hungarian_algortithm.calculate()
             print("The hungarian output is: "+str(hungarian_output))
@@ -194,71 +177,6 @@ class task_allocation:
             print(total_potential)
 
 
-            # dim = cost_matrix.shape[0]
-            # cur_mat = cost_matrix
-            # #Step 1 - Every column and every row subtract its internal minimum
-            # for row_num in range(self.number_of_robots): 
-            #     cur_mat[row_num] = cur_mat[row_num] - np.min(cur_mat[row_num])
-    
-            # for col_num in range(tasks_number): 
-            #     cur_mat[:,col_num] = cur_mat[:,col_num] - np.min(cur_mat[:,col_num])
-
-            # #Transform the matrix to boolean matrix(0 = True, others = False)
-            # zero_bool_mat = (cur_mat == 0)
-
-            # print("Zero bool matrix" + str(zero_bool_mat))
-
-            # def min_zero_row(zero_mat, mark_zero):
-    
-            #     # '''
-            #     # The function can be splitted into two steps:
-            #     # #1 The function is used to find the row which containing the fewest 0.
-            #     # #2 Select the zero number on the row, and then marked the element corresponding row and column as False
-            #     # '''
-
-            #     #Find the row
-            #     min_row = [99999, -1]
-
-            #     for row_num in range(zero_mat.shape[0]): 
-            #         if np.sum(zero_mat[row_num] == True) > 0 and min_row[0] > np.sum(zero_mat[row_num] == True):
-            #             min_row = [np.sum(zero_mat[row_num] == True), row_num]
-
-            #     # Marked the specific row and column as False
-            #     zero_index = np.where(zero_mat[min_row[1]] == True)[0][0]
-            #     mark_zero.append((min_row[1], zero_index))
-            #     zero_mat[min_row[1], :] = False
-            #     zero_mat[:, zero_index] = False
-
-
-            # #find the minimum cost of each row
-            # min_row_values =[]
-            # for robot in range(self.number_of_robots):
-            #     min_row_value = min(self.task_costs[robot])
-            #     # find and replace the min_row_value for a 0
-            #     min_row_index = self.task_costs[robot].index(min_row_value)
-            #     self.task_costs[robot][min_row_index]= 0
-            #     min_row_values.append(min_row_value)
-            
-            # print("The min_row values are: " +str(min_row_values))
-            # print("The NEW cost_matrix values are: " +str(self.task_costs))
-
-            # #find the minimum cost of each column
-            # min_col_values =[]
-            # col_costs = []
-            # for task in range(polygon_number):
-            #     min_col_values =[]
-            #     for robot in range(self.number_of_robots): 
-            #         min_col_values.append(self.task_costs[robot][task])
-            #     col_costs.append(min_col_values)
-            #     min_col_value = min(col_costs[task])
-            #     # find and replace the min_col_value for a 0
-            #     # min_col_index = self.task_costs[robot].index(min_col_value)
-
-            #     # self.task_costs[robot][min_row_index]= 0
-            #     min_col_values.append(min_col_value)
-
-            
-            # print("The min_col values are: " +str(min_col_values))
         return(self.robots_tasks,self.central_polygon_id)
 
     def make_cost_matrix(self,profit_matrix):

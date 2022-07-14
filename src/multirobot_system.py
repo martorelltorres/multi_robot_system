@@ -107,9 +107,9 @@ class MultiRobotSystem:
         if(self.system_initialization==True):
             self.system_initialization = False        
             self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
-            bat = self.task_allocation_handler.task_allocation()
-            print("--------------------------------------")
-            print(bat)
+            # bat = self.task_allocation_handler.task_allocation()
+            # print("--------------------------------------")
+            # print(bat)
 
             # init the task_time variable
             for task in range(len(self.goals)):
