@@ -8,10 +8,15 @@ from cola2_msgs.msg import  NavSts
 from shapely.geometry import Point
 from multi_robot_system.msg import TaskMonitoring 
 from sensor_msgs.msg import BatteryState
+
 #import classes
 from area_partition import area_partition
 from robot import robot
-from hungarian_algorithm import Hungarian
+from task_allocation.hungarian_algorithm import Hungarian
+from task_allocation.aco import ACO
+from task_allocation.ga import GA
+from task_allocation.evaluate import Env
+from task_allocation.pso import PSO
 class task_allocation:
     battery_status = [0,0,0]
 
@@ -175,6 +180,11 @@ class task_allocation:
             print("----------------------------------------------")
             print(results)
             print(total_potential)
+
+        #*********************************** Particle Swarm Optimization (PSO)************************************************
+        elif(self.task_allocator==4):
+            
+
 
 
         return(self.robots_tasks,self.central_polygon_id)
