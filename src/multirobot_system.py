@@ -5,6 +5,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import datetime
 from numpy import *
+import numpy as np
 from shapely.geometry import Polygon,LineString,Point
 import actionlib
 from cola2_msgs.msg import WorldSectionActionResult
@@ -27,8 +28,6 @@ class MultiRobotSystem:
         self.name = name
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID',0)   
-        self.robot_name = self.get_param('~robot_name','turbot') 
-        self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
         self.robot_bvr_topic = self.get_param('~robot_bvr_topic','/turbot/pilot/world_section_req/result') 
         self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
         self.number_of_robots = self.get_param('number_of_robots')
@@ -38,7 +37,6 @@ class MultiRobotSystem:
         self.robot_handler = robot("robot")
         # self.collision_avoidance_handler = CollisionAvoidance("collision_avoidance_handler")
 
-        self.system_initialization = True
         self.success_result = False
         self.data_gattered = False
         self.points = []
@@ -55,10 +53,6 @@ class MultiRobotSystem:
                          self.update_section_result,
                          queue_size=1)
 
-        rospy.Subscriber(self.navigation_topic ,
-                         NavSts,    
-                         self.update_robot_position,
-                         queue_size=1)
 
         rospy.Subscriber('/collission_avoidance_info' ,
                          AvoidCollision,    
@@ -83,12 +77,6 @@ class MultiRobotSystem:
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
 
-    def update_robot_position(self,msg):
-        self.robot_position_north = msg.position.north
-        self.robot_position_east = msg.position.east
-        self.robot_position_depth = msg.position.depth
-        self.robot_orientation_yaw = msg.orientation.yaw 
-
     def collision_avoidance(self, msg):
         self.distance = msg.distance
         self.coverage = msg.coverage
@@ -103,24 +91,28 @@ class MultiRobotSystem:
  
     def initialization(self): 
         # wait 3 seconds in order to initialize the different robot architectures
-        rospy.sleep(3)
-        if(self.system_initialization==True):
-            self.system_initialization = False        
-            self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
-            # bat = self.task_allocation_handler.task_allocation()
-            # print("--------------------------------------")
-            # print(bat)
+        rospy.sleep(2)
+        robot_init_status = np.array([False,False,False])   
+        
+        while np.all(robot_init_status == False):
+            for ID_robot in range(self.number_of_robots):
+                robot_init_status[ID_robot] = self.robot_handler.is_robot_alive(ID_robot)
+        print("             *************************")
+        print("                 ROBOT "+str(self.robot_ID)+ " INITIALIZED   ")
+        print("             *************************")
 
-            # init the task_time variable
-            for task in range(len(self.goals)):
-                self.task_monitoring.append(0)
+        self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
 
-            self.goal_polygons = self.goals[self.robot_ID][1]
-            print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
-            print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
-            times = self.area_handler.get_estimated_polygons_coverage_time()
-            self.goal_points = self.area_handler.define_path_coverage()
-            self.robot_task_assignement()
+        # init the task_time variable
+        for task in range(len(self.goals)):
+            self.task_monitoring.append(0)
+
+        self.goal_polygons = self.goals[self.robot_ID][1]
+        print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
+        print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
+        times = self.area_handler.get_estimated_polygons_coverage_time()
+        self.goal_points = self.area_handler.define_path_coverage()
+        self.robot_task_assignement()
 
     def robot_task_assignement(self):          
         for task in range(len(self.goal_polygons)):
@@ -173,6 +165,7 @@ class MultiRobotSystem:
         self.section_id = goal
         for section in range(len(section_points)):
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
+            self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw,self.robot_id = self.robot_handler.get_robot_position()
             self.current_section = section_points[section]
             
             if(self.section_id==goal):

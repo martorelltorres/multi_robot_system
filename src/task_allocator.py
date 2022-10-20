@@ -7,32 +7,27 @@ import matplotlib.pyplot as plt
 from cola2_msgs.msg import  NavSts
 from shapely.geometry import Point
 from multi_robot_system.msg import TaskMonitoring 
-from sensor_msgs.msg import BatteryState
-
 #import classes
 from area_partition import area_partition
 from robot import robot
-from task_allocation.hungarian_algorithm import Hungarian
-from task_allocation.aco import ACO
-from task_allocation.ga import GA
-from task_allocation.evaluate import Env
-from task_allocation.pso import PSO
+from task_allocation_algorithms.hungarian_algorithm import Hungarian
+from task_allocation_algorithms.aco import ACO
+
+
 class task_allocation:
-    battery_status = [0,0,0]
 
     def __init__(self, name):
         self.name = name
+
         # read parameter from the parameter server
-        self.navigation_topic = self.get_param('~navigation_topic','/turbot1/navigator/navigation') 
+        self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
         self.number_of_robots = self.get_param('number_of_robots')
         self.task_allocator = self.get_param('task_allocation')
         self.robot_ID = self.get_param('~robot_ID',0) 
         self.robot_init = False
 
-
         self.polygons = []
         self.task_monitoring = []
-        
         self.central_polygon_defined = False
         self.first_robot = True
         self.task_monitoring = []
@@ -43,14 +38,11 @@ class task_allocation:
         self.area_handler = area_partition("area_partition")
         self.robot_handler = robot("robot")
 
-
-
         # subscribers
         rospy.Subscriber(self.navigation_topic ,
                          NavSts,    
                          self.update_robot_position,
                          queue_size=1)
-
         # publishers
         self.task_monitoring = rospy.Publisher("task_monitoring",
                                         TaskMonitoring,
@@ -58,7 +50,6 @@ class task_allocation:
         # Timers
         rospy.Timer(rospy.Duration(1.0), self.task_monitoring_publisher)
         self.update_task_status(self.robot_ID,"ND",0,0)
-    
 
     def update_robot_position(self,msg):
         self.robot_position_north = msg.position.north
@@ -70,7 +61,7 @@ class task_allocation:
 
     def task_allocation(self):
 
-        # **********************************     Split the tasks depending of the number of robots     *******************************************************
+        # task_allocator==1 --> Split the tasks depending of the number of robots
         if(self.task_allocator==1):
             polygon_number = self.area_handler.get_polygon_number()
             # create an array with the goal polygon_ids, from 0 to n
@@ -95,7 +86,7 @@ class task_allocation:
                 self.robots_tasks.append(self.tasks)
 
         # task_allocator==2 --> Assign non consecutive random tasks 
-        elif(self.task_allocator==2 and self.robot_init==True):
+        elif(self.task_allocator==2):
             polygon_number = self.area_handler.get_polygon_number()
             voronoy_polygons = self.area_handler.get_voronoi_offset_polygons()
             robot_tasks=[]
@@ -105,71 +96,83 @@ class task_allocation:
                 self.polygons.append(polygon)
 
             for robot in range(self.number_of_robots):
-                if(self.robot_id==robot and self.first_robot == True):
+                if(self.robot_id==robot):
                     current_nearest_polygon = self.area_handler.determine_nearest_polygon(self.robot_position_north,self.robot_position_east,voronoy_polygons)
-                    
-                    if(current_nearest_polygon == self.nearest_polygon and self.first_robot == False):
-                        self.polygons[self.nearest_polygon]
+                    robot_tasks[self.robot_id].append(current_nearest_polygon)
 
-                    self.nearest_polygon = current_nearest_polygon
-                    robot_tasks[self.robot_id].append(self.nearest_polygon)
+            #         if(current_nearest_polygon == self.nearest_polygon and self.first_robot == False):
+            #             self.polygons[self.nearest_polygon]
 
-            if(self.robot_id==0):
-                self.nearest_polygon = self.area_handler.determine_nearest_polygon(self.robot_position_north,self.robot_position_east,voronoy_polygons)
-                robot_tasks[self.robot_id].append(self.nearest_polygon)
+            #         self.nearest_polygon = current_nearest_polygon
+            #         robot_tasks[self.robot_id].append(self.nearest_polygon)
 
-            for robot in range(self.number_of_robots):
-                for task in range(polygon_number-1):
+            # if(self.robot_id==0):
+            #     self.nearest_polygon = self.area_handler.determine_nearest_polygon(self.robot_position_north,self.robot_position_east,voronoy_polygons)
+            #     robot_tasks[self.robot_id].append(self.nearest_polygon)
 
-                    robot_tasks[self.robot_id].append(self.nearest_polygon)
+            # for robot in range(self.number_of_robots):
+            #     for task in range(polygon_number-1):
 
+            #         robot_tasks[self.robot_id].append(self.nearest_polygon)
 
         #*********************************** Hungarian algorithm**************************************************
         elif(self.task_allocator==3):
             tasks_number = self.area_handler.get_polygon_number()
             estimated_time_tasks = self.area_handler.get_estimated_polygons_coverage_time()
-            battery_charge = self.robot_handler.get_battery_status()
+            # battery_charge = self.robot_handler.get_battery_status()
             # task_allocation.battery_status[self.robot_ID] = battery_charge
-            
             costs = np.array([])
             # create de cost matrix using the time_task values
             for task in range(tasks_number):
                 cost_function = estimated_time_tasks[task]
                 costs = np.append([costs],[cost_function])
-                # costs.append(cost_function)
-            costs = list(costs)
-            print("The time_tasks costs are: " +str(costs))
+            
+            # cost_matrix = np.array([])
+            # for row in range(tasks_number):
+            #     cost_matrix = np.append(cost_matrix,costs)
+            # cost_matrix = cost_matrix.reshape(tasks_number,tasks_number)
 
             # create the cost_matrix adding a random factor to the cost matrix
-            for robot in range(self.number_of_robots):
-                cost_matrix = np.array([])
-                random_costs =np.array([])
-                for element in range(len(costs)):
-                    random_costs = np.append([random_costs],[costs[element]*random.uniform(1,10.5)]) 
-                    cost_matrix = np.append(cost_matrix,random_costs)
-                print("The random costs are: " +str(random_costs))
-            # cost_matrix = cost_matrix.reshape(self.number_of_robots,tasks_number)
-            max_random_cost = max(random_costs)
 
-            # make the cost_matrix square
-            new_row = np.array([])
-            if (tasks_number>self.number_of_robots):
-                rows_to_add = tasks_number-self.number_of_robots
-                for element in range(tasks_number):
-                    new_row = np.append(new_row,max_random_cost)
+            # for robot in range(self.number_of_robots):
+            #     cost_matrix = np.array([])
+            #     random_costs =np.array([])
+            #     for element in range(len(costs)):
+            #         random_costs = np.append([random_costs],[costs[element]*random.uniform(1,10.5)]) 
+            #         cost_matrix = np.append(cost_matrix,random_costs)
+            #     print("The random costs are: " +str(random_costs))
+            # # cost_matrix = cost_matrix.reshape(self.number_of_robots,tasks_number)
+            # max_random_cost = max(random_costs)
 
-                for rows in range(rows_to_add):
-                    cost_matrix = np.append(cost_matrix,new_row)
+            cost_matrix = np.array([])
+
+            for robot in range(tasks_number):
+                cost_matrix = np.append(cost_matrix,costs)
+            cost_matrix = cost_matrix.reshape(tasks_number,tasks_number)
+
+            cost_matrix=np.transpose(cost_matrix) 
+
+
+            # # make the cost_matrix square
+
+            # new_row = np.array([])
+            # if (tasks_number>self.number_of_robots):
+            #     rows_to_add = tasks_number-self.number_of_robots
+            #     for element in range(tasks_number):
+            #         new_row = np.append(new_row,0)
+
+            #     for rows in range(rows_to_add):
+            #         cost_matrix = np.append(cost_matrix,new_row)
             
-                cost_matrix = cost_matrix.reshape(tasks_number,tasks_number)
+            #     cost_matrix = cost_matrix.reshape(tasks_number,tasks_number)
 
-            if(self.number_of_robots > tasks_number):
-                rows_to_add = self.number_of_robots-tasks_number
-                new_row = np.zeros(self.number_of_robots)
-                for rows in range(rows_to_add):
-                    cost_matrix = np.append(cost_matrix,new_row)
+            # if(self.number_of_robots > tasks_number):
+            #     rows_to_add = self.number_of_robots-tasks_number
+            #     new_row = np.zeros(self.number_of_robots)
+            #     for rows in range(rows_to_add):
+            #         cost_matrix = np.append(cost_matrix,new_row)
                 
-                cost_matrix = cost_matrix.reshape(self.number_of_robots,self.number_of_robots)
+            #     cost_matrix = cost_matrix.reshape(self.number_of_robots,self.number_of_robots)
 
             print("The cost_matrix values are: " +str(cost_matrix))         
             self.hungarian_algortithm = Hungarian(cost_matrix)
@@ -183,25 +186,14 @@ class task_allocation:
 
         #*********************************** Particle Swarm Optimization (PSO)************************************************
         elif(self.task_allocator==4):
-            
+            tasks_number = self.area_handler.get_polygon_number()
+            robots_velocity = self.robot_handler.get_robot_velocity()
+            aco = ACO(self.number_of_robots,tasks_number,robots_velocity,env.targets,env.time_lim)
 
-
+          
 
         return(self.robots_tasks,self.central_polygon_id)
 
-    def make_cost_matrix(self,profit_matrix):
-        """
-        Converts a profit matrix into a cost matrix.
-        Expects NumPy objects as input.
-        """
-        # subtract profit matrix from a matrix made of the max value of the profit matrix
-        matrix_shape = profit_matrix.shape
-        offset_matrix = np.ones(matrix_shape, dtype=int) * profit_matrix.max()
-        cost_matrix = offset_matrix - profit_matrix
-        return cost_matrix
-
-        # return(self.robots_tasks,self.central_polygon_id)
-    
     def initialize_task_status(self):
         for robot in range(self.number_of_robots):
             for task in range(len(self.robots_tasks)):
@@ -275,7 +267,7 @@ class task_allocation:
         self.setup_start_points = True
 
         return(goal_polygon_1,goal_polygon_2)
-    
+
     
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

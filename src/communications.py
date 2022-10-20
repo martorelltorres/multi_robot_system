@@ -75,6 +75,12 @@ class communications:
         y_distance = self.r1_position_east - self.r0_position_east
         self.distance = np.sqrt(x_distance**2 + y_distance**2)
         self.distance = round(self.distance, 2)
+    
+    def distance_between_robots(self):
+        x_distance = self.r1_position_north - self.r0_position_north
+        y_distance = self.r1_position_east - self.r0_position_east
+        self.distance = np.sqrt(x_distance**2 + y_distance**2)
+        self.distance = round(self.distance, 2)
 
     def communication_noise(self):
         self.distance_between_robots()

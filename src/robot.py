@@ -32,6 +32,7 @@ class robot:
         self.robot0_bat = False
         self.robot1_bat = False
         self.robot2_bat = False
+        self.robot_alive = False
         self.is_section_actionlib_running = False
         self.battery_status = [0,0,0]
         self.ns = rospy.get_namespace()
@@ -66,7 +67,7 @@ class robot:
         # subscribers
         rospy.Subscriber(self.navigation_topic ,
                     NavSts,    
-                    self.get_robot_position,
+                    self.update_robot_position,
                     queue_size=1)
 
         rospy.Subscriber(self.battery_topic ,
@@ -176,14 +177,23 @@ class robot:
         # uint64 FAILURE=2
         # uint64 BUSY=3
 
-    def get_robot_position(self,msg):
-        robot_position_north = msg.position.north
-        robot_position_east = msg.position.east
-        robot_position_depth = msg.position.depth
+    def update_robot_position(self,msg):
+        self.robot_position_north = msg.position.north
+        self.robot_position_east = msg.position.east
+        self.robot_position_depth = msg.position.depth
         self.robot_orientation_yaw = msg.orientation.yaw 
-        robot_id = self.robot_ID
-        return(robot_position_north,robot_position_east,robot_position_depth,self.robot_orientation_yaw,robot_id)
+        self.robot_id = self.robot_ID
+        self.robot_alive = True
     
+    def get_robot_position(self):
+        return(self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw,self.robot_id)
+    
+    def is_robot_alive(self, ID_robot):
+        if(ID_robot ==self.robot_ID and self.robot_alive==False):
+            return(False)
+        elif(ID_robot ==self.robot_ID and self.robot_alive==True):
+            return(True)
+
     def get_robot_distance_to_point(self,robot_north, robot_east, point_x, point_y):
         x_distance = robot_north - point_x
         y_distance = robot_east - point_y

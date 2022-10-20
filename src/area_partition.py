@@ -176,6 +176,7 @@ class area_partition:
             min_distance = min(self.distance)
             self.goal_polygon = self.distance.index(min_distance)
             self.goal_polygon_defined = True
+
         return(self.goal_polygon)
 
     def get_goal_points(self, goal_polygon):
@@ -201,7 +202,7 @@ class area_partition:
         x,y = polygon.exterior.coords.xy
         slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
         y_coordinate =[]
-        x_threshold = 100
+        x_threshold = 10
 
         if(x[self.reference_points[0]] > x[self.reference_points[1]]):
             x_0 = x[self.reference_points[0]] + x_threshold

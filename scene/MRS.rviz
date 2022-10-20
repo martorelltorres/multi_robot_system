@@ -82,8 +82,6 @@ Visualization Manager:
           Value: true
         turbot2/thruster_2:
           Value: true
-        world:
-          Value: false
         world_ned:
           Value: false
         xiroi/base_link:
@@ -110,74 +108,73 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          world_ned:
-            turbot1/base_link:
-              turbot1/dvl:
-                turbot1/dvl_altitude:
-                  {}
-              turbot1/echosounder:
+        world_ned:
+          turbot1/base_link:
+            turbot1/dvl:
+              turbot1/dvl_altitude:
                 {}
-              turbot1/gps:
-                {}
-              turbot1/imu:
-                {}
-              turbot1/imu_filter:
-                {}
-              turbot1/modem:
-                {}
-              turbot1/pressure:
-                turbot1/depth:
-                  {}
-              turbot1/thruster_0:
-                {}
-              turbot1/thruster_1:
-                {}
-              turbot1/thruster_2:
-                {}
-            turbot1/dynamics:
+            turbot1/echosounder:
               {}
-            turbot2/base_link:
-              turbot2/dvl:
-                turbot2/dvl_altitude:
-                  {}
-              turbot2/echosounder:
-                {}
-              turbot2/gps:
-                {}
-              turbot2/imu:
-                {}
-              turbot2/imu_filter:
-                {}
-              turbot2/modem:
-                {}
-              turbot2/pressure:
-                turbot2/depth:
-                  {}
-              turbot2/thruster_0:
-                {}
-              turbot2/thruster_1:
-                {}
-              turbot2/thruster_2:
-                {}
-            turbot2/dynamics:
+            turbot1/gps:
               {}
-            xiroi/dynamics:
+            turbot1/imu:
               {}
-            xiroi/odom:
-              xiroi/base_link:
-                xiroi/gps:
-                  {}
-                xiroi/imu:
-                  {}
-                xiroi/imu_filter:
-                  {}
-                xiroi/thruster_1:
-                  {}
-                xiroi/thruster_2:
-                  {}
-                xiroi/usbl:
-                  {}
+            turbot1/imu_filter:
+              {}
+            turbot1/modem:
+              {}
+            turbot1/pressure:
+              turbot1/depth:
+                {}
+            turbot1/thruster_0:
+              {}
+            turbot1/thruster_1:
+              {}
+            turbot1/thruster_2:
+              {}
+          turbot1/dynamics:
+            {}
+          turbot2/base_link:
+            turbot2/dvl:
+              turbot2/dvl_altitude:
+                {}
+            turbot2/echosounder:
+              {}
+            turbot2/gps:
+              {}
+            turbot2/imu:
+              {}
+            turbot2/imu_filter:
+              {}
+            turbot2/modem:
+              {}
+            turbot2/pressure:
+              turbot2/depth:
+                {}
+            turbot2/thruster_0:
+              {}
+            turbot2/thruster_1:
+              {}
+            turbot2/thruster_2:
+              {}
+          turbot2/dynamics:
+            {}
+          xiroi/dynamics:
+            {}
+          xiroi/odom:
+            xiroi/base_link:
+              xiroi/gps:
+                {}
+              xiroi/imu:
+                {}
+              xiroi/imu_filter:
+                {}
+              xiroi/thruster_1:
+                {}
+              xiroi/thruster_2:
+                {}
+              xiroi/usbl:
+                {}
       Update Interval: 0
       Value: true
     - Class: rviz/Axes
@@ -712,7 +709,7 @@ Visualization Manager:
   Global Options:
     Background Color: 165; 165; 165
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: world_ned
     Frame Rate: 30
   Name: root
   Tools:
@@ -731,11 +728,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 9.684273719787598
+      Scale: 6.87442684173584
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: -61.09811782836914
-      Y: 53.84710693359375
+      X: -40.76890182495117
+      Y: -16.78324317932129
     Saved: ~
 Window Geometry:
   Displays:
