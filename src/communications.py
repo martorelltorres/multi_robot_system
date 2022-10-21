@@ -10,6 +10,7 @@ class communications:
 
     def __init__(self, name):
         self.name = name
+        self.number_of_robots = self.get_param('number_of_robots')
         # navigation topics
         self.r0_navigation_topic = self.get_param('~r0_navigation_topic','/turbot/navigator/navigation') 
         self.r1_navigation_topic = self.get_param('~r1_navigation_topic','/xiroi/navigator/navigation') 
@@ -25,6 +26,13 @@ class communications:
         self.r1_init = False
         self.r0_init = False
         self.system_init = False
+
+        # for robot in range(self.number_of_robots):
+        #     rospy.Subscriber("/robot"+str(robot)+"/navigator/navigation",
+        #                  NavSts,    
+        #                  self.update_robots_position,
+        #                  queue_size=1)
+
 
         #Subscribers
         rospy.Subscriber(self.r0_navigation_topic,
@@ -54,6 +62,14 @@ class communications:
         self.r0_yaw = msg.orientation.yaw
         self.r0_init = True
         self.initialization()
+    
+    # def update_robots_position(self, msg):
+    #     self.position_north = msg.position.north
+    #     self.position_east = msg.position.east
+    #     self.position_depth = msg.position.depth
+    #     self.yaw = msg.orientation.yaw
+    #     self.init = True
+    #     self.initialization()
 
     def update_r1_position(self, msg):
         self.r1_position_north = msg.position.north

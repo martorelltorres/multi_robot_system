@@ -26,82 +26,82 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        turbot1/base_link:
+        robot1/base_link:
           Value: true
-        turbot1/depth:
+        robot1/depth:
           Value: true
-        turbot1/dvl:
+        robot1/dvl:
           Value: true
-        turbot1/dvl_altitude:
+        robot1/dvl_altitude:
           Value: true
-        turbot1/dynamics:
+        robot1/dynamics:
           Value: true
-        turbot1/echosounder:
+        robot1/echosounder:
           Value: true
-        turbot1/gps:
+        robot1/gps:
           Value: true
-        turbot1/imu:
+        robot1/imu:
           Value: true
-        turbot1/imu_filter:
+        robot1/imu_filter:
           Value: true
-        turbot1/modem:
+        robot1/modem:
           Value: true
-        turbot1/pressure:
+        robot1/pressure:
           Value: true
-        turbot1/thruster_0:
+        robot1/thruster_0:
           Value: true
-        turbot1/thruster_1:
+        robot1/thruster_1:
           Value: true
-        turbot1/thruster_2:
+        robot1/thruster_2:
           Value: true
-        turbot2/base_link:
+        robot2/base_link:
           Value: true
-        turbot2/depth:
+        robot2/depth:
           Value: true
-        turbot2/dvl:
+        robot2/dvl:
           Value: true
-        turbot2/dvl_altitude:
+        robot2/dvl_altitude:
           Value: true
-        turbot2/dynamics:
+        robot2/dynamics:
           Value: true
-        turbot2/echosounder:
+        robot2/echosounder:
           Value: true
-        turbot2/gps:
+        robot2/gps:
           Value: true
-        turbot2/imu:
+        robot2/imu:
           Value: true
-        turbot2/imu_filter:
+        robot2/imu_filter:
           Value: true
-        turbot2/modem:
+        robot2/modem:
           Value: true
-        turbot2/pressure:
+        robot2/pressure:
           Value: true
-        turbot2/thruster_0:
+        robot2/thruster_0:
           Value: true
-        turbot2/thruster_1:
+        robot2/thruster_1:
           Value: true
-        turbot2/thruster_2:
+        robot2/thruster_2:
+          Value: true
+        robot3/base_link:
+          Value: true
+        robot3/dynamics:
+          Value: true
+        robot3/gps:
+          Value: true
+        robot3/imu:
+          Value: true
+        robot3/imu_filter:
+          Value: true
+        robot3/odom:
+          Value: true
+        robot3/thruster_1:
+          Value: true
+        robot3/thruster_2:
+          Value: true
+        robot3/usbl:
           Value: true
         world_ned:
           Value: false
-        xiroi/base_link:
-          Value: true
-        xiroi/dynamics:
-          Value: false
-        xiroi/gps:
-          Value: true
-        xiroi/imu:
-          Value: true
-        xiroi/imu_filter:
-          Value: false
-        xiroi/odom:
-          Value: false
-        xiroi/thruster_1:
-          Value: true
-        xiroi/thruster_2:
-          Value: true
-        xiroi/usbl:
-          Value: true
       Marker Scale: 2
       Name: tf
       Show Arrows: true
@@ -109,71 +109,71 @@ Visualization Manager:
       Show Names: true
       Tree:
         world_ned:
-          turbot1/base_link:
-            turbot1/dvl:
-              turbot1/dvl_altitude:
+          robot1/base_link:
+            robot1/dvl:
+              robot1/dvl_altitude:
                 {}
-            turbot1/echosounder:
+            robot1/echosounder:
               {}
-            turbot1/gps:
+            robot1/gps:
               {}
-            turbot1/imu:
+            robot1/imu:
               {}
-            turbot1/imu_filter:
+            robot1/imu_filter:
               {}
-            turbot1/modem:
+            robot1/modem:
               {}
-            turbot1/pressure:
-              turbot1/depth:
+            robot1/pressure:
+              robot1/depth:
                 {}
-            turbot1/thruster_0:
+            robot1/thruster_0:
               {}
-            turbot1/thruster_1:
+            robot1/thruster_1:
               {}
-            turbot1/thruster_2:
+            robot1/thruster_2:
               {}
-          turbot1/dynamics:
+          robot1/dynamics:
             {}
-          turbot2/base_link:
-            turbot2/dvl:
-              turbot2/dvl_altitude:
+          robot2/base_link:
+            robot2/dvl:
+              robot2/dvl_altitude:
                 {}
-            turbot2/echosounder:
+            robot2/echosounder:
               {}
-            turbot2/gps:
+            robot2/gps:
               {}
-            turbot2/imu:
+            robot2/imu:
               {}
-            turbot2/imu_filter:
+            robot2/imu_filter:
               {}
-            turbot2/modem:
+            robot2/modem:
               {}
-            turbot2/pressure:
-              turbot2/depth:
+            robot2/pressure:
+              robot2/depth:
                 {}
-            turbot2/thruster_0:
+            robot2/thruster_0:
               {}
-            turbot2/thruster_1:
+            robot2/thruster_1:
               {}
-            turbot2/thruster_2:
+            robot2/thruster_2:
               {}
-          turbot2/dynamics:
+          robot2/dynamics:
             {}
-          xiroi/dynamics:
+          robot3/dynamics:
             {}
-          xiroi/odom:
-            xiroi/base_link:
-              xiroi/gps:
+          robot3/odom:
+            robot3/base_link:
+              robot3/gps:
                 {}
-              xiroi/imu:
+              robot3/imu:
                 {}
-              xiroi/imu_filter:
+              robot3/imu_filter:
                 {}
-              xiroi/thruster_1:
+              robot3/thruster_1:
                 {}
-              xiroi/thruster_2:
+              robot3/thruster_2:
                 {}
-              xiroi/usbl:
+              robot3/usbl:
                 {}
       Update Interval: 0
       Value: true
@@ -401,7 +401,7 @@ Visualization Manager:
       Marker Topic: /xiroi/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /xiroi/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -409,7 +409,7 @@ Visualization Manager:
       Marker Topic: /turbot1/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /turbot1/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -417,7 +417,7 @@ Visualization Manager:
       Marker Topic: /turbot2/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /turbot2/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -430,61 +430,61 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        turbot2/base_link:
+        robot2/base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        turbot2/depth:
+        robot2/depth:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/dvl:
+        robot2/dvl:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/dvl_altitude:
+        robot2/dvl_altitude:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/echosounder:
+        robot2/echosounder:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/gps:
+        robot2/gps:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/imu:
+        robot2/imu:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/imu_filter:
+        robot2/imu_filter:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/modem:
+        robot2/modem:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/pressure:
+        robot2/pressure:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/thruster_0:
+        robot2/thruster_0:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/thruster_1:
+        robot2/thruster_1:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot2/thruster_2:
+        robot2/thruster_2:
           Alpha: 1
           Show Axes: false
           Show Trail: false
       Name: RobotModel
-      Robot Description: /turbot2/robot_description
+      Robot Description: /robot2/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -499,61 +499,61 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        turbot1/base_link:
+        robot1/base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        turbot1/depth:
+        robot1/depth:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/dvl:
+        robot1/dvl:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/dvl_altitude:
+        robot1/dvl_altitude:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/echosounder:
+        robot1/echosounder:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/gps:
+        robot1/gps:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/imu:
+        robot1/imu:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/imu_filter:
+        robot1/imu_filter:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/modem:
+        robot1/modem:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/pressure:
+        robot1/pressure:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/thruster_0:
+        robot1/thruster_0:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/thruster_1:
+        robot1/thruster_1:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        turbot1/thruster_2:
+        robot1/thruster_2:
           Alpha: 1
           Show Axes: false
           Show Trail: false
       Name: RobotModel
-      Robot Description: /turbot1/robot_description
+      Robot Description: /robot1/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -568,37 +568,37 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        xiroi/base_link:
+        robot3/base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        xiroi/gps:
+        robot3/gps:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        xiroi/imu:
+        robot3/imu:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        xiroi/imu_filter:
+        robot3/imu_filter:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        xiroi/thruster_1:
+        robot3/thruster_1:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        xiroi/thruster_2:
+        robot3/thruster_2:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        xiroi/usbl:
+        robot3/usbl:
           Alpha: 1
           Show Axes: false
           Show Trail: false
       Name: RobotModel
-      Robot Description: xiroi/robot_description
+      Robot Description: robot3/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -634,7 +634,7 @@ Visualization Manager:
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /turbot1/navigator/odometry
+      Topic: /robot1/navigator/odometry
       Unreliable: false
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -668,7 +668,7 @@ Visualization Manager:
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /turbot2/navigator/odometry
+      Topic: /robot2/navigator/odometry
       Unreliable: false
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -702,7 +702,7 @@ Visualization Manager:
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /xiroi/ekf_map/odometry
+      Topic: /robot3/ekf_map/odometry
       Unreliable: false
       Value: true
   Enabled: true
@@ -728,11 +728,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 6.87442684173584
+      Scale: 15.659517288208008
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: -40.76890182495117
-      Y: -16.78324317932129
+      X: -53.44660568237305
+      Y: -39.28826141357422
     Saved: ~
 Window Geometry:
   Displays:

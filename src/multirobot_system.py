@@ -28,7 +28,7 @@ class MultiRobotSystem:
         self.name = name
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID',0)   
-        self.robot_bvr_topic = self.get_param('~robot_bvr_topic','/turbot/pilot/world_section_req/result') 
+        # self.robot_bvr_topic = self.get_param('~robot_bvr_topic','/turbot/pilot/world_section_req/result') 
         self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
         self.number_of_robots = self.get_param('number_of_robots')
 
@@ -52,7 +52,6 @@ class MultiRobotSystem:
                          WorldSectionActionResult,    
                          self.update_section_result,
                          queue_size=1)
-
 
         rospy.Subscriber('/collission_avoidance_info' ,
                          AvoidCollision,    
@@ -223,9 +222,7 @@ class MultiRobotSystem:
                     polygon_stamped_msg.header.frame_id = "world_ned"
                     polygon_stamped_msg.header.stamp = rospy.Time.now()
                     polygon_stamped_msg.polygon = polygon_msg
-                    self.polygon_pub.publish(polygon_stamped_msg)
-        else:
-            rospy.logwarn("Unable to print polygon, data not gattered yet")      
+                    self.polygon_pub.publish(polygon_stamped_msg)  
 
     def print_offset_polygon(self,event):
         if(self.data_gattered==True):      
@@ -252,8 +249,8 @@ class MultiRobotSystem:
                     polygon_stamped_msg.header.stamp = rospy.Time.now()
                     polygon_stamped_msg.polygon = polygon_msg
                     self.polygon_offset_pub.publish(polygon_stamped_msg)
-        else:
-            rospy.logwarn("Unable to print polygon, data not gattered yet")  
+        # else:
+        #     rospy.logwarn("Unable to print polygon, data not gattered yet")  
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

@@ -7,62 +7,65 @@
   <arg name="enableCollisonAvoidance" default="false"/>
   <arg name="enableCommunicationModule" default="true"/>
 
-  <!-- general robot information -->
-  <arg name="robot_1" default="turbot1"/>
-  <arg name="robot_2" default="turbot2"/>
-  <arg name="robot_3" default="xiroi"/>
+  <!-- load the multi_robot_system.yaml parameters file -->
+  <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
+
+  <!-- General robots information -->
+  <arg name="robot_1" default="robot1"/>
+  <arg name="robot_2" default="robot2"/>
+  <arg name="robot_3" default="robot3"/>
   <arg name="navigation_topic_robot_1" default="/$(arg robot_1)/navigator/navigation"/>
   <arg name="navigation_topic_robot_2" default="/$(arg robot_2)/navigator/navigation"/>
   <arg name="navigation_topic_robot_3" default="/$(arg robot_3)/navigator/navigation"/>
 
-  <!-- Launch the Turbot Simulation -->
+  <!-- Launch the AUV Simulation -->
   <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
     <arg name="place" value="$(arg place)"/>
+    <arg name="robot1_name" value="$(arg robot_1)"/>
+    <arg name="robot2_name" value="$(arg robot_2)"/>
   </include>
 
-  <!-- Launch the Xiroi Simulation -->
+  <!-- Launch the ASV Simulation -->
   <include  file="$(find cola2_xiroi)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaASV)"/>
     <arg name="place" value="$(arg place)"/>
+    <arg name="robot_name" value="$(arg robot_3)"/>
   </include>
   
-   <!-- load the multi_robot_system.yaml parameters file -->
-  <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
-
-  <!-- Robot 1: turbot1 AUV -->
+  <!-- Robot 1-->
   <node name="multi_robot_system_$(arg robot_1)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
-    <param name="robot_ID" value="0"/>
+    <!-- <param name="robot_ID" value="0"/>
     <param name="robot_name" value="$(arg robot_1)"/>
     <param name="navigation_topic" value="/$(arg robot_1)/navigator/navigation"/>
-    <param name="battery_topic" value="/$(arg robot_1)/batteries/status"/>
+    <param name="battery_topic" value="/$(arg robot_1)/batteries/status"/> -->
     <param name="section_action" value="/$(arg robot_1)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_1)/pilot/world_section_req/result"/>
-    <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
-    <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
+    <!-- <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
+    <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/> -->
   </node>
 
-  <!-- Robot 2: turbot2 AUV -->
+  <!-- Robot 2 -->
   <node name="multi_robot_system_$(arg robot_2)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
-    <param name="robot_ID" value="1"/>
+    <!-- <param name="robot_ID" value="1"/>
     <param name="robot_name" value="$(arg robot_2)"/>
     <param name="navigation_topic" value="/$(arg robot_2)/navigator/navigation"/>
-    <param name="battery_topic" value="/$(arg robot_2)/batteries/status"/>
+    <param name="battery_topic" value="/$(arg robot_2)/batteries/status"/> -->
     <param name="section_action" value="/$(arg robot_2)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_2)/pilot/world_section_req/result"/>
-    <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
-    <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/>
+    <!-- <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
+    <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/> -->
   </node>
 
   <!-- Robot 3: xiroi ASV -->
   <node name="multi_robot_system_$(arg robot_3)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
-    <param name="robot_ID" value="2"/>
+    <!-- <param name="robot_ID" value="2"/>
     <param name="robot_name" value= "$(arg robot_3)"/>
     <param name="navigation_topic" value="/$(arg robot_3)/navigator/navigation"/>
-    <param name="battery_topic" value="/$(arg robot_3)/batteries/status"/>
+    <param name="battery_topic" value="/$(arg robot_3)/batteries/status"/> -->
     <param name="section_action" value="/$(arg robot_3)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_3)/pilot/world_section_req/result"/>
-    <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
-    <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
+    <!-- <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
+    <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/> -->
   </node>
 
   <!-- Collision avoidance module -->

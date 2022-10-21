@@ -37,7 +37,7 @@
     </group>
 
     <group if="$(arg robot2)">
-        <!-- ROBOT1 -->
+        <!-- ROBOT2 -->
         <include file="$(find cola2_turbot)/launch/simulation.launch">
             <!-- Params -->
             <arg name="place" value="$(arg place)"/>
