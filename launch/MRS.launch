@@ -79,9 +79,6 @@
 
   <!-- Communications module -->
   <node if="$(arg enableCommunicationModule)" name="communications" pkg="multi_robot_system" type="communications.py" output="screen" respawn="true">
-    <param name="r0_navigation_topic" value="$(arg navigation_topic_robot_1)"/>
-    <param name="r1_navigation_topic" value="$(arg navigation_topic_robot_2)"/>
-    <param name="r2_navigation_topic" value="$(arg navigation_topic_robot_3)"/>
     <param name="low_noise" value= "0.9"/>
     <param name="medium_noise" value="0.6"/>
     <param name="high_noise" value="0.3"/>

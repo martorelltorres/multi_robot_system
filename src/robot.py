@@ -36,39 +36,26 @@ class robot:
         self.is_section_actionlib_running = False
         self.battery_status = [0,0,0]
         self.ns = rospy.get_namespace()
+
+        robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
+        self.robots_information = []
+        # self.robots = []
+        # self.robot_initialization = np.array([])
+
+        for robot in range(self.number_of_robots):
+            self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
+            # self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
+            # self.robots.append(robot)  # self.robots = [0,1,2]
         
-        #  # enable thrusters service
-        # rospy.wait_for_service(str(self.robot_name)+'/controller/enable_thrusters', 10)
-        # try:
-        #     self.enable_thrusters_srv = rospy.ServiceProxy(
-        #                 str(self.robot_name) + '/controller/enable_thrusters', Empty)
-        # except rospy.ServiceException, e:
-        #     rospy.logwarn("%s: Service call failed: %s", self.name, e)
-
-        # # disable thrusters service
-        # rospy.wait_for_service(str(self.robot_name)+'/controller/disable_thrusters', 10)
-        # try:
-        #     self.disable_thrusters_srv = rospy.ServiceProxy(
-        #                 str(self.robot_name)+ '/controller/disable_thrusters', 
-        #                 Empty)
-        # except rospy.ServiceException, e:
-        #     rospy.logwarn("%s: Service call failed: %s", self.name, e)
-
-        # enable goto
-        # try:
-        #     rospy.wait_for_service('/'+str(self.robot_name)+'/captain/enable_goto', 20)
-        #     self.goto_srv = rospy.ServiceProxy(
-        #                 '/'+str(self.robot_name)+'/captain/enable_goto', Goto)
-        # except rospy.exceptions.ROSException:
-        #     rospy.logerr('%s: error creating client to goto service',
-        #                  self.name)
-        #     rospy.signal_shutdown('Error creating client to goto service')
 
         # subscribers
-        rospy.Subscriber(self.navigation_topic ,
-                    NavSts,    
-                    self.update_robot_position,
-                    queue_size=1)
+        for robot in range(self.number_of_robots):
+            rospy.Subscriber(
+                '/robot'+str(robot+1)+'/navigator/navigation',
+                NavSts,
+                self.update_robot_position,
+                robot,
+                queue_size=1)
 
         rospy.Subscriber(self.battery_topic ,
                     BatteryState,    
@@ -118,7 +105,7 @@ class robot:
         self.goto_srv(goto_req)
         rospy.sleep(1.0)
     
-    def send_section_strategy(self,initial_point,final_point):
+    def send_section_strategy(self,initial_point,final_point,robot_id):
         initial_position_x = initial_point[0]
         final_position_x = final_point[0]
         initial_position_y = initial_point[1]
@@ -128,7 +115,7 @@ class robot:
         section_req.initial_position.x = initial_position_x
         section_req.initial_position.y = initial_position_y
         section_req.initial_position.z = 0.0
-        section_req.initial_yaw = self.robot_orientation_yaw
+        section_req.initial_yaw = self.robots_information[robot_id][11] #yaw
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
         section_req.final_position.z = 0.0
@@ -177,16 +164,25 @@ class robot:
         # uint64 FAILURE=2
         # uint64 BUSY=3
 
-    def update_robot_position(self,msg):
-        self.robot_position_north = msg.position.north
-        self.robot_position_east = msg.position.east
-        self.robot_position_depth = msg.position.depth
-        self.robot_orientation_yaw = msg.orientation.yaw 
-        self.robot_id = self.robot_ID
-        self.robot_alive = True
+    def update_robot_position(self,msg,robot_id):
+        # fill the robots_information array with the robots information received from the NavSts 
+        self.robots_information[robot_id][0] = msg.position.north
+        self.robots_information[robot_id][1] = msg.position.east
+        self.robots_information[robot_id][2] = msg.position.depth
+        self.robots_information[robot_id][3] = msg.altitude
+        self.robots_information[robot_id][4] = msg.global_position.latitude
+        self.robots_information[robot_id][5] = msg.global_position.longitude
+        self.robots_information[robot_id][6] = msg.body_velocity.x
+        self.robots_information[robot_id][7] = msg.body_velocity.y
+        self.robots_information[robot_id][8] = msg.body_velocity.z
+        self.robots_information[robot_id][9] = msg.orientation.roll
+        self.robots_information[robot_id][10] = msg.orientation.pitch
+        self.robots_information[robot_id][11] = msg.orientation.yaw
+        self.robot_id = robot_id
+
     
-    def get_robot_position(self):
-        return(self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw,self.robot_id)
+    def get_robot_position(self,robot_id):
+        return(self.robots_information[robot_id][0],self.robots_information[robot_id][1],self.robots_information[robot_id][2],self.robots_information[robot_id][11])
     
     def is_robot_alive(self, ID_robot):
         if(ID_robot ==self.robot_ID and self.robot_alive==False):

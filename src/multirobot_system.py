@@ -43,6 +43,14 @@ class MultiRobotSystem:
         self.simulation_task_times = []
         self.task_monitoring = []
         self.section_cancelled = False
+        self.final_status = 99999
+
+        self.system_init = False
+        self.robot_initialization = np.array([])
+
+         # initialize the robots variables
+        for i in range(self.number_of_robots):
+            self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
 
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -90,19 +98,17 @@ class MultiRobotSystem:
         self.avoid_collisions()
  
     def initialization(self): 
-        # wait 3 seconds in order to initialize the different robot architectures
-        rospy.sleep(2)
-        robot_init_status = np.array([False,False,False])   
-        
-        while np.all(robot_init_status == False):
-            for ID_robot in range(self.number_of_robots):
-                robot_init_status[ID_robot] = self.robot_handler.is_robot_alive(ID_robot)
+        # wait 7 seconds in order to initialize the different robot architectures
+        rospy.sleep(7)      
+        if np.all(self.robot_initialization == False):
+            for robot in range(self.number_of_robots):
+                self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
+
         print("             *************************")
         print("                 ROBOT "+str(self.robot_ID)+ " INITIALIZED   ")
         print("             *************************")
 
         self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
-
         # init the task_time variable
         for task in range(len(self.goals)):
             self.task_monitoring.append(0)
@@ -124,8 +130,7 @@ class MultiRobotSystem:
             print(".......................................")
             print("The spended time is "+ str(task_time)+ " seconds")
             self.simulation_task_times[self.goal_polygons[task]] = task_time
-            print(self.simulation_task_times)
-            # self.task_monitoring[task]= True
+            self.task_monitoring[task]= True
   
     def wait_until_section_reached(self):
         if(self.final_status==0):
@@ -161,11 +166,11 @@ class MultiRobotSystem:
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
         self.data_gattered = True
         section_points = self.goal_points[goal]
-
         self.section_id = goal
+
         for section in range(len(section_points)):
             self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
-            self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw,self.robot_id = self.robot_handler.get_robot_position()
+            self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
             self.current_section = section_points[section]
             
             if(self.section_id==goal):
@@ -185,18 +190,18 @@ class MultiRobotSystem:
                 initial_point = second_point
                 final_point = first_point
 
-            self.robot_handler.send_section_strategy(initial_point,final_point)
+            self.robot_handler.send_section_strategy(initial_point,final_point,self.robot_ID)
 
             self.wait_until_section_reached()
 
-        self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon)
+        # self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon)
     
     def generate_initial_section(self,position_north,position_east,section_points):
         self.section_id = -1
         initial_point = Point(position_north,position_east)
         initial_point = list(initial_point.coords)[0]
         final_point = section_points[0]
-        self.robot_handler.send_section_strategy(initial_point,final_point)
+        self.robot_handler.send_section_strategy(initial_point,final_point,self.robot_ID)
         self.wait_until_section_reached()
 
     def print_polygon(self,event):

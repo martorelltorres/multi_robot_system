@@ -13,20 +13,18 @@ class communications:
     def __init__(self, name):
         self.name = name
         self.number_of_robots = self.get_param('number_of_robots')
-        # navigation topics
-        self.r0_navigation_topic = self.get_param('~r0_navigation_topic','/turbot/navigator/navigation') 
-        self.r1_navigation_topic = self.get_param('~r1_navigation_topic','/xiroi/navigator/navigation') 
+ 
         # communication noise frequency 
         self.low_noise = self.get_param('~low_noise','1') 
         self.medium_noise = self.get_param('~medium_noise','0.5') 
         self.high_noise = self.get_param('~high_noise','0.1') 
+
         # distance range
         self.low_distance = self.get_param('~low_distance','10') 
         self.medium_distance = self.get_param('~medium_distance','40') 
         self.large_distance = self.get_param('~large_distance','80') 
 
         self.system_init = False
-        
         robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
         self.robots_information = []
         self.robots = []
@@ -37,7 +35,13 @@ class communications:
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot)  # self.robots = [0,1,2]
-
+                
+        #Publishers
+        node_name = rospy.get_name()
+        self.communication_pub = rospy.Publisher(node_name +"/communication_info",
+                                        Communication,
+                                        queue_size=1)
+        #Subscribers
         for robot in range(self.number_of_robots):
             rospy.Subscriber(
                 '/robot'+str(robot+1)+'/navigator/navigation',
@@ -46,12 +50,6 @@ class communications:
                 robot,
                 queue_size=1)
                 
-        #Publishers
-        node_name = rospy.get_name()
-        self.communication_pub = rospy.Publisher(node_name +"/communication_info",
-                                        Communication,
-                                        queue_size=1)
-        #Subscribers
         rospy.Subscriber(node_name +"/communication_info",
                          Communication,    
                          self.monitoring_communications,
@@ -84,15 +82,12 @@ class communications:
         if((self.robot_initialization == True).all()):
             self.system_init = True
             self.communication_noise()
-           
 
-    def distance_between_robots(self,first_robot, second_robot):
-        print("The first robot_id is : "+str(first_robot)+" and the second robot_id is: "+str(second_robot))
+    def distance_between_robots(self,first_robot,second_robot):
         x_distance = self.robots_information[first_robot][0]-self.robots_information[second_robot][0]
         y_distance = self.robots_information[first_robot][1]-self.robots_information[second_robot][1]
         self.distance = np.sqrt(x_distance**2 + y_distance**2)
         self.distance = round(self.distance, 2)    
-
 
     def communication_noise(self):
 
