@@ -27,9 +27,9 @@ class MultiRobotSystem:
         """ Init the class """
         self.name = name
          # Get config parameters from the parameter server
-        self.robot_ID = self.get_param('~robot_ID',0)   
+        self.robot_ID = self.get_param('~robot_ID')   
         # self.robot_bvr_topic = self.get_param('~robot_bvr_topic','/turbot/pilot/world_section_req/result') 
-        self.section_result = self.get_param('~section_result','/turbot/pilot/world_section_req/result') 
+        self.section_result = self.get_param('~section_result') 
         self.number_of_robots = self.get_param('number_of_robots')
 
         self.area_handler =  area_partition("area_partition")
@@ -52,6 +52,7 @@ class MultiRobotSystem:
                          WorldSectionActionResult,    
                          self.update_section_result,
                          queue_size=1)
+
 
         rospy.Subscriber('/collission_avoidance_info' ,
                          AvoidCollision,    
@@ -134,12 +135,12 @@ class MultiRobotSystem:
        
         if(self.repulsion == True):
             if(self.robot_master_id!=self.robot_ID):
-                if((self.robot_master_id==0 and self.robot_ID==1) or (self.robot_master_id==1 and self.robot_ID==0)):
-                    robot_slave = 2
-                elif((self.robot_master_id==1 and self.robot_ID==2) or (self.robot_master_id==2 and self.robot_ID==1)):
-                    robot_slave = 0
-                elif((self.robot_master_id==0 and self.robot_ID==2) or (self.robot_master_id==2 and self.robot_ID==0)):
+                if((self.robot_master_id==1 and self.robot_ID==2) or (self.robot_master_id==2 and self.robot_ID==1)):
+                    robot_slave = 3
+                elif((self.robot_master_id==2 and self.robot_ID==3) or (self.robot_master_id==3 and self.robot_ID==2)):
                     robot_slave = 1
+                elif((self.robot_master_id==1 and self.robot_ID==3) or (self.robot_master_id==3 and self.robot_ID==1)):
+                    robot_slave = 2
                 # print ("-------------------------------------------")
                 # print("Robot id: "+str(self.robot_ID))
                 # print("Robot master id: "+str(self.robot_master_id))

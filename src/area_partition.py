@@ -27,8 +27,8 @@ class area_partition:
 
     def __init__(self, name):
         self.name = name
-        self.ned_origin_lat = get_param(self,'/xiroi/navigator/ned_latitude')
-        self.ned_origin_lon = get_param(self,'/xiroi/navigator/ned_longitude')
+        self.ned_origin_lat = get_param(self,'ned_origin_lat')
+        self.ned_origin_lon = get_param(self,'ned_origin_lon')
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
         self.surge_velocity = get_param(self,'surge_velocity')

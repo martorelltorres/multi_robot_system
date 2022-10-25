@@ -4,12 +4,10 @@
 
 # ------------------ ROBOTS INFO -----------------------
 number_of_robots: 3
-robot_1: turbot1
-robot_2: turbot2
-robot_3: xiroi
-navigation_topic_robot_1: /turbot1/navigator/navigation
-navigation_topic_robot_2: /turbot2/navigator/navigation
-navigation_topic_robot_3: /turbot3/navigator/navigation
+# be sure that all the simulated architectures has the same NED origin (Bendinat)
+ned_origin_lat: 39.5319633484
+ned_origin_lon: 2.57906508446
+
 
 # ------------------ AREA PARTITION -----------------------
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons

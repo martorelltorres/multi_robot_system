@@ -323,7 +323,7 @@ Visualization Manager:
       History Length: 1
       Name: PointStamped
       Radius: 1
-      Topic: /xiroi/pilot/goal
+      Topic: /robot1/pilot/goal
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -333,7 +333,7 @@ Visualization Manager:
       History Length: 1
       Name: PointStamped
       Radius: 1
-      Topic: /turbot2/pilot/goal
+      Topic: /robot2/pilot/goal
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -343,7 +343,7 @@ Visualization Manager:
       History Length: 1
       Name: PointStamped
       Radius: 1
-      Topic: /turbot1/pilot/goal
+      Topic: /robot3/pilot/goal
       Unreliable: false
       Value: true
     - Class: rviz/Marker
@@ -398,26 +398,26 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /xiroi/pilot/waypoint_marker
+      Marker Topic: /robot1/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        {}
+        /robot1/pilot: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /turbot1/pilot/waypoint_marker
+      Marker Topic: /robot2/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        {}
+        /robot2/pilot: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /turbot2/pilot/waypoint_marker
+      Marker Topic: /robot3/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        {}
+        /robot3/pilot: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -728,11 +728,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 15.659517288208008
+      Scale: 5.362767219543457
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: -53.44660568237305
-      Y: -39.28826141357422
+      X: -20.66408920288086
+      Y: -0.1941775679588318
     Saved: ~
 Window Geometry:
   Displays:

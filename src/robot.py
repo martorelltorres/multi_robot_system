@@ -16,8 +16,8 @@ class robot:
 
     def __init__(self, name):
         self.name = name
-        self.ned_origin_lat = self.get_param(self,'/turbot/navigator/ned_latitude')
-        self.ned_origin_lon = self.get_param(self,'/turbot/navigator/ned_longitude')
+        self.ned_origin_lat = self.get_param('ned_origin_lat')
+        self.ned_origin_lon = self.get_param('ned_origin_lon')
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
@@ -55,14 +55,14 @@ class robot:
         #     rospy.logwarn("%s: Service call failed: %s", self.name, e)
 
         # enable goto
-        try:
-            rospy.wait_for_service('/'+str(self.robot_name)+'/captain/enable_goto', 20)
-            self.goto_srv = rospy.ServiceProxy(
-                        '/'+str(self.robot_name)+'/captain/enable_goto', Goto)
-        except rospy.exceptions.ROSException:
-            rospy.logerr('%s: error creating client to goto service',
-                         self.name)
-            rospy.signal_shutdown('Error creating client to goto service')
+        # try:
+        #     rospy.wait_for_service('/'+str(self.robot_name)+'/captain/enable_goto', 20)
+        #     self.goto_srv = rospy.ServiceProxy(
+        #                 '/'+str(self.robot_name)+'/captain/enable_goto', Goto)
+        # except rospy.exceptions.ROSException:
+        #     rospy.logerr('%s: error creating client to goto service',
+        #                  self.name)
+        #     rospy.signal_shutdown('Error creating client to goto service')
 
         # subscribers
         rospy.Subscriber(self.navigation_topic ,
@@ -164,7 +164,7 @@ class robot:
         self.get_battery_status()
     
     def get_battery_status(self):
-        self.battery_status[self.robot_ID] =  self.battery_charge
+        self.battery_status[self.robot_ID-1] =  self.battery_charge
         return(self.battery_charge)
          
     def update_section_result(self,msg):

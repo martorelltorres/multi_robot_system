@@ -34,38 +34,38 @@
   
   <!-- Robot 1-->
   <node name="multi_robot_system_$(arg robot_1)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
-    <!-- <param name="robot_ID" value="0"/>
+    <param name="robot_ID" value="0"/>
     <param name="robot_name" value="$(arg robot_1)"/>
     <param name="navigation_topic" value="/$(arg robot_1)/navigator/navigation"/>
-    <param name="battery_topic" value="/$(arg robot_1)/batteries/status"/> -->
+    <param name="battery_topic" value="/$(arg robot_1)/batteries/status"/>
     <param name="section_action" value="/$(arg robot_1)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_1)/pilot/world_section_req/result"/>
-    <!-- <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
-    <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/> -->
+    <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
+    <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
   </node>
 
   <!-- Robot 2 -->
   <node name="multi_robot_system_$(arg robot_2)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
-    <!-- <param name="robot_ID" value="1"/>
+    <param name="robot_ID" value="1"/>
     <param name="robot_name" value="$(arg robot_2)"/>
     <param name="navigation_topic" value="/$(arg robot_2)/navigator/navigation"/>
-    <param name="battery_topic" value="/$(arg robot_2)/batteries/status"/> -->
+    <param name="battery_topic" value="/$(arg robot_2)/batteries/status"/>
     <param name="section_action" value="/$(arg robot_2)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_2)/pilot/world_section_req/result"/>
-    <!-- <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
-    <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/> -->
+    <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
+    <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/>
   </node>
 
   <!-- Robot 3: xiroi ASV -->
   <node name="multi_robot_system_$(arg robot_3)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
-    <!-- <param name="robot_ID" value="2"/>
+    <param name="robot_ID" value="2"/>
     <param name="robot_name" value= "$(arg robot_3)"/>
     <param name="navigation_topic" value="/$(arg robot_3)/navigator/navigation"/>
-    <param name="battery_topic" value="/$(arg robot_3)/batteries/status"/> -->
+    <param name="battery_topic" value="/$(arg robot_3)/batteries/status"/>
     <param name="section_action" value="/$(arg robot_3)/pilot/world_section_req"/>
     <param name="section_result" value="/$(arg robot_3)/pilot/world_section_req/result"/>
-    <!-- <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
-    <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/> -->
+    <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
+    <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
   </node>
 
   <!-- Collision avoidance module -->

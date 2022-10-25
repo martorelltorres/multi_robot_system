@@ -81,19 +81,19 @@ class CollisionAvoidance:
         rospy.Subscriber(self.r1_navigation_topic,
                          NavSts,
                          self.update_nav_status,
-                         0,#send a robot id to the callback function
+                         1,#send a robot id to the callback function
                          queue_size=1)   
 
         rospy.Subscriber(self.r2_navigation_topic,
                          NavSts,
                          self.update_nav_status,
-                         1,
+                         2,
                          queue_size=1)         
 
         rospy.Subscriber(self.r3_navigation_topic,
                          NavSts,
                          self.update_nav_status,
-                         2,
+                         3,
                          queue_size=1)
 
         #Publishers
@@ -152,11 +152,11 @@ class CollisionAvoidance:
 
     def get_robot_position(self,robot_id):
 
-        if(robot_id == 0):
+        if(robot_id == 1):
             return(self.robot1_position_north,self.robot1_position_east,self.robot1_position_depth,self.robot1_yaw)
-        elif(robot_id == 1):
-            return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth,self.robot2_yaw)
         elif(robot_id == 2):
+            return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth,self.robot2_yaw)
+        elif(robot_id == 3):
             return(self.robot2_position_north,self.robot2_position_east,self.robot2_position_depth,self.robot3_yaw)
 
     def set_services(self,robot_name):
