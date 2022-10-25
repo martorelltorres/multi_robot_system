@@ -9,7 +9,7 @@ from shapely.geometry import Point
 from multi_robot_system.msg import TaskMonitoring 
 #import classes
 from area_partition import area_partition
-from robot import robot
+from robot import Robot
 from task_allocation_algorithms.hungarian_algorithm import Hungarian
 from task_allocation_algorithms.aco import ACO
 
@@ -36,7 +36,7 @@ class task_allocation:
                         # 2 --> finished
 
         self.area_handler = area_partition("area_partition")
-        self.robot_handler = robot("robot")
+        self.robot_handler = Robot("robot")
 
         # subscribers
         rospy.Subscriber(self.navigation_topic ,

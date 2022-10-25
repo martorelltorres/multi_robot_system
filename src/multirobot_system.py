@@ -18,7 +18,7 @@ from multi_robot_system.msg import AvoidCollision
 #import classes
 from area_partition import area_partition
 from task_allocator import task_allocation
-from robot import robot
+from robot import Robot
 # from collision_avoidance import CollisionAvoidance
 
 class MultiRobotSystem:
@@ -34,7 +34,7 @@ class MultiRobotSystem:
 
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
-        self.robot_handler = robot("robot")
+        self.robot_handler = Robot("robot")
         # self.collision_avoidance_handler = CollisionAvoidance("collision_avoidance_handler")
 
         self.success_result = False

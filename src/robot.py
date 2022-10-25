@@ -12,7 +12,7 @@ import numpy as np
 from std_srvs.srv import Empty, EmptyResponse
 
 
-class robot:
+class Robot:
 
     def __init__(self, name):
         self.name = name
@@ -115,7 +115,7 @@ class robot:
         section_req.initial_position.x = initial_position_x
         section_req.initial_position.y = initial_position_y
         section_req.initial_position.z = 0.0
-        section_req.initial_yaw = self.robots_information[robot_id][11] #yaw
+        section_req.initial_yaw = self.robots_information[robot_id][2] #yaw
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
         section_req.final_position.z = 0.0

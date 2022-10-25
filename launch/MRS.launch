@@ -56,7 +56,7 @@
     <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/>
   </node>
 
-  <!-- Robot 3: xiroi ASV -->
+  <!-- Robot 3 -->
   <node name="multi_robot_system_$(arg robot_3)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
     <param name="robot_ID" value="2"/>
     <param name="robot_name" value= "$(arg robot_3)"/>
