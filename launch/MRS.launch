@@ -69,13 +69,13 @@
   </node>
 
   <!-- Collision avoidance module -->
-  <node if="$(arg enableCollisonAvoidance)" name="collision_avoidance" pkg="multi_robot_system" type="collision_avoidance.py" output="screen" respawn="true">
+  <!-- <node if="$(arg enableCollisonAvoidance)" name="collision_avoidance" pkg="multi_robot_system" type="collision_avoidance.py" output="screen" respawn="true">
     <param name="robot1_name" value="$(arg robot_1)"/>
     <param name="robot2_name" value="$(arg robot_2)"/>
     <param name="robot3_name" value="$(arg robot_3)"/>
     <param name="repulsion_radius" value="10"/>
     <param name="anchor_radius" value="20"/>
-  </node>
+  </node> -->
 
   <!-- Communications module -->
   <node if="$(arg enableCommunicationModule)" name="communications" pkg="multi_robot_system" type="communications.py" output="screen" respawn="true">
