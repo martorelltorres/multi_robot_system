@@ -77,21 +77,14 @@ class communications:
             self.initialization(robot_id)
         else:
             self.communication_noise()
-        print("ROBOTS INFORMATION")
-        print(self.robots_information[[0][self.robot_data[0]]])
-        print(self.robots_information[[1][self.robot_data[0]]])
-        print(self.robots_information[[2][self.robot_data[0]]])
 
     def initialization(self,robot_id):
         # check if all the n robots are publishing their information
         if(self.robots_information[[robot_id][self.robot_data[0]]] != 0): 
             self.robot_initialization[robot_id] = True
-        else:
-            self.robot_initialization[robot_id] = False
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
-            self.communication_noise()
 
     def distance_between_robots(self,first_robot,second_robot):
         first_robot_north = self.robots_information[[first_robot][self.robot_data[0]]]
@@ -102,11 +95,8 @@ class communications:
         y_distance = first_robot_east - second_robot_east
         self.distance = np.sqrt(x_distance**2 + y_distance**2)
         self.distance = round(self.distance, 2)   
-        print("distance: "+str(self.distance)) 
 
     def communication_noise(self):
-
-
 
         for robot in range(self.number_of_robots):
             # find the different combinations between the n robots
@@ -119,23 +109,29 @@ class communications:
                 self.distance_range = "low_distance"
                 self.communication_freq = 1
                 self.rate = rospy.Rate(self.communication_freq)
+                self.robot1_id = robot_combinations[0]
+                self.robot2_id = robot_combinations[1]
                 self.communication()
 
             elif(self.low_distance <= self.distance <= self.medium_distance):
                 self.distance_range = "medium_distance"
                 self.noise = self.medium_noise
                 self.communication_freq = 0.5
+                self.robot1_id = robot_combinations[0]
+                self.robot2_id = robot_combinations[1]
                 self.rate = rospy.Rate(self.communication_freq)
                 self.communication()
             else:
                 self.noise = self.high_noise
                 self.communication_freq = 0.1  
                 self.distance_range = "large_distance"
+                self.robot1_id = robot_combinations[0]
+                self.robot2_id = robot_combinations[1]
                 self.rate = rospy.Rate(self.communication_freq)
                 self.communication()        
 
     def random_interference(self):
-        interference = random.randint(0,10)
+        interference = random.randint(0,5)
         rospy.sleep(interference)
 
     def communication(self):
@@ -149,9 +145,11 @@ class communications:
             communication_msg.distance = self.distance
             communication_msg.distance_range = self.distance_range
             communication_msg.noise_level = self.noise
+            communication_msg.robot1_id = self.robot1_id
+            communication_msg.robot2_id = self.robot2_id
             communication_msg.communication_freq = self.communication_freq
             self.communication_pub.publish(communication_msg)
-            self.rate.sleep()
+
 
     def monitoring_communications(self,msg):
         distance = msg.distance
