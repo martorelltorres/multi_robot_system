@@ -121,8 +121,8 @@ class area_partition:
     def get_estimated_polygons_coverage_time(self):
         estimated_coverage_time=[]
         sections_distance = self.get_sections_time()
-        sections_number = self.get_sections_number()
         sections_distance = sections_distance[0]
+        sections_number = self.get_sections_number()
 
         for polygon_id in range(len(self.voronoi_offset_polygons)):
             distance = sections_distance[polygon_id]
