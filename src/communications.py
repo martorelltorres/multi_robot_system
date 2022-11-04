@@ -131,7 +131,7 @@ class communications:
                 self.communication()        
 
     def random_interference(self):
-        interference = random.randint(0,5)
+        interference = random.randint(0,2)
         rospy.sleep(interference)
 
     def communication(self):
@@ -149,7 +149,6 @@ class communications:
             communication_msg.robot2_id = self.robot2_id
             communication_msg.communication_freq = self.communication_freq
             self.communication_pub.publish(communication_msg)
-
 
     def monitoring_communications(self,msg):
         distance = msg.distance

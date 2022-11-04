@@ -163,13 +163,13 @@ class MultiRobotSystem:
 
 
     def mrs_coverage(self,goal):
-        self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon)
+        self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon,self.goal_polygons)
         self.data_gattered = True
         section_points = self.goal_points[goal]
         self.section_id = goal
 
         for section in range(len(section_points)):
-            self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon)
+            self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon,self.goal_polygons)
             self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
             self.current_section = section_points[section]
             
@@ -194,7 +194,7 @@ class MultiRobotSystem:
 
             self.wait_until_section_reached()
 
-        # self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon)
+        self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon,self.goal_polygons)
     
     def generate_initial_section(self,position_north,position_east,section_points):
         self.section_id = -1
