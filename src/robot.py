@@ -135,6 +135,9 @@ class Robot:
 
         #  Wait for result or cancel if timed out
         self.section_strategy.wait_for_result()
+        
+    def set_current_section(self,current_section):
+        return(current_section)
 
     def get_robot_id(self):
         return(self.robot_ID)

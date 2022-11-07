@@ -31,7 +31,7 @@ class MultiRobotSystem:
         # self.robot_bvr_topic = self.get_param('~robot_bvr_topic','/turbot/pilot/world_section_req/result') 
         self.section_result = self.get_param('~section_result') 
         self.number_of_robots = self.get_param('number_of_robots')
-
+        self.actual_section = 0
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = Robot("robot")
@@ -129,11 +129,12 @@ class MultiRobotSystem:
             task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
             print(".......................................")
             print("The spended time is "+ str(task_time)+ " seconds")
-            self.simulation_task_times[self.goal_polygons[task]] = task_time
+            # self.simulation_task_times[self.goal_polygons[task]] = task_time
             self.task_monitoring[task]= True
   
     def wait_until_section_reached(self):
         if(self.final_status==0):
+            self.actual_section = self.actual_section +1
             self.success_result = True    
     
     def avoid_collisions(self):
@@ -175,7 +176,11 @@ class MultiRobotSystem:
             
             if(self.section_id==goal):
                 self.generate_initial_section(self.robot_position_north,self.robot_position_east,self.current_section)
-                self.section_id = 100000 #TODO:find a better way     
+                self.section_id = 100000 #TODO:find a better way   
+
+            # update_current_section = self.robot_handler.set_current_section(self,self.actual_section)
+            # print("--------------------")
+            # print(update_current_section)
 
             # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
             first_point = self.current_section[0]

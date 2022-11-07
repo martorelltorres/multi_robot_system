@@ -33,6 +33,7 @@ class area_partition:
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
         self.surge_velocity = get_param(self,'surge_velocity')
         self.offset_distance = 0
+        self.goal_polygon_defined = False
         
         self.coverage_distance = 0
         self.fixed_offset = 1
@@ -182,8 +183,12 @@ class area_partition:
     def get_goal_points(self, goal_polygon):
         if (self.goal_polygon_defined == True):
             goal_points = self.goal_points([goal_polygon])
+        else:
+            polygon_number = self.get_polygon_number()
+            goal_points = []
+            for polygon in range(polygon_number):
+                goal_points.append(0)
 
-        self.goal_polygon_defined = False
         return(goal_points)
 
     def send_position(self, req):
@@ -235,8 +240,8 @@ class area_partition:
         initial_section = [initial_section[0][0],initial_section[1][0]]
         
         # remove empty elements and add first_section 
-        if(self.goal_points[self.polygon_id][0]== []):
-            self.goal_points[self.polygon_id][0]=initial_section
+        if(self.goal_points[self.polygon_id][0] == []):
+            self.goal_points[self.polygon_id][0] = initial_section
 
         return(self.goal_points)
 

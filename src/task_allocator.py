@@ -206,7 +206,6 @@ class task_allocation:
         return(self.task_monitoring)
     
     def update_task_status(self,robot_id,task_id,status_update,central_polygon,tasks):
-
         self.task_msg = TaskMonitoring()
         self.task_msg.header.frame_id = "world_ned"
         self.task_msg.header.stamp = rospy.Time.now()
@@ -217,7 +216,7 @@ class task_allocation:
         self.task_msg.task_status = status_update
         task_sections = self.area_handler.get_sections_number()
         self.task_msg.sections = task_sections[task_id]
-        # self.task_msg.goal_points = status_update
+        self.task_msg.goal_points = self.area_handler.get_goal_points(task_id)
 
     def task_monitoring_publisher(self,event):
         self.task_monitoring.publish(self.task_msg)
