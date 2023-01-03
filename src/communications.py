@@ -35,6 +35,9 @@ class communications:
             self.robots_information.append(self.robot_data) #set the self.robots_information initialized to 0
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot)  # self.robots = [0,1,2]
+            print("++++++++++++++++++++++++++++++++++++++++++++++++++")
+            print(self.robots)
+            print("-----------------------------------------------------")
 
         #Publishers
         node_name = rospy.get_name()

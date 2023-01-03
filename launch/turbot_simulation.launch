@@ -1,12 +1,13 @@
 <launch>
     <!-- Params -->
     <arg name="place" default="bendinat.yaml"/>
-
     <arg name="robot1" default="true"/>
     <arg name="robot2" default="true"/>
+    <arg name="robot3" default="true"/>
     <!-- params robot1  -->
     <arg name="robot1_name" default="turbot1"/>
     <arg name="robot2_name" default="turbot2"/>
+    <arg name="robot3_name" default="turbot3"/>
 
 
     <!-- Common Flags -->
@@ -42,6 +43,25 @@
             <!-- Params -->
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot2_name)"/>
+            <!-- Flags -->
+            <arg name="cola2_nav" value="$(arg cola2_nav)"/>
+            <arg name="enableSafety" value="$(arg enableSafety)"/>
+            <arg name="openLoopTeleoperation" value="$(arg openLoopTeleoperation)"/>
+            <arg name="enableUSBLloc" value="$(arg enableUSBLloc)"/>
+            <arg name="enableIqua" value="false"/>
+            <arg name="enableRviz" value="$(arg enableRviz)"/>
+            <arg name="enableMultimaster" value="$(arg enableMultimaster)"/>
+            <arg name="launchGS" value="false"/>
+            <arg name="enableRelayBoard" value="false"/>
+        </include>
+    </group>
+
+    <group if="$(arg robot3)">
+        <!-- ROBOT3 -->
+        <include file="$(find cola2_turbot)/launch/simulation.launch">
+            <!-- Params -->
+            <arg name="place" value="$(arg place)"/>
+            <arg name="robot_name" value="$(arg robot3_name)"/>
             <!-- Flags -->
             <arg name="cola2_nav" value="$(arg cola2_nav)"/>
             <arg name="enableSafety" value="$(arg enableSafety)"/>

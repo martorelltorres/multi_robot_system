@@ -85,7 +85,15 @@ Visualization Manager:
           Value: true
         robot3/base_link:
           Value: true
+        robot3/depth:
+          Value: true
+        robot3/dvl:
+          Value: true
+        robot3/dvl_altitude:
+          Value: true
         robot3/dynamics:
+          Value: true
+        robot3/echosounder:
           Value: true
         robot3/gps:
           Value: true
@@ -93,13 +101,33 @@ Visualization Manager:
           Value: true
         robot3/imu_filter:
           Value: true
-        robot3/odom:
+        robot3/modem:
+          Value: true
+        robot3/pressure:
+          Value: true
+        robot3/thruster_0:
           Value: true
         robot3/thruster_1:
           Value: true
         robot3/thruster_2:
           Value: true
-        robot3/usbl:
+        robot4/base_link:
+          Value: true
+        robot4/dynamics:
+          Value: true
+        robot4/gps:
+          Value: true
+        robot4/imu:
+          Value: true
+        robot4/imu_filter:
+          Value: true
+        robot4/odom:
+          Value: true
+        robot4/thruster_1:
+          Value: true
+        robot4/thruster_2:
+          Value: true
+        robot4/usbl:
           Value: true
         world_ned:
           Value: false
@@ -160,21 +188,46 @@ Visualization Manager:
               {}
           robot2/dynamics:
             {}
+          robot3/base_link:
+            robot3/dvl:
+              robot3/dvl_altitude:
+                {}
+            robot3/echosounder:
+              {}
+            robot3/gps:
+              {}
+            robot3/imu:
+              {}
+            robot3/imu_filter:
+              {}
+            robot3/modem:
+              {}
+            robot3/pressure:
+              robot3/depth:
+                {}
+            robot3/thruster_0:
+              {}
+            robot3/thruster_1:
+              {}
+            robot3/thruster_2:
+              {}
           robot3/dynamics:
             {}
-          robot3/odom:
-            robot3/base_link:
-              robot3/gps:
+          robot4/dynamics:
+            {}
+          robot4/odom:
+            robot4/base_link:
+              robot4/gps:
                 {}
-              robot3/imu:
+              robot4/imu:
                 {}
-              robot3/imu_filter:
+              robot4/imu_filter:
                 {}
-              robot3/thruster_1:
+              robot4/thruster_1:
                 {}
-              robot3/thruster_2:
+              robot4/thruster_2:
                 {}
-              robot3/usbl:
+              robot4/usbl:
                 {}
       Update Interval: 0
       Value: true
@@ -574,6 +627,22 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        robot3/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         robot3/gps:
           Alpha: 1
           Show Axes: false
@@ -586,15 +655,23 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        robot3/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         robot3/thruster_1:
           Alpha: 1
           Show Axes: false
           Show Trail: false
         robot3/thruster_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot3/usbl:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -706,6 +783,51 @@ Visualization Manager:
       Topic: /robot3/ekf_map/odometry
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        robot4/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot4/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/usbl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: robot4/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 165; 165; 165
@@ -729,11 +851,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 5.66773796081543
+      Scale: 21.704532623291016
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: -62.668670654296875
-      Y: -22.970474243164062
+      X: -7.516017436981201
+      Y: 0.882451057434082
     Saved: ~
 Window Geometry:
   Displays:
