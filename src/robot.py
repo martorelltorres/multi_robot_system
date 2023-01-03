@@ -20,18 +20,13 @@ class Robot:
         self.ned_origin_lon = self.get_param('ned_origin_lon')
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
-        self.navigation_topic = self.get_param('~navigation_topic','/turbot/navigator/navigation') 
         self.battery_topic = self.get_param('~battery_topic','/turbot1/batteries/status')
         self.section_action = self.get_param('~section_action','/xiroi/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/xiroi/pilot/world_section_req/result') 
         self.number_of_robots = self.get_param('number_of_robots')
         self.robot_ID = self.get_param('~robot_ID',0)
         self.robot_name = self.get_param('~robot_name','turbot1')
-        self.robot_slave_name = rospy.get_param('~robot_slave_name',default='xiroi')
         self.distance = []
-        self.robot0_bat = False
-        self.robot1_bat = False
-        self.robot2_bat = False
         self.robot_alive = False
         self.is_section_actionlib_running = False
         self.battery_status = [0,0,0]
@@ -57,11 +52,6 @@ class Robot:
                 robot,
                 queue_size=1)
 
-        rospy.Subscriber(self.battery_topic ,
-                    BatteryState,    
-                    self.update_battery_status,
-                    queue_size=1)
-
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
         self.section_strategy.wait_for_server()
@@ -69,15 +59,6 @@ class Robot:
     def simulation_task_time (self,init_time, final_time):
         spend_time = (final_time - init_time)/1000000000
         return(spend_time)
-
-
-    def disable_thrusters(self,robot_name):
-        if(robot_name == self.robot_slave_name):
-            self.disable_thrusters_srv()
-
-    # def enable_thrusters(self,robot_name):
-    #     if(robot_name == self.robot_slave_name):
-    #         self.enable_thrusters_srv()
 
     def send_goto_strategy(self, position_x, position_y,linear_velocity):
         """Goto to position x, y, z, at velocity vel."""

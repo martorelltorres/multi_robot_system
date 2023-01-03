@@ -66,6 +66,15 @@
       <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
     </node>
 
+    <!-- Robot 4 -->
+    <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
+      <param name="robot_ID" value="4"/>
+      <param name="section_action" value="/$(arg robot_4)/pilot/world_section_req"/>
+      <param name="section_result" value="/$(arg robot_4)/pilot/world_section_req/result"/>
+    </node>
+
+
+
     <!-- Communications module -->
     <group if="$(arg enableCommunicationModule)">
       <node name="communications_sim" pkg="multi_robot_system" type="communications.py" output="screen" respawn="true">
