@@ -44,12 +44,12 @@ class task_allocation:
                          self.update_robot_position,
                          queue_size=1)
         # publishers
-        self.task_monitoring = rospy.Publisher("robot"+str(self.robot_ID+1)+"_task_monitoring",
+        self.task_monitoring = rospy.Publisher("robot"+str(self.robot_ID)+"_task_monitoring",
                                         TaskMonitoring,
                                         queue_size=1)
         # Timers
         rospy.Timer(rospy.Duration(1.0), self.task_monitoring_publisher)
-        self.update_task_status(self.robot_ID,0,0,0,[0,0])
+        self.update_task_status(self.robot_ID,0,0,0,[0,0],0)
 
     def update_robot_position(self,msg):
         self.robot_position_north = msg.position.north
@@ -205,7 +205,7 @@ class task_allocation:
         # [[0, 0, 0], [0, 1, 0], [1, 2, 0], [1, 3, 0]]
         return(self.task_monitoring)
     
-    def update_task_status(self,robot_id,task_id,status_update,central_polygon,tasks):
+    def update_task_status(self,robot_id,task_id,status_update,central_polygon,tasks,current_section):
         self.task_msg = TaskMonitoring()
         self.task_msg.header.frame_id = "world_ned"
         self.task_msg.header.stamp = rospy.Time.now()
@@ -216,6 +216,7 @@ class task_allocation:
         self.task_msg.task_status = status_update
         task_sections = self.area_handler.get_sections_number()
         self.task_msg.sections = task_sections[task_id]
+        self.task_msg.current_section = current_section
         self.task_msg.goal_points = self.area_handler.get_goal_points(task_id)
 
     def task_monitoring_publisher(self,event):

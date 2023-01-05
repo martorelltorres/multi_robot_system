@@ -3,9 +3,11 @@ import rospy
 import math
 import numpy as np
 import random 
+from math import *
+import matplotlib
 import actionlib         
 import matplotlib.pyplot as plt
-from cola2_msgs.msg import  NavSts
+from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from shapely.geometry import Point
 from multi_robot_system.msg import TaskMonitoring
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
@@ -16,7 +18,7 @@ class DustbinRobot:
   
     def __init__(self, name):
         """ Init the class """
-
+        rospy.sleep(7)
         self.name = name
         # Get config parameters from the parameter server
         self.number_of_robots = self.get_param('number_of_robots')
@@ -25,8 +27,15 @@ class DustbinRobot:
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.section_action = self.get_param('section_action','/robot4/pilot/world_section_req') 
         self.section_result = self.get_param('section_result','/robot4/pilot/world_section_req/result') 
+
+        self.repulsion_radius = self.get_param("repulsion_radius", default=10)
+        self.adrift_radius = self.get_param("adrift_radius", default=20)
+        self.tracking_radius = self.get_param("tracking_radius", default=50)
+
         self.is_section_actionlib_running = False
+        self.start = False
         self.robot_at_center = False
+        self.robots_id = np.array([])
         self.area_handler =  area_partition("area_partition")
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -43,6 +52,7 @@ class DustbinRobot:
             self.robots_information.append(self.robot_data) #set the self.robots_information initialized to 0
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot)  # self.robots = [0,1,2]
+            self.robots_id = np.append(self.robots_id,robot)
 
         #Subscribers
         for robot_id in range(self.number_of_robots):
@@ -52,7 +62,6 @@ class DustbinRobot:
                 self.update_robots_position,
                 robot_id,
                 queue_size=1) 
-
         rospy.Subscriber('/robot'+str(self.robot_ID)+'/navigator/navigation',
                             NavSts,    
                             self.update_robot_position,
@@ -62,14 +71,25 @@ class DustbinRobot:
                          WorldSectionActionResult,    
                          self.update_section_result,
                          queue_size=1)
+
+        #Publishers
+        self.corrected_bvr = rospy.Publisher('/robot'+str(self.robot_ID)+'/controller/body_velocity_req',
+                                                BodyVelocityReq,
+                                                queue_size=1)
+
+        # Init periodic timers
+        if(self.start == True):
+            rospy.Timer(rospy.Duration(60.0), self.dustbin_strategy)
+   
+
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
         self.section_strategy.wait_for_server() 
 
     def update_robot_position(self, msg):
-        self.north_position = msg.position.north
-        self.east_position = msg.position.east      
-        self.yaw = msg.orientation.yaw
+        self.asv_north_position = msg.position.north
+        self.asv_east_position = msg.position.east      
+        self.asv_yaw = msg.orientation.yaw
 
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
@@ -92,12 +112,12 @@ class DustbinRobot:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_id)
-        else:
-            # go to the central area
-            if(self.robot_at_center == False):
-                self.goto_central_point()
-            else:
-                self.dustbin_strategy()
+
+        elif(self.robot_at_center == False):
+            self.goto_central_point()
+            self.start = True
+            self.robots_id = np.roll(self.robots_id,1)
+            
  
     def initialization(self,robot_id):
         # check if all the n robots are publishing their information
@@ -107,13 +127,107 @@ class DustbinRobot:
         if((self.robot_initialization == True).all()):
             self.system_init = True
   
-    def dustbin_strategy(self):
-        print("do a lot of TODO's")
+    def dustbin_strategy(self,event):       
+        rospy.Timer(rospy.Duration(0.1), self.tracking)
+        
+    def tracking(self,event):
+        robot_id = self.robots_id[0] 
+        self.auv_position_north = self.robots_information[[robot_id][self.robot_data[0]]]
+        self.asv_position_north = self.asv_north_position
+        self.auv_position_east = self.robots_information[[robot_id][self.robot_data[1]]]
+        self.asv_position_east = self.asv_east_position
 
+        self.x_distance = self.auv_position_north-self.asv_position_north
+        self.y_distance = self.auv_position_east-self.asv_position_east
+        self.radius = sqrt((self.x_distance)**2 + (self.y_distance)**2)
+        self.initialized = True
+        rospy.loginfo(self.radius)
+
+        if(self.radius > self.adrift_radius):
+            rospy.loginfo("----------------- TRACKING STRATEGY -----------------")
+            self.tracking_strategy()
+
+        elif(self.repulsion_radius <= self.radius <= self.adrift_radius):
+            rospy.loginfo("----------------- ADRIFT STRATEGY -----------------")
+
+        elif(self.radius <= self.repulsion_radius):
+            rospy.loginfo("----------------- REPULSION STRATEGY -----------------")
+            self.extract_safety_position()
+            self.repulsion_strategy(self.x, self.y)
+    
+    def extract_safety_position(self):
+        self.m =-(1/ (self.auv_position_east-self.asv_position_east)/(self.auv_position_north-self.asv_position_north))
+        self.pointx = self.asv_position_north
+        self.pointy = self.asv_position_east
+        if (self.auv_position_north > self.asv_position_north):
+            self.x = self.asv_position_north-1
+        else:
+            self.x = self.asv_position_north+1
+        self.y = self.m*(self.x - self.pointy) + self.pointx 
+
+    def repulsion_strategy(self, position_x, position_y):
+        constant_linear_velocity = 4
+        constant_angular_velocity = 2 
+        linear_velocity = constant_linear_velocity
+        alpha_ref = atan2(position_y,position_x)
+        #obtain the minimum agle between both robots
+        angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
+        self.angular_velocity = constant_angular_velocity * angle_error
+        self.xr = linear_velocity*cos(angle_error)
+        self.yr = linear_velocity*sin(angle_error)
+        self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
+
+
+    def tracking_strategy(self):
+        constant_linear_velocity = 7
+        constant_angular_velocity = 2 
+
+        if (self.radius<self.tracking_radius and self.radius>self.adrift_radius):
+            self.velocity_adjustment = (self.radius-(self.adrift_radius))/(self.tracking_radius-(self.adrift_radius))
+        else:
+            self.velocity_adjustment = 1  
+        linear_velocity = self.velocity_adjustment * constant_linear_velocity
+        alpha_ref = atan2(self.y_distance,self.x_distance)
+        angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
+        self.angular_velocity = constant_angular_velocity * angle_error
+        self.xr = linear_velocity*cos(angle_error)
+        self.yr = linear_velocity*sin(angle_error)
+        if(self.xr < 0 ):
+            self.xr = 0
+        self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
+    
+    def corrected_bvr_pusblisher(self,corrected_velocity_x,corrected_velocity_y,corrected_angular_z):
+        # NEW PRIORITY DEFINITIONS
+        # PRIORITY_TELEOPERATION_LOW = 0
+        # PRIORITY_SAFETY_LOW = 5
+        # PRIORITY_NORMAL = 10
+        # PRIORITY_NORMAL_HIGH = 20
+        # PRIORITY_TELEOPERATION = 40
+        # PRIORITY_SAFETY = 45
+        # PRIORITY_SAFETY_HIGH  = 50
+        # PRIORITY_TELEOPERATION_HIGH = 60 
+        bvr = BodyVelocityReq()
+        bvr.header.frame_id    = "/robot3/base_link"
+        bvr.header.stamp       = rospy.Time.now()
+        bvr.goal.requester     =  self.name
+        bvr.disable_axis.x     = False
+        bvr.disable_axis.y     = False
+        bvr.disable_axis.z     = True
+        bvr.disable_axis.roll  = True
+        bvr.disable_axis.pitch = True
+        bvr.disable_axis.yaw   = False
+        bvr.twist.linear.x     = corrected_velocity_x
+        bvr.twist.linear.y     = corrected_velocity_y
+        bvr.twist.linear.z     = 0.0
+        bvr.twist.angular.x    = 0.0
+        bvr.twist.angular.y    = 0.0
+        bvr.twist.angular.z    = corrected_angular_z
+        bvr.goal.priority      = 20
+        self.corrected_bvr.publish(bvr)
     
     def goto_central_point(self):
         self.central_point = self.area_handler.get_main_polygon_centroid()
-        initial_point = [self.north_position,self.east_position]
+        initial_point = [self.asv_north_position,self.asv_east_position]
         final_point = [self.central_point.x,self.central_point.y]
         self.send_section_strategy(initial_point,final_point,self.robot_ID)
         self.wait_until_section_reached()
@@ -122,7 +236,6 @@ class DustbinRobot:
     def wait_until_section_reached(self):
         if(self.final_status==0):
             self.success_result = True 
-
 
     def send_section_strategy(self,initial_point,final_point,robot_id):
         initial_position_x = initial_point[0]
@@ -134,7 +247,7 @@ class DustbinRobot:
         section_req.initial_position.x = initial_position_x
         section_req.initial_position.y = initial_position_y
         section_req.initial_position.z = 0.0
-        section_req.initial_yaw = self.yaw #yaw
+        section_req.initial_yaw = self.asv_yaw 
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
         section_req.final_position.z = 0.0

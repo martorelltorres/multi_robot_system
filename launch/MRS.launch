@@ -5,7 +5,7 @@
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
   <arg name="enableCollisonAvoidance" default="false"/>
-  <arg name="enableCommunicationModule" default="false"/>
+  <arg name="enableCommunicationModule" default="true"/>
 
   <!-- General robots information -->
   <arg name="robot_1" default="robot1"/>
@@ -71,6 +71,9 @@
       <param name="robot_ID" value="4"/>
       <param name="section_action" value="/$(arg robot_4)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_4)/pilot/world_section_req/result"/>
+      <param name="repulsion_radius" value="10"/>
+      <param name="adrift_radius" value="30"/>
+      <param name="tracking_radius" value="40"/>
     </node>
 
 
