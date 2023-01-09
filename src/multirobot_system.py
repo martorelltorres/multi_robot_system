@@ -31,6 +31,7 @@ class MultiRobotSystem:
         # self.robot_bvr_topic = self.get_param('~robot_bvr_topic','/turbot/pilot/world_section_req/result') 
         self.section_result = self.get_param('~section_result') 
         self.number_of_robots = self.get_param('number_of_robots')
+        self.actual_sections = []
         self.actual_section = 0
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
@@ -51,7 +52,7 @@ class MultiRobotSystem:
          # initialize the robots variables
         for i in range(self.number_of_robots):
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
-
+            self.actual_sections.append([i,0])
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -134,7 +135,8 @@ class MultiRobotSystem:
   
     def wait_until_section_reached(self):
         if(self.final_status==0):
-            self.actual_section = self.actual_section +1
+            self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
+            self.actual_section = self.actual_sections[self.robot_ID][1]
             self.success_result = True    
     
     def avoid_collisions(self):
