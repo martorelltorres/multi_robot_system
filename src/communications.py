@@ -71,6 +71,7 @@ class communications:
         self.robots_information[[robot_id][self.robot_data[10]]] = msg.orientation.pitch
         self.robots_information[[robot_id][self.robot_data[11]]] = msg.orientation.yaw
 
+
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_id)

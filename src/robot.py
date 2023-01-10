@@ -164,7 +164,7 @@ class Robot:
         self.robots_information[robot_id][11] = msg.orientation.yaw
         self.robot_id = robot_id
 
-    
+   
     def get_robot_position(self,robot_id):
         return(self.robots_information[robot_id][0],self.robots_information[robot_id][1],self.robots_information[robot_id][2],self.robots_information[robot_id][11])
     

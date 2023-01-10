@@ -106,19 +106,19 @@ class DustbinRobot:
         self.asv_yaw = msg.orientation.yaw
  
     def update_robots_position(self, msg, robot_id):
-        # fill the robots_information array with the robots information received from the NavSts
-        self.robots_information[[robot_id][self.robot_data[0]]] = msg.position.north
-        self.robots_information[[robot_id][self.robot_data[1]]] = msg.position.east
-        self.robots_information[[robot_id][self.robot_data[2]]]= msg.position.depth
-        self.robots_information[[robot_id][self.robot_data[3]]] = msg.altitude
-        self.robots_information[[robot_id][self.robot_data[4]]] = msg.global_position.latitude
-        self.robots_information[[robot_id][self.robot_data[5]]] = msg.global_position.longitude
-        self.robots_information[[robot_id][self.robot_data[6]]] = msg.body_velocity.x
-        self.robots_information[[robot_id][self.robot_data[7]]] = msg.body_velocity.y
-        self.robots_information[[robot_id][self.robot_data[8]]] = msg.body_velocity.z
-        self.robots_information[[robot_id][self.robot_data[9]]] = msg.orientation.roll
-        self.robots_information[[robot_id][self.robot_data[10]]] = msg.orientation.pitch
-        self.robots_information[[robot_id][self.robot_data[11]]] = msg.orientation.yaw
+        # fill the robots_information array with the robots information received from the NavSts 
+        self.robots_information[robot_id][0] = msg.position.north
+        self.robots_information[robot_id][1] = msg.position.east
+        self.robots_information[robot_id][2] = msg.position.depth
+        self.robots_information[robot_id][3] = msg.altitude
+        self.robots_information[robot_id][4] = msg.global_position.latitude
+        self.robots_information[robot_id][5] = msg.global_position.longitude
+        self.robots_information[robot_id][6] = msg.body_velocity.x
+        self.robots_information[robot_id][7] = msg.body_velocity.y
+        self.robots_information[robot_id][8] = msg.body_velocity.z
+        self.robots_information[robot_id][9] = msg.orientation.roll
+        self.robots_information[robot_id][10] = msg.orientation.pitch
+        self.robots_information[robot_id][11] = msg.orientation.yaw
 
         # check the system initialization
         if(self.system_init == False):
@@ -130,9 +130,10 @@ class DustbinRobot:
             self.goto_central_area()
 
         # Init periodic timer 
-        rospy.Timer(rospy.Duration(30), self.get_robot_information)
+        # rospy.Timer(rospy.Duration(30), self.get_robot_information)
+        self.get_robot_information()
 
-    def get_robot_information(self,event):
+    def get_robot_information(self):
         if(self.system_init==True):
             self.robots_id = np.roll(self.robots_id, 2)
             self.robot_goal_id = self.robots_id[0]
@@ -147,7 +148,7 @@ class DustbinRobot:
 
     def initialization(self,robot_id):
         # check if all the n robots are publishing their information
-        if(self.robots_information[[robot_id][self.robot_data[0]]] != 0):
+        if(self.robots_information[robot_id][0] != 0):
             self.robot_initialization[robot_id] = True
         
         if((self.robot_initialization == True).all()):
@@ -155,9 +156,9 @@ class DustbinRobot:
                  
     def tracking(self,event):
         robot_id = self.robot_goal_id 
-        self.auv_position_north = self.robots_information[[robot_id][self.robot_data[0]]]
+        self.auv_position_north = self.robots_information[robot_id][0]
         self.asv_position_north = self.asv_north_position
-        self.auv_position_east = self.robots_information[[robot_id][self.robot_data[1]]]
+        self.auv_position_east = self.robots_information[robot_id][1]
         self.asv_position_east = self.asv_east_position
 
         self.x_distance = self.auv_position_north-self.asv_position_north
