@@ -371,12 +371,22 @@ Visualization Manager:
       Value: true
     - Alpha: 1
       Class: rviz/PointStamped
-      Color: 255; 25; 0
+      Color: 252; 233; 79
       Enabled: true
       History Length: 1
       Name: PointStamped
       Radius: 1
       Topic: /robot1/pilot/goal
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 239; 41; 41
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Radius: 1
+      Topic: /robot4/pilot/goal
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -398,22 +408,6 @@ Visualization Manager:
       Radius: 1
       Topic: /robot3/pilot/goal
       Unreliable: false
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /anchorRadius
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /repulsionRadius
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 100
       Value: true
     - Angle Tolerance: 0.10000000149011612
       Class: rviz/Odometry
@@ -463,6 +457,14 @@ Visualization Manager:
       Name: Marker
       Namespaces:
         /robot2/pilot: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /robot4/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /robot4/pilot: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -538,6 +540,51 @@ Visualization Manager:
           Show Trail: false
       Name: RobotModel
       Robot Description: /robot2/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        robot4/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot4/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/usbl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: robot4/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -782,64 +829,25 @@ Visualization Manager:
       Topic: /robot3/navigator/odometry
       Unreliable: false
       Value: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
+    - Class: rviz/Marker
       Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        robot4/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot4/gps:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/imu_filter:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/thruster_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/thruster_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/usbl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-      Name: RobotModel
-      Robot Description: robot4/robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
-    - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 204; 41; 204
-      Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Radius: 1
-      Topic: /robot4/pilot/goal
-      Unreliable: false
+      Marker Topic: /mrs/tracking_radius
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /robot4/pilot/waypoint_marker
+      Marker Topic: /mrs/repulsion_radius
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mrs/adrift_radius
       Name: Marker
       Namespaces:
         {}
@@ -858,22 +866,47 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 1.119999885559082
-      Class: rviz/TopDownOrtho
+      Class: rviz/Orbit
+      Distance: 166.50592041015625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Invert Z Axis: false
+      Focal Point:
+        X: -54.90623474121094
+        Y: -35.5413818359375
+        Z: -1.8933526277542114
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: true
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 8.019171714782715
+      Pitch: 1.5697963237762451
       Target Frame: turbot/base_link
-      Value: TopDownOrtho (rviz)
-      X: -47.90913391113281
-      Y: -18.82956886291504
-    Saved: ~
+      Value: Orbit (rviz)
+      Yaw: 0
+    Saved:
+      - Class: rviz/Orbit
+        Distance: 150.83807373046875
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Focal Point:
+          X: -62.95317077636719
+          Y: -41.06990432739258
+          Z: -1.901399850845337
+        Focal Shape Fixed Size: true
+        Focal Shape Size: 0.05000000074505806
+        Invert Z Axis: true
+        Name: Orbit
+        Near Clip Distance: 0.009999999776482582
+        Pitch: 1.5697963237762451
+        Target Frame: turbot/base_link
+        Value: Orbit (rviz)
+        Yaw: 0
 Window Geometry:
   Displays:
     collapsed: false

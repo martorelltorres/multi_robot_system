@@ -71,12 +71,10 @@
       <param name="robot_ID" value="4"/>
       <param name="section_action" value="/$(arg robot_4)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_4)/pilot/world_section_req/result"/>
-      <param name="repulsion_radius" value="10"/>
-      <param name="adrift_radius" value="30"/>
-      <param name="tracking_radius" value="40"/>
+      <param name="repulsion_radius" value="2"/>
+      <param name="adrift_radius" value="5"/>
+      <param name="tracking_radius" value="20"/>
     </node>
-
-
 
     <!-- Communications module -->
     <group if="$(arg enableCommunicationModule)">
