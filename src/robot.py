@@ -4,6 +4,7 @@ import rospy
 import actionlib
 from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
+import math
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 from cola2_msgs.msg import  NavSts
 from cola2_msgs.srv import Goto, GotoRequest
@@ -27,20 +28,25 @@ class Robot:
         self.robot_ID = self.get_param('~robot_ID',0)
         self.robot_name = self.get_param('~robot_name','turbot1')
         self.distance = []
+        self.travelled_distance = []
+        self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
+        # self.distance_travelled
         self.robot_alive = False
         self.is_section_actionlib_running = False
         self.battery_status = [0,0,0]
         self.ns = rospy.get_namespace()
 
-        robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
-        self.robots_information = []
+        # robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
+        # self.robots_information = []
         # self.robots = []
         # self.robot_initialization = np.array([])
 
-        for robot in range(self.number_of_robots):
-            self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
-            # self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
-            # self.robots.append(robot)  # self.robots = [0,1,2]
+        # for robot in range(self.number_of_robots):
+        #     self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
+        #     # self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
+        #     # self.robots.append(robot)  # self.robots = [0,1,2]
+        #     print("***********---------------------")
+        #     print(self.robots_information)
         
 
         # subscribers
@@ -95,11 +101,11 @@ class Robot:
         section_req = WorldSectionGoal()
         section_req.initial_position.x = initial_position_x
         section_req.initial_position.y = initial_position_y
-        section_req.initial_position.z = 0.0
+        section_req.initial_position.z = 10.0
         section_req.initial_yaw = self.robots_information[robot_id][2] #yaw
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
-        section_req.final_position.z = 0.0
+        section_req.final_position.z = 10.0
         section_req.altitude_mode = False
         section_req.tolerance.x = self.tolerance
         section_req.tolerance.y = self.tolerance
@@ -122,6 +128,13 @@ class Robot:
 
     def get_robot_id(self):
         return(self.robot_ID)
+    
+    def update_travelled_distance(self,distance_travelled,x_old_position,y_old_position,x_current_position,y_current_position, id):
+        x_diff = x_old_position - x_current_position
+        y_diff = y_old_position - y_current_position
+        distance = distance + math.sqrt(x_diff**2 + y_diff**2)
+        self.travelled_distance[id]= distance
+        return self.travelled_distance
 
     def cancel_section_strategy(self,section):
         if self.is_section_actionlib_running==True:
@@ -162,7 +175,36 @@ class Robot:
         self.robots_information[robot_id][9] = msg.orientation.roll
         self.robots_information[robot_id][10] = msg.orientation.pitch
         self.robots_information[robot_id][11] = msg.orientation.yaw
-        self.robot_id = robot_id
+
+        # travelled distance calculations
+        # if (self.first_time == True):
+        #     self.x_old_position = 0
+        #     self.y_old_position = 0
+        #     self.x_current_position = self.robots_information[robot_id][0]
+        #     self.y_current_position = self.robots_information[robot_id][1]
+
+        #     x_old_position = self.x_old_position 
+        #     y_old_position = self.y_old_position 
+        #     x_current_position = self.x_current_position 
+        #     y_current_position = self.y_current_position 
+        #     distance_travelled = 0
+        #     self.travelled_distance = self.update_travelled_distance(self,distance_travelled,x_old_position,y_old_position,x_current_position,y_current_position, robot_id)
+        #     self.first_time = False
+
+        # else:
+        #     self.x_old_position = self.x_current_position
+        #     self.y_old_position = self.y_current_position
+        #     self.x_current_position = self.robots_information[robot_id][0]
+        #     self.y_current_position = self.robots_information[robot_id][1]
+        #     x_old_position = self.x_old_position 
+        #     y_old_position = self.y_old_position 
+        #     x_current_position = self.x_current_position 
+        #     y_current_position = self.y_current_position
+
+
+
+
+        
 
    
     def get_robot_position(self,robot_id):

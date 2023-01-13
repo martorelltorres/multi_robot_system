@@ -25,30 +25,27 @@ class DustbinRobot:
         """ Init the class """
         rospy.sleep(7)
         self.name = name
+
         # Get config parameters from the parameter server
         self.number_of_robots = self.get_param('number_of_robots')
         self.robot_ID = self.get_param('~robot_ID',0) 
-        self.max_distance_to_waypoint = self.get_param('~max_distance_to_waypoint',750)
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.section_action = self.get_param('section_action','/robot4/pilot/world_section_req') 
         self.section_result = self.get_param('section_result','/robot4/pilot/world_section_req/result') 
-        self.pose = [0,0]
-        self.repulsion_radius = self.get_param("repulsion_radius", default=10)
-        self.adrift_radius = self.get_param("adrift_radius", default=20)
-        self.tracking_radius = self.get_param("tracking_radius", default=50)
+        self.repulsion_radius = self.get_param("repulsion_radius",3)
+        self.adrift_radius = self.get_param("adrift_radius",5)
+        self.tracking_radius = self.get_param("tracking_radius",15)
 
-        self.is_section_actionlib_running = False
-        self.start = False
+        # Import classes
+        self.area_handler =  area_partition("area_partition")
+        self.robot_handler = Robot("robot")
+
+        # Initialize some variables
+        self.pose = [0,0]
         self.get_information = False
         self.robot_at_center = False
         self.robots_id = np.array([])
-        self.area_handler =  area_partition("area_partition")
-        self.robot_handler = Robot("robot")
-        # Show initialization message
-        rospy.loginfo('[%s]: initialized', self.name)
-
-        # Initialize some variables
         self.system_init = False
         self.robot_data = [0,0]
         self.robots_information = [[0,0],[0,0],[0,0]]
@@ -58,9 +55,12 @@ class DustbinRobot:
         # initialize the robots variables
         for robot in range(self.number_of_robots):
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
-            self.robots.append(robot)  # self.robots = [0,1,2]
+            self.robots.append(robot)  
             self.robots_id = np.append(self.robots_id,robot)
             self.robots_id = self.robots_id.astype(int) #convert float to int type
+
+        # Show initialization message
+        rospy.loginfo('[%s]: initialized', self.name)
 
         #Subscribers
         for robot_id in range(self.number_of_robots):
@@ -175,17 +175,17 @@ class DustbinRobot:
         self.y_distance = self.auv_position_east-self.asv_position_east
         self.radius = sqrt((self.x_distance)**2 + (self.y_distance)**2)
         self.initialized = True
-        rospy.loginfo(self.radius)
+        # rospy.loginfo(self.radius)
 
         if(self.radius > self.adrift_radius):
-            rospy.loginfo("----------------- TRACKING STRATEGY -----------------")
+            # rospy.loginfo("----------------- TRACKING STRATEGY -----------------")
             self.tracking_strategy()
 
-        elif(self.repulsion_radius <= self.radius <= self.adrift_radius):
-            rospy.loginfo("----------------- ADRIFT STRATEGY -----------------")
+        # elif(self.repulsion_radius <= self.radius <= self.adrift_radius):
+            # rospy.loginfo("----------------- ADRIFT STRATEGY -----------------")
 
         elif(self.radius <= self.repulsion_radius):
-            rospy.loginfo("----------------- REPULSION STRATEGY -----------------")
+            # rospy.loginfo("----------------- REPULSION STRATEGY -----------------")
             self.extract_safety_position()
             self.repulsion_strategy(self.x, self.y)
     
@@ -266,7 +266,7 @@ class DustbinRobot:
         goto_req = GotoRequest()
         goto_req.altitude = 0
         goto_req.altitude_mode = False
-        goto_req.linear_velocity.x = 30
+        goto_req.linear_velocity.x = 1
         goto_req.position.x = pose[0]
         goto_req.position.y = pose[1]
         goto_req.position.z = 0.0

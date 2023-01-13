@@ -99,8 +99,7 @@ class area_partition:
             # take into account that for example in case of 4 sections there will be only 3 turns
             number_of_sections.append(len(goal_points[polygon])-1)
         return(number_of_sections)
-
-
+    
     def get_sections_time(self):
         goal_points = self.define_path_coverage()
         polygon_distances =[]

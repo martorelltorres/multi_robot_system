@@ -130,7 +130,7 @@ class MultiRobotSystem:
             task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
             print(".......................................")
             print("The spended time is "+ str(task_time)+ " seconds")
-            # self.simulation_task_times[self.goal_polygons[task]] = task_time
+            self.simulation_task_times[task] = task_time
             self.task_monitoring[task]= True
   
     def wait_until_section_reached(self):

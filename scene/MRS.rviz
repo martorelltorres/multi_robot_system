@@ -830,19 +830,19 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /mrs/tracking_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /mrs/repulsion_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -850,7 +850,7 @@ Visualization Manager:
       Marker Topic: /mrs/adrift_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -867,16 +867,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 166.50592041015625
+      Distance: 92.61630249023438
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -54.90623474121094
-        Y: -35.5413818359375
-        Z: -1.8933526277542114
+        X: -55.48070526123047
+        Y: -54.89252471923828
+        Z: -1.8939259052276611
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: true

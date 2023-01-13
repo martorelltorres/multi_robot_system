@@ -71,9 +71,9 @@
       <param name="robot_ID" value="4"/>
       <param name="section_action" value="/$(arg robot_4)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_4)/pilot/world_section_req/result"/>
-      <param name="repulsion_radius" value="2"/>
-      <param name="adrift_radius" value="5"/>
-      <param name="tracking_radius" value="20"/>
+      <param name="repulsion_radius" value="1"/>
+      <param name="adrift_radius" value="2"/>
+      <param name="tracking_radius" value="10"/>
     </node>
 
     <!-- Communications module -->
