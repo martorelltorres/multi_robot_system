@@ -136,14 +136,14 @@ class area_partition:
 
     def define_path_coverage(self):
         #create the loop for the diferent voronoi offset polygons
-        for self.polygon_id in range(len(self.voronoi_offset_polygons)):
-            self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
-            goal_points = self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
-        return(goal_points)
-        # for self.polygon_id in range(len(self.voronoi_polygons)):
-        #     self.find_largest_side(self.voronoi_polygons[self.polygon_id])
-        #     goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
+        # for self.polygon_id in range(len(self.voronoi_offset_polygons)):
+        #     self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
+        #     goal_points = self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
         # return(goal_points)
+        for self.polygon_id in range(len(self.voronoi_polygons)):
+            self.find_largest_side(self.voronoi_polygons[self.polygon_id])
+            goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
+        return(goal_points)
 
     def distance_between_points(self,point_a, point_b):
         distance = point_a.distance(point_b)

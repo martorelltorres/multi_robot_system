@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import datetime
 from numpy import *
 import numpy as np
+import os
+import subprocess
 from shapely.geometry import Polygon,LineString,Point
 import actionlib
 from cola2_msgs.msg import WorldSectionActionResult
@@ -14,13 +16,10 @@ from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
 from multi_robot_system.msg import AvoidCollision
 
-
 #import classes
 from area_partition import area_partition
 from task_allocator import task_allocation
 from robot import Robot
-# from collision_avoidance import CollisionAvoidance
-
 class MultiRobotSystem:
     
     def __init__(self, name):
@@ -28,7 +27,6 @@ class MultiRobotSystem:
         self.name = name
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID')   
-        # self.robot_bvr_topic = self.get_param('~robot_bvr_topic','/turbot/pilot/world_section_req/result') 
         self.section_result = self.get_param('~section_result') 
         self.number_of_robots = self.get_param('number_of_robots')
         self.actual_sections = []
@@ -36,7 +34,6 @@ class MultiRobotSystem:
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = Robot("robot")
-        # self.collision_avoidance_handler = CollisionAvoidance("collision_avoidance_handler")
 
         self.success_result = False
         self.data_gattered = False
@@ -62,12 +59,6 @@ class MultiRobotSystem:
                          self.update_section_result,
                          queue_size=1)
 
-
-        rospy.Subscriber('/collission_avoidance_info' ,
-                         AvoidCollision,    
-                         self.collision_avoidance,
-                         queue_size=1)
-
         #Publishers
         self.polygon_pub = rospy.Publisher("voronoi_polygons",
                                         PolygonStamped,
@@ -86,18 +77,7 @@ class MultiRobotSystem:
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
 
-    def collision_avoidance(self, msg):
-        self.distance = msg.distance
-        self.coverage = msg.coverage
-        self.repulsion = msg.repulsion 
-        self.adrift = msg.adrift
-        self.first_robot_id = msg.first_robot_id
-        self.second_robot_id = msg.second_robot_id
-        self.robot_master_id = msg.robot_master_id
-        self.robot_master = msg.robot_master
-        self.robot_slave = msg.robot_slave
-        self.avoid_collisions()
- 
+
     def initialization(self): 
         # wait 7 seconds in order to initialize the different robot architectures
         rospy.sleep(7)      
@@ -115,23 +95,28 @@ class MultiRobotSystem:
             self.task_monitoring.append(0)
 
         self.goal_polygons = self.goals[self.robot_ID][1]
-        print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
+        # print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
         print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
-        times = self.area_handler.get_estimated_polygons_coverage_time()
+        # times = self.area_handler.get_estimated_polygons_coverage_time()
         self.goal_points = self.area_handler.define_path_coverage()
-        self.robot_task_assignement()
+        self.coverage()
 
-    def robot_task_assignement(self):          
+    def coverage(self):          
         for task in range(len(self.goal_polygons)):
-            initial_task_time = rospy.Time.now()
             print("The robot_"+str(self.robot_ID)+" is covering the polygon: "+str(self.goal_polygons[task]))
             self.mrs_coverage(self.goal_polygons[task])
-            final_task_time = rospy.Time.now()
-            task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
-            print(".......................................")
-            print("The spended time is "+ str(task_time)+ " seconds")
-            self.simulation_task_times[task] = task_time
+            
+            # task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
+            # print(".......................................")
+            # print("The spended time is "+ str(task_time)+ " seconds")
+            self.simulation_task_times[task] = self.task_time
             self.task_monitoring[task]= True
+
+        # kill the node
+        # os.system("rosnode kill " + "/mrs/multi_robot_system_robot"+str(self.robot_ID))
+        self.robot_handler.get_robot_position(self.robot_ID)
+        self.robot_handler.send_goto_strategy()
+        rospy.loginfo("robot"+str(self.robot_ID)+" killed!")
   
     def wait_until_section_reached(self):
         if(self.final_status==0):
@@ -139,31 +124,6 @@ class MultiRobotSystem:
             self.actual_section = self.actual_sections[self.robot_ID][1]
             self.success_result = True    
     
-    def avoid_collisions(self):
-        if(self.repulsion == True):
-            if(self.robot_master_id!=self.robot_ID):
-                if((self.robot_master_id==1 and self.robot_ID==2) or (self.robot_master_id==2 and self.robot_ID==1)):
-                    robot_slave = 3
-                elif((self.robot_master_id==2 and self.robot_ID==3) or (self.robot_master_id==3 and self.robot_ID==2)):
-                    robot_slave = 1
-                elif((self.robot_master_id==1 and self.robot_ID==3) or (self.robot_master_id==3 and self.robot_ID==1)):
-                    robot_slave = 2
-                # print ("-------------------------------------------")
-                # print("Robot id: "+str(self.robot_ID))
-                # print("Robot master id: "+str(self.robot_master_id))
-                # print("Robot slave id: "+str(robot_slave))
-
-                # self.collision_avoidance_handler.repulsion_strategy(self.robot_ID,self.robot_master_id,robot_slave,self.robot_bvr_topic)
-
-            elif(self.adrift == True):
-                # self.section_cancelled=False
-                print("********************cancel section and stop the robot************************************")
-                # self.robot_handler.cancel_section_strategy(self.robot_slave)
-                # self.robot_handler.disable_thrusters(self.robot_slave)
-
-
-
-
     def mrs_coverage(self,goal):
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon,self.goal_polygons,self.actual_section)
         self.data_gattered = True
@@ -195,10 +155,19 @@ class MultiRobotSystem:
             else:
                 initial_point = second_point
                 final_point = first_point
+            
 
+            initial_task_time = rospy.Time.now()
             self.robot_handler.send_section_strategy(initial_point,final_point,self.robot_ID)
 
             self.wait_until_section_reached()
+            
+        final_task_time = rospy.Time.now()
+        self.task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
+        print(".......................................")
+        print("The spended time is "+ str(self.task_time)+ " seconds")
+        # self.simulation_task_times[task] = task_time
+        # self.task_monitoring[task]= True
 
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon,self.goal_polygons,self.actual_section)
     

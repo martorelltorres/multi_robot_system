@@ -8,7 +8,6 @@ number_of_robots: 3
 ned_origin_lat: 39.5319633484
 ned_origin_lon: 2.57906508446
 
-
 # ------------------ AREA PARTITION -----------------------
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_polygon_distance: 5

@@ -14,6 +14,7 @@ import numpy as np
 from std_srvs.srv import Empty, EmptyResponse
 
 
+
 class Robot:
 
     def __init__(self, name):
@@ -26,6 +27,7 @@ class Robot:
         self.section_action = self.get_param('~section_action','/xiroi/pilot/world_section_req') 
         self.section_result = self.get_param('~section_result','/xiroi/pilot/world_section_req/result') 
         self.number_of_robots = self.get_param('number_of_robots')
+        self.navigation_depth = self.get_param('~navigation_depth',10)
         self.robot_ID = self.get_param('~robot_ID',0)
         self.robot_name = self.get_param('~robot_name','turbot1')
         self.distance = []
@@ -110,7 +112,7 @@ class Robot:
         spend_time = (final_time - init_time)/1000000000
         return(spend_time)
 
-    def send_goto_strategy(self, position_x, position_y,linear_velocity):
+    def send_goto_strategy(self, position_x, position_y,linear_velocity,keep_position):
         """Goto to position x, y, z, at velocity vel."""
         # // Define waypoint attributes
         goto_req = GotoRequest()
@@ -145,11 +147,11 @@ class Robot:
         section_req = WorldSectionGoal()
         section_req.initial_position.x = initial_position_x
         section_req.initial_position.y = initial_position_y
-        section_req.initial_position.z = 10.0
+        section_req.initial_position.z = self.navigation_depth
         section_req.initial_yaw = self.robots_information[robot_id][2] #yaw
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
-        section_req.final_position.z = 10.0
+        section_req.final_position.z = self.navigation_depth
         section_req.altitude_mode = False
         section_req.tolerance.x = self.tolerance
         section_req.tolerance.y = self.tolerance
@@ -173,8 +175,6 @@ class Robot:
     def get_robot_id(self):
         return(self.robot_ID)
     
-
-
     def cancel_section_strategy(self,section):
         if self.is_section_actionlib_running==True:
             # print("------------------------" + str(section) +"-----------------------------")
