@@ -4,7 +4,8 @@ import rospy
 import actionlib
 from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
-import math
+from math import *
+from std_msgs.msg import Float32
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 from cola2_msgs.msg import  NavSts
 from cola2_msgs.srv import Goto, GotoRequest
@@ -29,11 +30,13 @@ class Robot:
         self.robot_name = self.get_param('~robot_name','turbot1')
         self.distance = []
         self.travelled_distance = []
+        self.robots_travelled_distances = [0,0,0]
         self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
         # self.distance_travelled
         self.robot_alive = False
         self.is_section_actionlib_running = False
         self.battery_status = [0,0,0]
+        self.first_time = True
         self.ns = rospy.get_namespace()
 
         # robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
@@ -49,7 +52,7 @@ class Robot:
         #     print(self.robots_information)
         
 
-        # subscribers
+        #Subscribers
         for robot in range(self.number_of_robots):
             rospy.Subscriber(
                 '/robot'+str(robot+1)+'/navigator/navigation',
@@ -57,10 +60,51 @@ class Robot:
                 self.update_robot_position,
                 robot,
                 queue_size=1)
+        
+        #Publishers
+        self.communication_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/travelled_distance',
+                                        Float32,
+                                        queue_size=1)
+
+        # Init periodic timers
+        rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
 
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
         self.section_strategy.wait_for_server()
+
+    def update_travelled_distance(self,event):
+        if (self.first_time == True):
+            self.x_old_position = 0
+            self.y_old_position = 0
+            self.x_current_position = self.robots_information[self.robot_ID][0]
+            self.y_current_position = self.robots_information[self.robot_ID][1]
+
+            self.travelled_distance = self.update_distance()
+            self.robots_travelled_distances[self.robot_ID] = self.travelled_distance
+            self.first_time = False
+
+        else:
+            self.x_old_position = self.x_current_position
+            self.y_old_position = self.y_current_position
+            self.x_current_position = self.robots_information[self.robot_ID][0]
+            self.y_current_position = self.robots_information[self.robot_ID][1]
+            self.travelled_distance = self.update_distance()
+            self.robots_travelled_distances[self.robot_ID] = self.travelled_distance
+
+        # publish the data
+        msg = Float32()
+        msg.data = self.travelled_distance 
+        self.communication_pub.publish(msg)
+
+    def update_distance(self):
+        x_diff =  self.x_current_position - self.x_old_position
+        y_diff =  self.y_current_position - self.y_old_position 
+        distance =  sqrt(x_diff**2 + y_diff**2)
+        travelled_distance = self.robots_travelled_distances[self.robot_ID] + distance
+        # self.robots_travelled_distances[id] = self.robots_travelled_distances[id] + distance
+        return travelled_distance
+
     
     def simulation_task_time (self,init_time, final_time):
         spend_time = (final_time - init_time)/1000000000
@@ -129,12 +173,7 @@ class Robot:
     def get_robot_id(self):
         return(self.robot_ID)
     
-    def update_travelled_distance(self,distance_travelled,x_old_position,y_old_position,x_current_position,y_current_position, id):
-        x_diff = x_old_position - x_current_position
-        y_diff = y_old_position - y_current_position
-        distance = distance + math.sqrt(x_diff**2 + y_diff**2)
-        self.travelled_distance[id]= distance
-        return self.travelled_distance
+
 
     def cancel_section_strategy(self,section):
         if self.is_section_actionlib_running==True:
@@ -175,37 +214,6 @@ class Robot:
         self.robots_information[robot_id][9] = msg.orientation.roll
         self.robots_information[robot_id][10] = msg.orientation.pitch
         self.robots_information[robot_id][11] = msg.orientation.yaw
-
-        # travelled distance calculations
-        # if (self.first_time == True):
-        #     self.x_old_position = 0
-        #     self.y_old_position = 0
-        #     self.x_current_position = self.robots_information[robot_id][0]
-        #     self.y_current_position = self.robots_information[robot_id][1]
-
-        #     x_old_position = self.x_old_position 
-        #     y_old_position = self.y_old_position 
-        #     x_current_position = self.x_current_position 
-        #     y_current_position = self.y_current_position 
-        #     distance_travelled = 0
-        #     self.travelled_distance = self.update_travelled_distance(self,distance_travelled,x_old_position,y_old_position,x_current_position,y_current_position, robot_id)
-        #     self.first_time = False
-
-        # else:
-        #     self.x_old_position = self.x_current_position
-        #     self.y_old_position = self.y_current_position
-        #     self.x_current_position = self.robots_information[robot_id][0]
-        #     self.y_current_position = self.robots_information[robot_id][1]
-        #     x_old_position = self.x_old_position 
-        #     y_old_position = self.y_old_position 
-        #     x_current_position = self.x_current_position 
-        #     y_current_position = self.y_current_position
-
-
-
-
-        
-
    
     def get_robot_position(self,robot_id):
         return(self.robots_information[robot_id][0],self.robots_information[robot_id][1],self.robots_information[robot_id][2],self.robots_information[robot_id][11])

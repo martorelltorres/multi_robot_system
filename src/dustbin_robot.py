@@ -16,7 +16,7 @@ from multi_robot_system.msg import TaskMonitoring
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 #import classes
 from area_partition import area_partition
-from robot import Robot
+# from robot import Robot
 
  
 class DustbinRobot:
@@ -39,7 +39,7 @@ class DustbinRobot:
 
         # Import classes
         self.area_handler =  area_partition("area_partition")
-        self.robot_handler = Robot("robot")
+        # self.robot_handler = Robot("robot")
 
         # Initialize some variables
         self.pose = [0,0]
