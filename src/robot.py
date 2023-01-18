@@ -142,9 +142,9 @@ class Robot:
         goto_req.position.x = position_x
         goto_req.position.y = position_y
         goto_req.position.z = 0.0
-        goto_req.position_tolerance.x = 2
-        goto_req.position_tolerance.y = 2
-        goto_req.position_tolerance.z = 2
+        goto_req.position_tolerance.x = 5
+        goto_req.position_tolerance.y = 5
+        goto_req.position_tolerance.z = 5
         goto_req.blocking = True
         goto_req.keep_position = keep_position
         goto_req.disable_axis.x = False

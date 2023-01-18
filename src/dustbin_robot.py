@@ -7,6 +7,7 @@ from math import *
 import matplotlib
 import actionlib         
 import matplotlib.pyplot as plt
+from std_msgs.msg import Int16
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger, TriggerRequest
 from visualization_msgs.msg import Marker
@@ -16,9 +17,6 @@ from multi_robot_system.msg import TaskMonitoring
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 #import classes
 from area_partition import area_partition
-from robot import Robot
-# from robot import Robot
-
  
 class DustbinRobot:
   
@@ -40,7 +38,6 @@ class DustbinRobot:
 
         # Import classes
         self.area_handler =  area_partition("area_partition")
-        self.robot_handler = Robot("robot")
 
         # Initialize some variables
         self.pose = [0,0]
@@ -75,6 +72,11 @@ class DustbinRobot:
         rospy.Subscriber('/robot'+str(self.robot_ID)+'/navigator/navigation',
                             NavSts,    
                             self.update_robot_position,
+                            queue_size=1)
+
+        rospy.Subscriber('robot_is_finished',
+                            Int16,    
+                            self.remove_robot_from_dustbin_goals,
                             queue_size=1)
         #Publishers
         self.corrected_bvr = rospy.Publisher('/robot'+str(self.robot_ID)+'/controller/body_velocity_req',
@@ -114,7 +116,7 @@ class DustbinRobot:
         
     
         self.dustbin_strategy()
-
+    
     def update_robot_position(self, msg):
         self.asv_north_position = msg.position.north
         self.asv_east_position = msg.position.east      
@@ -140,6 +142,13 @@ class DustbinRobot:
             # Init periodic timer 
             rospy.Timer(rospy.Duration(120), self.time_trigger)
             self.get_information = False
+    
+    def remove_robot_from_dustbin_goals(self,msg):
+        robot_id = msg.data
+        print("::::::::::::::::::::::::::::::::::::::::::::::::::")
+        print(self.robots_id)
+        self.robots_id = np.delete(self.robots_id, robot_id)
+        print(self.robots_id)
     
     def time_trigger(self, event):
         # this timer set the robot goal id

@@ -15,6 +15,7 @@ from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
 from multi_robot_system.msg import AvoidCollision
+from std_msgs.msg import Int16
 
 #import classes
 from area_partition import area_partition
@@ -42,7 +43,6 @@ class MultiRobotSystem:
         self.task_monitoring = []
         self.section_cancelled = False
         self.final_status = 99999
-
         self.system_init = False
         self.robot_initialization = np.array([])
 
@@ -66,6 +66,10 @@ class MultiRobotSystem:
 
         self.polygon_offset_pub = rospy.Publisher("voronoi_offset_polygons",
                                         PolygonStamped,
+                                        queue_size=1)
+
+        self.robot_is_finished_pub = rospy.Publisher("robot_is_finished",
+                                        Int16,
                                         queue_size=1)
 
         # Init periodic timers
@@ -114,9 +118,18 @@ class MultiRobotSystem:
 
         # kill the node
         # os.system("rosnode kill " + "/mrs/multi_robot_system_robot"+str(self.robot_ID))
+        print("publishing the message")
+        msg = Int16()
+        msg.data = self.robot_ID 
+        self.robot_is_finished_pub.publish(msg)
+        
         position_north,position_east,position_depth,orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
         self.robot_handler.send_goto_strategy(position_north,position_east,True)
-        # remove_robot_from_dustbin_goals(self.robot_ID)
+
+        # advise the robot_id of the robot that finishes its job
+
+
+        # self.dustbin_robot_handler.remove_robot_from_dustbin_goals(self.robot_ID)
         # print("***********************adrhathrtntranaedtnastrntr***********************")
   
     def wait_until_section_reached(self):
