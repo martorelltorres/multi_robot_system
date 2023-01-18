@@ -16,6 +16,7 @@ from multi_robot_system.msg import TaskMonitoring
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 #import classes
 from area_partition import area_partition
+from robot import Robot
 # from robot import Robot
 
  
@@ -39,7 +40,7 @@ class DustbinRobot:
 
         # Import classes
         self.area_handler =  area_partition("area_partition")
-        # self.robot_handler = Robot("robot")
+        self.robot_handler = Robot("robot")
 
         # Initialize some variables
         self.pose = [0,0]
@@ -53,10 +54,10 @@ class DustbinRobot:
         self.robot_initialization = np.array([])
 
         # initialize the robots variables
-        for robot in range(self.number_of_robots):
+        for robot_ in range(self.number_of_robots):
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
-            self.robots.append(robot)  
-            self.robots_id = np.append(self.robots_id,robot)
+            self.robots.append(robot_)  
+            self.robots_id = np.append(self.robots_id,robot_)
             self.robots_id = self.robots_id.astype(int) #convert float to int type
 
         # Show initialization message

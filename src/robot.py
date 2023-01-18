@@ -5,6 +5,7 @@ import actionlib
 from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
 from math import *
+from std_srvs.srv import Trigger, TriggerRequest
 from std_msgs.msg import Float32
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 from cola2_msgs.msg import  NavSts
@@ -67,6 +68,24 @@ class Robot:
         self.communication_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/travelled_distance',
                                         Float32,
                                         queue_size=1)
+        # Services clients
+        try:
+            rospy.wait_for_service('/robot'+str(self.robot_ID+1)+'/captain/enable_goto', 20)
+            self.goto_srv = rospy.ServiceProxy(
+                        '/robot'+str(self.robot_ID+1)+'/captain/enable_goto', Goto)
+        except rospy.exceptions.ROSException:
+            rospy.logerr('%s: error creating client to goto service',
+                         self.name)
+            rospy.signal_shutdown('Error creating client to goto service')
+        
+        try:
+            rospy.wait_for_service('/robot'+str(self.robot_ID+1)+'/captain/disable_all_and_set_idle', 20)
+            self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
+                        '/robot'+str(self.robot_ID+1)+'/captain/disable_all_and_set_idle', Trigger)
+        except rospy.exceptions.ROSException:
+            rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
+                         self.name)
+            rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
 
         # Init periodic timers
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
@@ -112,13 +131,14 @@ class Robot:
         spend_time = (final_time - init_time)/1000000000
         return(spend_time)
 
-    def send_goto_strategy(self, position_x, position_y,linear_velocity,keep_position):
+    def send_goto_strategy(self, position_x, position_y,keep_position):
+        # self.disable_all_and_set_idle_srv()
         """Goto to position x, y, z, at velocity vel."""
         # // Define waypoint attributes
         goto_req = GotoRequest()
         goto_req.altitude = 0
         goto_req.altitude_mode = False
-        goto_req.linear_velocity.x = linear_velocity
+        goto_req.linear_velocity.x = self.surge_velocity
         goto_req.position.x = position_x
         goto_req.position.y = position_y
         goto_req.position.z = 0.0
@@ -126,7 +146,7 @@ class Robot:
         goto_req.position_tolerance.y = 2
         goto_req.position_tolerance.z = 2
         goto_req.blocking = True
-        goto_req.keep_position = False
+        goto_req.keep_position = keep_position
         goto_req.disable_axis.x = False
         goto_req.disable_axis.y = True
         goto_req.disable_axis.z = False
