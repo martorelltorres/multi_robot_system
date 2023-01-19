@@ -49,6 +49,7 @@ class DustbinRobot:
         self.robots_information = [[0,0],[0,0],[0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
+        self.enable_tracking = True
 
         # initialize the robots variables
         for robot_ in range(self.number_of_robots):
@@ -140,19 +141,31 @@ class DustbinRobot:
             self.goto_central_area()
         if(self.system_init==True):
             # Init periodic timer 
-            rospy.Timer(rospy.Duration(120), self.time_trigger)
+            rospy.Timer(rospy.Duration(30), self.time_trigger)
             self.get_information = False
     
     def remove_robot_from_dustbin_goals(self,msg):
         robot_id = msg.data
-        print("::::::::::::::::::::::::::::::::::::::::::::::::::")
-        print(self.robots_id)
         self.robots_id = np.delete(self.robots_id, robot_id)
         print(self.robots_id)
+        print("removeeee")
+        print(self.robots_id)
+        self.check_dustbin_robot()
+    
+    def check_dustbin_robot(self):
+        print("***********************************************")
+        print(np.size(self.robots_id))
+        print(self.robots_id)
+        if(np.size(self.robots_id)==0):
+            self.enable_tracking = False
+            print("IIIIIIIIIIIIIIIIIIIIIN")
+            self.goto_central_area()
     
     def time_trigger(self, event):
         # this timer set the robot goal id
-        self.robots_id = np.roll(self.robots_id, 2)
+        self.robots_id = np.roll(self.robots_id,1)
+        print("rolllllll")
+        print(self.robots_id)
         self.robot_goal_id = self.robots_id[0]
         self.get_information = True
                   

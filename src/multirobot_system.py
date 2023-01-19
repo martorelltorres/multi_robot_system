@@ -116,21 +116,13 @@ class MultiRobotSystem:
             # self.simulation_task_times[task] = self.task_time
             # self.task_monitoring[task]= True
 
-        # kill the node
-        # os.system("rosnode kill " + "/mrs/multi_robot_system_robot"+str(self.robot_ID))
-        print("publishing the message")
+        # advise the robot_id of the robot that finishes its job
         msg = Int16()
         msg.data = self.robot_ID 
         self.robot_is_finished_pub.publish(msg)
-        
+        # move the robot to the surface
         position_north,position_east,position_depth,orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
         self.robot_handler.send_goto_strategy(position_north,position_east,True)
-
-        # advise the robot_id of the robot that finishes its job
-
-
-        # self.dustbin_robot_handler.remove_robot_from_dustbin_goals(self.robot_ID)
-        # print("***********************adrhathrtntranaedtnastrntr***********************")
   
     def wait_until_section_reached(self):
         if(self.final_status==0):
@@ -178,8 +170,8 @@ class MultiRobotSystem:
             
         final_task_time = rospy.Time.now()
         self.task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
-        print(".......................................")
-        print("The spended time is "+ str(self.task_time)+ " seconds")
+        # print(".......................................")
+        # print("The spended time is "+ str(self.task_time)+ " seconds")
         # self.simulation_task_times[task] = task_time
         # self.task_monitoring[task]= True
 
