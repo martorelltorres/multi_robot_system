@@ -123,7 +123,7 @@ class DustbinRobot:
         self.asv_east_position = msg.position.east      
         self.asv_yaw = msg.orientation.yaw
 
-        if(self.get_information==True):
+        if(self.get_information==True and self.enable_tracking==True):
             self.tracking()     
  
     def update_robots_position(self, msg, robot_id):
@@ -146,26 +146,17 @@ class DustbinRobot:
     
     def remove_robot_from_dustbin_goals(self,msg):
         robot_id = msg.data
-        self.robots_id = np.delete(self.robots_id, robot_id)
-        print(self.robots_id)
-        print("removeeee")
-        print(self.robots_id)
+        self.robots_id = np.delete(self.robots_id, np.where(self.robots_id == robot_id))
         self.check_dustbin_robot()
     
     def check_dustbin_robot(self):
-        print("***********************************************")
-        print(np.size(self.robots_id))
-        print(self.robots_id)
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            print("IIIIIIIIIIIIIIIIIIIIIN")
             self.goto_central_area()
     
     def time_trigger(self, event):
         # this timer set the robot goal id
         self.robots_id = np.roll(self.robots_id,1)
-        print("rolllllll")
-        print(self.robots_id)
         self.robot_goal_id = self.robots_id[0]
         self.get_information = True
                   
