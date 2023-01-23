@@ -56,7 +56,7 @@ class DustbinRobot:
         self.start_comm_time_settled = False
         self.end_comm_time_settled = False
         self.set_end_time = True
-        self.start_dustbin_strategy = [False,False,False]
+        self.start_dustbin_strategy =np.array([False,False,False])
         self.first_time = True
 
 
@@ -147,11 +147,13 @@ class DustbinRobot:
     
     def dustbin_trigger(self, event):
          # start the dustbin_strategy if all the robots started the coverage
-        if all(item is True for item in self.start_dustbin_strategy and self.first_time == True):
-            self.dustbin_strategy()
-            self.first_time = False
+        if (np.all(self.start_dustbin_strategy) and self.first_time == True):
             print("-------------------------")
             print(self.start_dustbin_strategy)
+            print("calling the dustbin strategy")
+            self.dustbin_strategy()
+            self.first_time = False
+
 
     
     def update_robot_position(self, msg):
