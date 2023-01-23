@@ -7,13 +7,13 @@ from math import *
 import matplotlib
 import actionlib         
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16
+from std_msgs.msg import Int16, Time, Float64
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger, TriggerRequest
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
 from shapely.geometry import Point
-from multi_robot_system.msg import TaskMonitoring
+from multi_robot_system.msg import TaskMonitoring,CoverageStartTime
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 #import classes
 from area_partition import area_partition
@@ -32,9 +32,9 @@ class DustbinRobot:
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.section_action = self.get_param('section_action','/robot4/pilot/world_section_req') 
         self.section_result = self.get_param('section_result','/robot4/pilot/world_section_req/result') 
-        self.repulsion_radius = self.get_param("repulsion_radius",3)
-        self.adrift_radius = self.get_param("adrift_radius",5)
-        self.tracking_radius = self.get_param("tracking_radius",15)
+        self.repulsion_radius = self.get_param("repulsion_radius",2)
+        self.adrift_radius = self.get_param("adrift_radius",6)
+        self.tracking_radius = self.get_param("tracking_radius",25)
 
         # Import classes
         self.area_handler =  area_partition("area_partition")
@@ -44,12 +44,21 @@ class DustbinRobot:
         self.get_information = False
         self.robot_at_center = False
         self.robots_id = np.array([])
+        self.communication_times_delay = [0,0,0]
+        self.communication_times_start = [0,0,0]
+        self.communication_times_end = [0,0,0]
         self.system_init = False
         self.robot_data = [0,0]
         self.robots_information = [[0,0],[0,0],[0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = True
+        self.start_comm_time_settled = False
+        self.end_comm_time_settled = False
+        self.set_end_time = True
+        self.start_dustbin_strategy = [False,False,False]
+        self.first_time = True
+
 
         # initialize the robots variables
         for robot_ in range(self.number_of_robots):
@@ -79,6 +88,15 @@ class DustbinRobot:
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
+        
+        for robot in range(self.number_of_robots):
+            rospy.Subscriber(
+            '/mrs/robot'+str(robot)+'_start_coverage_time',
+            CoverageStartTime,
+            self.set_coverage_start_time,
+            robot,
+            queue_size=1)      
+
         #Publishers
         self.corrected_bvr = rospy.Publisher('/robot'+str(self.robot_ID)+'/controller/body_velocity_req',
                                                 BodyVelocityReq,
@@ -95,6 +113,10 @@ class DustbinRobot:
         self.markerPub_tracking = rospy.Publisher('tracking_radius',
                                                 Marker,
                                                 queue_size=1)
+        
+        self.communication_delay_time = rospy.Publisher("communication_delay_time_robot",
+                                        Time,
+                                        queue_size=1)
 
         # Services clients
         try:
@@ -115,8 +137,22 @@ class DustbinRobot:
                          self.name)
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
         
+        # move the robot to the central area
+        if (self.robot_at_center == False):
+            self.goto_central_area()
+        
+        # Init periodic timers
+        rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
+
     
-        self.dustbin_strategy()
+    def dustbin_trigger(self, event):
+         # start the dustbin_strategy if all the robots started the coverage
+        if all(item is True for item in self.start_dustbin_strategy and self.first_time == True):
+            self.dustbin_strategy()
+            self.first_time = False
+            print("-------------------------")
+            print(self.start_dustbin_strategy)
+
     
     def update_robot_position(self, msg):
         self.asv_north_position = msg.position.north
@@ -125,6 +161,50 @@ class DustbinRobot:
 
         if(self.get_information==True and self.enable_tracking==True):
             self.tracking()     
+    
+    def set_coverage_start_time(self,msg,robot_id):
+        self.start_dustbin_strategy[robot_id]= True
+        print("set_coverage_start_time")
+        self.t_start = msg.time.secs
+        self.time_robot_id = msg.robot_id
+        self.communication_times_start[self.time_robot_id] = self.t_start 
+        self.start_comm_time_settled = True
+        print(self.t_start)
+        print(self.communication_times_start)
+        self.get_comm_time_delay()
+
+    def set_comm_start_time(self,time):
+        print("set_comm_start_time")
+        self.t_start = time.secs
+        self.time_robot_id = self.robot_goal_id
+        self.communication_times_start[self.time_robot_id] = self.t_start
+        self.start_comm_time_settled = True
+        print(self.t_start)
+        print(self.communication_times_start)
+        self.get_comm_time_delay()
+    
+    def set_comm_end_time(self,time):
+        print("set_comm_end_time")
+        self.t_end = time.secs
+        self.time_robot_id = self.robot_goal_id
+        self.communication_times_end[self.time_robot_id] = self.t_end
+        self.end_comm_time_settled = True
+        print(self.communication_times_end)
+        self.get_comm_time_delay()
+    
+    def get_comm_time_delay(self):
+        if(self.start_comm_time_settled == True and self.end_comm_time_settled == True):
+            print("get_comm_time_delay")
+            self.comm_delay = self.t_end - self.t_start
+            self.communication_times_delay[self.time_robot_id] =  self.comm_delay
+            print(self.communication_times_delay)
+            # publish the communication_delay_time
+            # msg = Time()
+            # msg.data.secs = self.comm_delay 
+            # self.communication_delay_time.publish(msg)
+
+            self.start_comm_time_settled = False
+            self.end_comm_time_settled = False
  
     def update_robots_position(self, msg, robot_id):
         # fill the robots_information array with the robots information received from the NavSts 
@@ -136,9 +216,7 @@ class DustbinRobot:
             self.initialization(robot_id) 
 
     def dustbin_strategy(self):
-        # move the robot to the central area
-        if (self.robot_at_center == False):
-            self.goto_central_area()
+
         if(self.system_init==True):
             # Init periodic timer 
             rospy.Timer(rospy.Duration(30), self.time_trigger)
@@ -158,6 +236,8 @@ class DustbinRobot:
         # this timer set the robot goal id
         self.robots_id = np.roll(self.robots_id,1)
         self.robot_goal_id = self.robots_id[0]
+        self.set_comm_start_time(rospy.Time.now())
+        self.set_end_time = True
         self.get_information = True
                   
     def goto_central_area(self):
@@ -189,17 +269,19 @@ class DustbinRobot:
         self.y_distance = self.auv_position_east-self.asv_position_east
         self.radius = sqrt((self.x_distance)**2 + (self.y_distance)**2)
         self.initialized = True
-        # rospy.loginfo(self.radius)
+
+        # if(self.tracking_radius < self.radius > self.adrift_radius and self.set_end_time==True ):
+        #     self.set_comm_end_time(rospy.Time.now())
+        #     self.set_end_time = False
 
         if(self.radius > self.adrift_radius):
-            # rospy.loginfo("----------------- TRACKING STRATEGY -----------------")
             self.tracking_strategy()
 
         # elif(self.repulsion_radius <= self.radius <= self.adrift_radius):
-            # rospy.loginfo("----------------- ADRIFT STRATEGY -----------------")
+        #     # rospy.loginfo("----------------- ADRIFT STRATEGY -----------------")
+        #     
 
         elif(self.radius <= self.repulsion_radius):
-            # rospy.loginfo("----------------- REPULSION STRATEGY -----------------")
             self.extract_safety_position()
             self.repulsion_strategy(self.x, self.y)
     

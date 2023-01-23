@@ -14,8 +14,8 @@ from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
-from multi_robot_system.msg import AvoidCollision
-from std_msgs.msg import Int16
+from multi_robot_system.msg import AvoidCollision, CoverageStartTime
+from std_msgs.msg import Int16, Float64
 
 #import classes
 from area_partition import area_partition
@@ -71,6 +71,9 @@ class MultiRobotSystem:
         self.robot_is_finished_pub = rospy.Publisher("robot_is_finished",
                                         Int16,
                                         queue_size=1)
+        self.start_coverage_time = rospy.Publisher("robot"+str(self.robot_ID)+"_start_coverage_time",
+                                        CoverageStartTime,
+                                        queue_size=1)
 
         # Init periodic timers
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
@@ -110,6 +113,7 @@ class MultiRobotSystem:
             print("The robot_"+str(self.robot_ID)+" is covering the polygon: "+str(self.goal_polygons[task]))
             self.mrs_coverage(self.goal_polygons[task])
             
+            
             # task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
             # print(".......................................")
             # print("The spended time is "+ str(task_time)+ " seconds")
@@ -148,6 +152,14 @@ class MultiRobotSystem:
             # update_current_section = self.robot_handler.set_current_section(self,self.actual_section)
             # print("--------------------")
             # print(update_current_section)
+
+            # advise the time when the robot starts the coverage
+            msg = CoverageStartTime()
+            msg.time = rospy.Time.now()
+            msg.robot_id = self.robot_ID
+            print("The robot_"+str(msg.robot_id)+" started the coverage at time "+str(msg.time))
+            self.start_coverage_time.publish(msg)
+
 
             # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
             first_point = self.current_section[0]

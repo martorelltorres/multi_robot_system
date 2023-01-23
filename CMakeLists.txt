@@ -53,6 +53,7 @@ add_message_files(
   TaskMonitoring.msg
   Communication.msg
   AvoidCollision.msg
+  CoverageStartTime.msg
 )
 
 ## Generate services in the 'srv' folder
