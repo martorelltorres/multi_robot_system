@@ -55,6 +55,7 @@ add_message_files(
   AvoidCollision.msg
   CommunicationDelay.msg
   CoverageStartTime.msg
+  TravelledDistance.msg
 )
 
 ## Generate services in the 'srv' folder

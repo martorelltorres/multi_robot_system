@@ -53,12 +53,9 @@ class DustbinRobot:
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = True
-        self.start_comm_time_settled = False
-        self.end_comm_time_settled = False
         self.set_end_time = True
         self.start_dustbin_strategy =np.array([False,False,False])
         self.first_time = True
-        self.set_init_time = False
         self.trigger = False
 
 
@@ -150,9 +147,6 @@ class DustbinRobot:
     def dustbin_trigger(self, event):
          # start the dustbin_strategy if all the has started the coverage
         if (np.all(self.start_dustbin_strategy) and self.first_time == True):
-            # print("-------------------------")
-            # print(self.start_dustbin_strategy)
-            # print("calling the dustbin strategy")
             self.dustbin_strategy()
             self.first_time = False
    
@@ -166,36 +160,24 @@ class DustbinRobot:
     
     def set_coverage_start_time(self,msg,robot_id):
         self.start_dustbin_strategy[robot_id]= True
-        # print("seting_coverage_start_time")
         self.t_start = msg.time.secs
         self.time_robot_id = msg.robot_id
         self.start_recording_time[self.time_robot_id] = self.t_start 
-        # print(self.t_start)
-        # print(self.start_recording_time)
 
     def set_comm_start_time(self,time):
-        # print("reset the countdown")
         self.t_start = time.secs
         self.start_recording_time[self.robot_goal_id] = self.t_start
-        # print(self.t_start)
-        # print(self.start_recording_time)
     
     def set_comm_end_time(self,time):
-        # print("stop the counter")
         self.t_end = time.secs
         self.communication_times_end[self.robot_goal_id] = self.t_end
-        # print(self.t_end)
-        # print(self.communication_times_end)
         self.get_comm_time_delay()
     
     def get_comm_time_delay(self):
-        # print("get_comm_time_delay for the robot"+str(self.robot_goal_id))
         end_time = self.communication_times_end[self.robot_goal_id]
         start_time = self.start_recording_time[self.robot_goal_id]
         comm_delay = end_time - start_time
         self.communication_times_delay[self.robot_goal_id] =  comm_delay
-        print(self.communication_times_delay)
-        # print("Setejam el temps d'inici per al robot"+str(self.robot_goal_id))
         self.set_comm_start_time(rospy.Time.now())
 
         # check if there are zeros in the array
@@ -213,7 +195,6 @@ class DustbinRobot:
         # this function set the robot goal id for the dustbin_strategy
         # The trigger flag is True only when there are no zeros in the self.communication_times_delay array 
         if (self.trigger==True):
-            # print("Setejam el temps d'inici per al robot"+str(self.robot_goal_id))
             self.set_comm_start_time(rospy.Time.now())
         
         self.robots_id = np.roll(self.robots_id,1)
@@ -267,7 +248,6 @@ class DustbinRobot:
         self.auv_position_east = self.robots_information[self.robot_goal_id][1]
         self.asv_position_east = self.asv_east_position
 
-        # print the radius markers
         self.adrift_marker()
         self.repulsion_marker()
         self.tracking_marker()

@@ -13,6 +13,7 @@ from cola2_msgs.srv import Goto, GotoRequest
 from sensor_msgs.msg import BatteryState
 import numpy as np
 from std_srvs.srv import Empty, EmptyResponse
+from multi_robot_system.msg import TravelledDistance, CoverageStartTime
 
 
 
@@ -63,10 +64,11 @@ class Robot:
                 self.update_robot_position,
                 robot,
                 queue_size=1)
-        
+            
+       
         #Publishers
-        self.communication_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/travelled_distance',
-                                        Float32,
+        self.travelled_distance_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/travelled_distance',
+                                        TravelledDistance,
                                         queue_size=1)
         # Services clients
         try:
@@ -114,9 +116,10 @@ class Robot:
             self.robots_travelled_distances[self.robot_ID] = self.travelled_distance
 
         # publish the data
-        msg = Float32()
-        msg.data = self.travelled_distance 
-        self.communication_pub.publish(msg)
+        msg = TravelledDistance()
+        msg.header.stamp = rospy.Time.now()
+        msg.travelled_distance = self.travelled_distance 
+        self.travelled_distance_pub.publish(msg)
 
     def update_distance(self):
         x_diff =  self.x_current_position - self.x_old_position
