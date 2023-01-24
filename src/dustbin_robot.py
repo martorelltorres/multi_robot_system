@@ -173,10 +173,10 @@ class DustbinRobot:
         print(self.t_start)
         print(self.start_recording_time)
 
-    def set_comm_start_time(self,time,robot_goal):
+    def set_comm_start_time(self,time):
         print("reset the countdown")
         self.t_start = time.secs
-        self.start_recording_time[robot_goal] = self.t_start
+        self.start_recording_time[self.robot_goal_id] = self.t_start
         print(self.t_start)
         print(self.start_recording_time)
     
@@ -195,6 +195,10 @@ class DustbinRobot:
         comm_delay = end_time - start_time
         self.communication_times_delay[self.robot_goal_id] =  comm_delay
         print(self.communication_times_delay)
+
+        print("Setejam el temps d'inici per al robot"+str(self.robot_goal_id))
+        self.set_comm_start_time(rospy.Time.now())
+
         # check if there are zeros in the array
         if(self.communication_times_delay.count(0) == 0):
             self.trigger = True
@@ -207,15 +211,16 @@ class DustbinRobot:
 
 
     def time_trigger(self, event):
+        if (self.trigger==True):
+            print("Setejam el temps d'inici per al robot"+str(self.robot_goal_id))
+            self.set_comm_start_time(rospy.Time.now())
         # this timer set the robot goal id for the dustbin_strategy
         self.robots_id = np.roll(self.robots_id,1)
         self.robot_goal_id = self.robots_id[0]
         print("The DUSTBIN robot goal ID is: "+str(self.robot_goal_id))
         # The trigger flag is True only when there are no zeros in the self.communication_times_delay array 
-        if (self.trigger==True):
-            print("Setejam el temps d'inici per al robot"+str(np.size(self.robots_id)-1))
-            self.set_comm_start_time(rospy.Time.now(),np.size(self.robots_id)-1)
-        # flags to handle the data obtention
+
+        # flags to handle the data communication time delay
         self.get_information = True
         self.set_end_time = True
  
