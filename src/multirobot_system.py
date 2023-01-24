@@ -111,6 +111,8 @@ class MultiRobotSystem:
     def coverage(self):          
         for task in range(len(self.goal_polygons)):
             print("The robot_"+str(self.robot_ID)+" is covering the polygon: "+str(self.goal_polygons[task]))
+
+            # start the coverage process
             self.mrs_coverage(self.goal_polygons[task])
             
             
@@ -153,14 +155,6 @@ class MultiRobotSystem:
             # print("--------------------")
             # print(update_current_section)
 
-            # advise the time when the robot starts the coverage
-            msg = CoverageStartTime()
-            msg.time = rospy.Time.now()
-            msg.robot_id = self.robot_ID
-            print("The robot_"+str(msg.robot_id)+" started the coverage at time "+str(msg.time))
-            self.start_coverage_time.publish(msg)
-
-
             # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
             first_point = self.current_section[0]
             first_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,first_point[0],first_point[1])
@@ -196,6 +190,13 @@ class MultiRobotSystem:
         final_point = section_points[0]
         self.robot_handler.send_section_strategy(initial_point,final_point,self.robot_ID)
         self.wait_until_section_reached()
+
+        # advise the time when the robot starts the coverage
+        msg = CoverageStartTime()
+        msg.time = rospy.Time.now()
+        msg.robot_id = self.robot_ID
+        print("The robot_"+str(msg.robot_id)+" started the coverage at time "+str(msg.time))
+        self.start_coverage_time.publish(msg)
 
     def print_polygon(self,event):
         if(self.data_gattered==True):      
