@@ -195,9 +195,6 @@ class MultiRobotSystem:
         msg = CoverageStartTime()
         msg.time = rospy.Time.now()
         msg.robot_id = self.robot_ID
-        print("")
-        print("--------------------------------------------------------------------")
-        print("The robot_"+str(msg.robot_id)+" started the coverage at time "+str(msg.time))
         self.start_coverage_time.publish(msg)
 
     def print_polygon(self,event):

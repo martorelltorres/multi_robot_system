@@ -7,13 +7,13 @@ from math import *
 import matplotlib
 import actionlib         
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16, Time, Float64
+from std_msgs.msg import Int16, Time, Int32MultiArray
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger, TriggerRequest
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
 from shapely.geometry import Point
-from multi_robot_system.msg import TaskMonitoring,CoverageStartTime
+from multi_robot_system.msg import TaskMonitoring,CoverageStartTime,CommunicationDelay
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 #import classes
 from area_partition import area_partition
@@ -116,8 +116,8 @@ class DustbinRobot:
                                                 Marker,
                                                 queue_size=1)
         
-        self.communication_delay_time = rospy.Publisher("communication_delay_time_robot",
-                                        Time,
+        self.communication_delay_time = rospy.Publisher("communication_time_delay",
+                                        CommunicationDelay,
                                         queue_size=1)
 
         # Services clients
@@ -148,11 +148,11 @@ class DustbinRobot:
 
     
     def dustbin_trigger(self, event):
-         # start the dustbin_strategy if all the robots started the coverage
+         # start the dustbin_strategy if all the has started the coverage
         if (np.all(self.start_dustbin_strategy) and self.first_time == True):
-            print("-------------------------")
-            print(self.start_dustbin_strategy)
-            print("calling the dustbin strategy")
+            # print("-------------------------")
+            # print(self.start_dustbin_strategy)
+            # print("calling the dustbin strategy")
             self.dustbin_strategy()
             self.first_time = False
    
@@ -166,60 +166,58 @@ class DustbinRobot:
     
     def set_coverage_start_time(self,msg,robot_id):
         self.start_dustbin_strategy[robot_id]= True
-        print("seting_coverage_start_time")
+        # print("seting_coverage_start_time")
         self.t_start = msg.time.secs
         self.time_robot_id = msg.robot_id
         self.start_recording_time[self.time_robot_id] = self.t_start 
-        print(self.t_start)
-        print(self.start_recording_time)
+        # print(self.t_start)
+        # print(self.start_recording_time)
 
     def set_comm_start_time(self,time):
-        print("reset the countdown")
+        # print("reset the countdown")
         self.t_start = time.secs
         self.start_recording_time[self.robot_goal_id] = self.t_start
-        print(self.t_start)
-        print(self.start_recording_time)
+        # print(self.t_start)
+        # print(self.start_recording_time)
     
     def set_comm_end_time(self,time):
-        print("stop the counter")
+        # print("stop the counter")
         self.t_end = time.secs
         self.communication_times_end[self.robot_goal_id] = self.t_end
         # print(self.t_end)
-        print(self.communication_times_end)
+        # print(self.communication_times_end)
         self.get_comm_time_delay()
     
     def get_comm_time_delay(self):
-        print("get_comm_time_delay for the robot"+str(self.robot_goal_id))
+        # print("get_comm_time_delay for the robot"+str(self.robot_goal_id))
         end_time = self.communication_times_end[self.robot_goal_id]
         start_time = self.start_recording_time[self.robot_goal_id]
         comm_delay = end_time - start_time
         self.communication_times_delay[self.robot_goal_id] =  comm_delay
         print(self.communication_times_delay)
-
-        print("Setejam el temps d'inici per al robot"+str(self.robot_goal_id))
+        # print("Setejam el temps d'inici per al robot"+str(self.robot_goal_id))
         self.set_comm_start_time(rospy.Time.now())
 
         # check if there are zeros in the array
         if(self.communication_times_delay.count(0) == 0):
             self.trigger = True
 
-        
         # publish the communication_delay_time
-        # msg = Time()
-        # msg.data.secs = self.comm_delay 
-        # self.communication_delay_time.publish(msg)
+        msg = CommunicationDelay()
+        msg.header.stamp = rospy.Time.now()
+        msg.comm_delay = self.communication_times_delay 
+        self.communication_delay_time.publish(msg)
 
 
     def time_trigger(self, event):
-        if (self.trigger==True):
-            print("Setejam el temps d'inici per al robot"+str(self.robot_goal_id))
-            self.set_comm_start_time(rospy.Time.now())
-        # this timer set the robot goal id for the dustbin_strategy
-        self.robots_id = np.roll(self.robots_id,1)
-        self.robot_goal_id = self.robots_id[0]
-        print("The DUSTBIN robot goal ID is: "+str(self.robot_goal_id))
+        # this function set the robot goal id for the dustbin_strategy
         # The trigger flag is True only when there are no zeros in the self.communication_times_delay array 
-
+        if (self.trigger==True):
+            # print("Setejam el temps d'inici per al robot"+str(self.robot_goal_id))
+            self.set_comm_start_time(rospy.Time.now())
+        
+        self.robots_id = np.roll(self.robots_id,1)
+        self.robot_goal_id = self.robots_id[0]      
         # flags to handle the data communication time delay
         self.get_information = True
         self.set_end_time = True
