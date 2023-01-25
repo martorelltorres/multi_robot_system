@@ -7,14 +7,12 @@ from math import *
 import matplotlib
 import actionlib         
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16, Time, Int32MultiArray
+from std_msgs.msg import Int16
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
-from std_srvs.srv import Trigger, TriggerRequest
+from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from shapely.geometry import Point
-from multi_robot_system.msg import TaskMonitoring,CoverageStartTime,CommunicationDelay
-from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
+from multi_robot_system.msg import CoverageStartTime,CommunicationDelay
 #import classes
 from area_partition import area_partition
  
@@ -32,9 +30,9 @@ class DustbinRobot:
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.section_action = self.get_param('section_action','/robot4/pilot/world_section_req') 
         self.section_result = self.get_param('section_result','/robot4/pilot/world_section_req/result') 
-        self.repulsion_radius = self.get_param("repulsion_radius",2)
-        self.adrift_radius = self.get_param("adrift_radius",6)
-        self.tracking_radius = self.get_param("tracking_radius",10)
+        self.repulsion_radius = self.get_param("repulsion_radius",40)
+        self.adrift_radius = self.get_param("adrift_radius",55)
+        self.tracking_radius = self.get_param("tracking_radius",60)
 
         # Import classes
         self.area_handler =  area_partition("area_partition")
@@ -215,7 +213,7 @@ class DustbinRobot:
     def dustbin_strategy(self):
         if(self.system_init==True):
             # Init periodic timer 
-            rospy.Timer(rospy.Duration(50), self.time_trigger)
+            rospy.Timer(rospy.Duration(180), self.time_trigger)
             self.get_information = False
     
     def remove_robot_from_dustbin_goals(self,msg):
@@ -296,7 +294,7 @@ class DustbinRobot:
 
 
     def tracking_strategy(self):
-        constant_linear_velocity = 7
+        constant_linear_velocity = 3
         constant_angular_velocity = 2 
 
         if (self.radius<self.tracking_radius and self.radius>self.adrift_radius):

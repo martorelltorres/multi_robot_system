@@ -1,6 +1,6 @@
 <launch>
     <!-- Params -->
-    <arg name="place" default="bendinat.yaml"/>
+    <arg name="place" default="cabrera.yaml"/>
     <arg name="robot1" default="true"/>
     <arg name="robot2" default="true"/>
     <arg name="robot3" default="true"/>

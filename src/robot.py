@@ -21,8 +21,6 @@ class Robot:
 
     def __init__(self, name):
         self.name = name
-        self.ned_origin_lat = self.get_param('ned_origin_lat')
-        self.ned_origin_lon = self.get_param('ned_origin_lon')
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.battery_topic = self.get_param('~battery_topic','/turbot1/batteries/status')
