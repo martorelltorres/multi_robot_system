@@ -3,17 +3,21 @@
 # ---------------------------------------------------------
 
 # ------------------ ROBOTS INFO -----------------------
-number_of_robots: 3
+number_of_robots: 2
 # be sure that all the simulated architectures has the same NED origin (Bendinat)
-ned_origin_lat: 39.14803625
-ned_origin_lon: 2.93195323
+# cabrera middle
+# ned_origin_lat: 39.14803625
+# ned_origin_lon: 2.93195323
+
+ned_origin_lat: 39.53146765
+ned_origin_lon: 2.57844877
 
 
 # ------------------ AREA PARTITION -----------------------
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_polygon_distance: 5
 # The offset_coverage_distance set the distance between the coverage lines path
-offset_coverage_distance: 7
+offset_coverage_distance: 10
 # Section strategy parameters
 surge_velocity: 0.8
 tolerance: 2

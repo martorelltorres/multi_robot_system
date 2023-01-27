@@ -42,17 +42,17 @@ class DustbinRobot:
         self.get_information = False
         self.robot_at_center = False
         self.robots_id = np.array([])
-        self.communication_times_delay = [0,0,0]
-        self.start_recording_time = [0,0,0]
-        self.communication_times_end = [0,0,0]
+        self.communication_times_delay = [0,0]
+        self.start_recording_time = [0,0]
+        self.communication_times_end = [0,0]
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[0,0],[0,0],[0,0]]
+        self.robots_information = [[0,0],[0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = True
         self.set_end_time = True
-        self.start_dustbin_strategy =np.array([False,False,False])
+        self.start_dustbin_strategy =np.array([False,False])
         self.first_time = True
         self.trigger = False
 

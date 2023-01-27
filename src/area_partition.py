@@ -308,7 +308,7 @@ class area_partition:
         self.latitude = []
         self.longitude = []
 
-        file = open("/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230125094943_cabrera_middle.xml", "r")
+        file = open("/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/220405123332_polygon_mission.xml", "r")
 
         for line in file:
             data.append(line)

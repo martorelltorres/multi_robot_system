@@ -56,13 +56,13 @@
         </include>
     </group>
 
-    <group if="$(arg robot3)">
-        <!-- ROBOT3 -->
+    <!-- <group if="$(arg robot3)">
+
         <include file="$(find cola2_turbot)/launch/simulation.launch">
-            <!-- Params -->
+
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot3_name)"/>
-            <!-- Flags -->
+
             <arg name="cola2_nav" value="$(arg cola2_nav)"/>
             <arg name="enableSafety" value="$(arg enableSafety)"/>
             <arg name="openLoopTeleoperation" value="$(arg openLoopTeleoperation)"/>
@@ -73,5 +73,5 @@
             <arg name="launchGS" value="false"/>
             <arg name="enableRelayBoard" value="false"/>
         </include>
-    </group>
+    </group> -->
 </launch>
