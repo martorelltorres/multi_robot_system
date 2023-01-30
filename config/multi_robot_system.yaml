@@ -5,12 +5,16 @@
 # ------------------ ROBOTS INFO -----------------------
 number_of_robots: 2
 # be sure that all the simulated architectures has the same NED origin (Bendinat)
+
 # cabrera middle
 # ned_origin_lat: 39.14803625
 # ned_origin_lon: 2.93195323
 
-ned_origin_lat: 39.53146765
-ned_origin_lon: 2.57844877
+# bendinat
+ned_origin_lat: 39.5319633484
+ned_origin_lon: 2.57906508446
+
+
 
 
 # ------------------ AREA PARTITION -----------------------
