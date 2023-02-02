@@ -12,7 +12,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,CommunicationDelay
+from multi_robot_system.msg import CoverageStartTime,CommunicationDelay,ExplorationUpdate
 #import classes
 from area_partition import area_partition
  
@@ -30,9 +30,10 @@ class DustbinRobot:
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.section_action = self.get_param('section_action','/robot4/pilot/world_section_req') 
         self.section_result = self.get_param('section_result','/robot4/pilot/world_section_req/result') 
-        self.repulsion_radius = self.get_param("repulsion_radius",40)
+        self.repulsion_radius = self.get_param("repulsion_radius",50)
         self.adrift_radius = self.get_param("adrift_radius",55)
-        self.tracking_radius = self.get_param("tracking_radius",60)
+        self.tracking_radius = self.get_param("tracking_radius",80)
+        self.dutsbin_timer = self.get_param("dutsbin_timer",60)
 
         # Import classes
         self.area_handler =  area_partition("area_partition")
@@ -55,6 +56,12 @@ class DustbinRobot:
         self.start_dustbin_strategy =np.array([False,False,False])
         self.first_time = True
         self.trigger = False
+        self.exploration_tasks_update = np.array([])
+
+        tasks = self.area_handler.get_polygon_number()
+
+        for task in range(tasks):
+            self.exploration_tasks_update = np.append(self.exploration_tasks_update,False)
 
 
         # initialize the robots variables
@@ -63,7 +70,6 @@ class DustbinRobot:
             self.robots.append(robot_)  
             self.robots_id = np.append(self.robots_id,robot_)
             self.robots_id = self.robots_id.astype(int) #convert float to int type
-
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -81,7 +87,12 @@ class DustbinRobot:
                             self.update_robot_position,
                             queue_size=1)
 
-        rospy.Subscriber('robot_is_finished',
+        rospy.Subscriber('/mrs/exploration_area_update',
+                            ExplorationUpdate,    
+                            self.kill_the_process,
+                            queue_size=1)
+        
+        rospy.Subscriber('/mrs/exploration_finished',
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
@@ -213,10 +224,28 @@ class DustbinRobot:
     def dustbin_strategy(self):
         if(self.system_init==True):
             # Init periodic timer 
-            rospy.Timer(rospy.Duration(180), self.time_trigger)
+            rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
             self.get_information = False
     
+    def kill_the_process(self,msg):
+        # update area explored
+        self.exploration_tasks_update[msg.explored_sub_area] = True
+        print("******TASK UPDATE******")
+        print(self.exploration_tasks_update)
+        # check if the area is fully explored 
+        if all(self.exploration_tasks_update):
+            print("****************The exploration area is totally explored***************")
+            list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+            list_output = list_cmd.stdout.read()
+            retcode = list_cmd.wait()
+            assert retcode == 0, "List command returned %d" % retcode
+            for str in list_output.split("\n"):
+                if (str.startswith('/record_')):
+                    os.system("rosnode kill " + str)
+
+    
     def remove_robot_from_dustbin_goals(self,msg):
+        # remove the robot from the dustbin goals
         robot_id = msg.data
         self.robots_id = np.delete(self.robots_id, np.where(self.robots_id == robot_id))
         self.check_dustbin_robot()
@@ -456,5 +485,5 @@ if __name__ == '__main__':
         dustbin_robot = DustbinRobot(rospy.get_name())
         rospy.spin()
     except rospy.ROSInterruptException:
-        pass
+        pass    
 

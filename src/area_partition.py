@@ -32,6 +32,7 @@ class area_partition:
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
         self.surge_velocity = get_param(self,'surge_velocity')
+        self.exploration_area = get_param(self,'exploration_area')
         self.offset_distance = 0
         self.goal_polygon_defined = False
         
@@ -206,8 +207,8 @@ class area_partition:
         x,y = polygon.exterior.coords.xy
         slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
         y_coordinate =[]
-        x_threshold = 10
-
+        x_threshold = 200 #take care with this harcoded parameter
+ 
         if(x[self.reference_points[0]] > x[self.reference_points[1]]):
             x_0 = x[self.reference_points[0]] + x_threshold
             x_1 = x[self.reference_points[1]] - x_threshold
@@ -302,13 +303,38 @@ class area_partition:
         self.reference_points.append(index)
         self.reference_points.append (index-1)
         return(self.reference_points)
+    
+    def find_largest_side_distance(self, polygon):
+        x,y = polygon.exterior.coords.xy
+        self.distance =[]
+        for i in range(len(x)-1):
+            if(i==(len(x)-1)):
+                x_distance = x[i]-x[0]
+                y_distance = y[i]-y[0]
+            else:
+                x_distance = x[i]-x[(i+1)]
+                y_distance = y[i]-y[(i+1)]
+            
+            cartesian_distance = np.sqrt(x_distance**2 + y_distance**2)
+            self.distance.append(cartesian_distance)
+
+        max_distance = max(self.distance)
+        index =  self.distance.index(max_distance)+1
+        # the reference_points contains the index of the two points of the major side
+        self.reference_points =[]
+        self.reference_points.append(index)
+        self.reference_points.append (index-1)
+
+        point1 = polygon.exterior.coords[self.reference_points[0]]
+        point2 = polygon.exterior.coords[self.reference_points[1]]
+        return(point1, point2)
 
     def read_file(self):
         data = []
         self.latitude = []
         self.longitude = []
 
-        file = open("/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230125094943_cabrera_middle.xml", "r")
+        file = open(str(self.exploration_area), "r")
 
         for line in file:
             data.append(line)
@@ -401,8 +427,9 @@ class area_partition:
         
         plt.plot(*zip(*self.polygon_points))
         plt.axis('equal')
-        plt.xlim(-100,-5)
-        plt.ylim(-110,20)
+        plt.xlim(-200,100)
+        plt.ylim(-100,100)
+        # plt.show()
 
     def voronoi_finite_polygons_2d(self,vor, radius=None):
         if vor.points.shape[1] != 2:

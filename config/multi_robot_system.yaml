@@ -9,16 +9,20 @@ ned_origin_lat: 39.14803625
 ned_origin_lon: 2.93195323
 
 # ------------------ AREA PARTITION -----------------------
+# Exploration area
+exploration_area: "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230125094943_cabrera_middle.xml"
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_polygon_distance: 5
 # The offset_coverage_distance set the distance between the coverage lines path
-offset_coverage_distance: 3
+offset_coverage_distance: 10
 # Section strategy parameters
 surge_velocity: 0.8
 tolerance: 2
 
-# ------------------ TASK ALLOCATION -----------------------
+# ------------------ DUSTBIN ROBOT -----------------------
+dutsbin_timer: 120
 
+# ------------------ TASK ALLOCATION -----------------------
 task_allocation: 1
 
 #Task allocation strategies

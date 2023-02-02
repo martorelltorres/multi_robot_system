@@ -1,0 +1,3 @@
+Header header
+uint8 robot_id
+uint8 explored_sub_area
