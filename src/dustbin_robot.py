@@ -13,6 +13,9 @@ from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
 from multi_robot_system.msg import CoverageStartTime,CommunicationDelay,ExplorationUpdate
+import os
+import sys
+import subprocess
 #import classes
 from area_partition import area_partition
  
