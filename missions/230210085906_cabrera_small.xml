@@ -1,0 +1,82 @@
+<mission>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.14878685891897</latitude>
+        <longitude>2.931524835777074</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2</x>
+        <y>2</y>
+        <z>1</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.148876935019004</latitude>
+        <longitude>2.932510932030161</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2</x>
+        <y>2</y>
+        <z>1</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.147857652834325</latitude>
+        <longitude>2.9329755350724813</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2</x>
+        <y>2</y>
+        <z>1</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.147355123013035</latitude>
+        <longitude>2.9318803993298697</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2</x>
+        <y>2</y>
+        <z>1</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.148047286729145</latitude>
+        <longitude>2.9310080834136767</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2</x>
+        <y>2</y>
+        <z>1</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+</mission>

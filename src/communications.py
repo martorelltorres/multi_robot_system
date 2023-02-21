@@ -97,7 +97,6 @@ class communications:
         self.distance = round(self.distance, 2)   
 
     def communication_noise(self):
-
         for robot in range(self.number_of_robots):
             # find the different combinations between the n robots
             extracted_combinations = combinations(self.robots, 2)
