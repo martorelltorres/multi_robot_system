@@ -20,7 +20,7 @@ surge_velocity: 0.8
 tolerance: 2
 
 # ------------------ DUSTBIN ROBOT -----------------------
-dutsbin_timer: 120
+dutsbin_timer: 1
 
 # ------------------ TASK ALLOCATION -----------------------
 task_allocation: 1

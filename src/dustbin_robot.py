@@ -5,7 +5,7 @@ import numpy as np
 import random 
 from math import *
 import matplotlib
-import actionlib         
+import actionlib       
 import matplotlib.pyplot as plt
 from std_msgs.msg import Int16
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
@@ -36,7 +36,8 @@ class DustbinRobot:
         self.repulsion_radius = self.get_param("repulsion_radius",50)
         self.adrift_radius = self.get_param("adrift_radius",55)
         self.tracking_radius = self.get_param("tracking_radius",80)
-        self.dutsbin_timer = self.get_param("dutsbin_timer",60)
+        self.dutsbin_timer = self.get_param("dutsbin_timer",1)
+
 
         # Import classes
         self.area_handler =  area_partition("area_partition")
@@ -60,6 +61,13 @@ class DustbinRobot:
         self.first_time = True
         self.trigger = False
         self.exploration_tasks_update = np.array([])
+
+        self.time_threshold = 400
+        self.initial_storage_disk = 500
+        self.AUV_trigger =[self.initial_storage_disk,self.initial_storage_disk,self.initial_storage_disk]
+        self.stimulus = np.array([0,0,0],dtype = float)
+        self.max_norm = 100
+        self.min_norm = 0
 
         tasks = self.area_handler.get_polygon_number()
 
@@ -202,6 +210,78 @@ class DustbinRobot:
         msg.comm_delay = self.communication_times_delay 
         self.communication_delay_time.publish(msg)
 
+    # *********************************************************************
+    
+    def get_time_threshold(self,robot_id):
+        start_time = self.start_recording_time[robot_id]
+        current_time = rospy.Time.now()
+        time_spend = current_time.secs - start_time
+        time_threshold = self.time_threshold-time_spend
+        return(int(time_threshold))
+
+    def get_distance(self, robot_id):
+        x_diff =  self.asv_north_position - self.robots_information[robot_id][0]
+        y_diff =  self.asv_east_position - self.robots_information[robot_id][1] 
+        distance =  sqrt(x_diff**2 + y_diff**2)
+        return(distance)
+
+    def get_AUV_trigger(self,robot_id):
+        occupied_memory = random.randint(0,4)
+        new_value = self.AUV_trigger[robot_id]-occupied_memory
+        self.AUV_trigger[robot_id] = new_value
+        
+    def normalize(self, values):
+        normalized_values = np.array([])
+
+        #find the max_value 
+        # max_value = np.max(values)
+        max_value = 1000
+        #find the min_value 
+        # min_value = np.min(values)
+        min_value = 0.1
+
+        for element in range(len(values)): 
+            normalized_value = ((values[element]-min_value)/(max_value-min_value))*100
+            normalized_values = np.append (normalized_values,normalized_value)
+
+        return(normalized_values)
+
+    def get_stimulus(self,event):
+        stimulus_variables = np.array([])
+
+        for robot in range(self.number_of_robots):
+            time_threshold = self.get_time_threshold(robot)
+            stimulus_variables = np.append(stimulus_variables,time_threshold)
+
+            distance = self.get_distance(robot)
+            stimulus_variables = np.append(stimulus_variables,distance)
+
+            self.get_AUV_trigger(robot)
+            stimulus_variables = np.append(stimulus_variables,self.AUV_trigger[robot])
+            
+            # normalize the values 
+            normalized_values = self.normalize(stimulus_variables)
+                     
+
+            # obtain the stimulus value
+            self.stimulus[robot] = normalized_values[2]*10000 / ((normalized_values[1]**2)*(normalized_values[0]**2))
+            print("....................................................")
+            print("The stimulus inpust are: "+str(stimulus_variables))
+            print("normalized values are: "+str(normalized_values))
+            print("the result stimulus is: "+str(self.stimulus[robot]))
+            stimulus_variables = np.array([]) 
+        
+        print("the stimulus are: "+str(self.stimulus[0])+" "+str(self.stimulus[1])+" "+str(self.stimulus[2]))            
+
+        # extract the goal robot ID
+        max_stimulus_value = np.amax(self.stimulus)
+        goal_robot = np.where(self.stimulus==max_stimulus_value)
+        goal_robot = list(self.stimulus).index(max_stimulus_value)
+
+        print("The goal robot is : "+str(goal_robot)) 
+
+
+
 
     def time_trigger(self, event):
         # this function set the robot goal id for the dustbin_strategy
@@ -228,6 +308,7 @@ class DustbinRobot:
         if(self.system_init==True):
             # Init periodic timer 
             rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
+            rospy.Timer(rospy.Duration(3), self.get_stimulus)
             self.get_information = False
     
     def kill_the_process(self,msg):

@@ -41,7 +41,6 @@ class communications:
                                         Communication,
                                         queue_size=1)
         #Subscribers
-        
         rospy.Subscriber(node_name +"/communication_info",
                          Communication,    
                          self.monitoring_communications,
