@@ -25,16 +25,16 @@ class communications:
         self.large_distance = self.get_param('~large_distance','80') 
 
         self.system_init = False
-        self.robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
-        self.robots_information = []
+        self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
 
-        # initialize the robots variables
-        for robot in range(self.number_of_robots):
-            self.robots_information.append(self.robot_data) #set the self.robots_information initialized to 0
+       # initialize the robots variables
+        for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
+            # self.robots_information.append(self.robot_data) #set the self.robots_information initialized to 0
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot)  # self.robots = [0,1,2]
+
         #Publishers
         node_name = rospy.get_name()
         self.communication_pub = rospy.Publisher(node_name +"/communication_info",
@@ -46,30 +46,35 @@ class communications:
                          self.monitoring_communications,
                          queue_size=1)
     
-        for robot in range(self.number_of_robots):
+        for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
             rospy.Subscriber(
-                '/robot'+str(robot+1)+'/navigator/navigation',
+                '/robot'+str(robot)+'/navigator/navigation',
                 NavSts,
                 self.update_robot_position,
                 robot,
-                queue_size=1)
+                queue_size=1)      
+            
+        self.round_robots = np.array([],dtype=np.uint32)
+
+        for robot in range(self.number_of_robots):
+            self.round_robots = np.append(self.round_robots,robot)
 
     def update_robot_position(self, msg, robot_id):
 
-        # fill the robots_information array with the robots information received from the NavSts 
-        self.robots_information[[robot_id][self.robot_data[0]]] = msg.position.north
-        self.robots_information[[robot_id][self.robot_data[1]]] = msg.position.east
-        self.robots_information[[robot_id][self.robot_data[2]]]= msg.position.depth
-        self.robots_information[[robot_id][self.robot_data[3]]] = msg.altitude
-        self.robots_information[[robot_id][self.robot_data[4]]] = msg.global_position.latitude
-        self.robots_information[[robot_id][self.robot_data[5]]] = msg.global_position.longitude
-        self.robots_information[[robot_id][self.robot_data[6]]] = msg.body_velocity.x
-        self.robots_information[[robot_id][self.robot_data[7]]] = msg.body_velocity.y
-        self.robots_information[[robot_id][self.robot_data[8]]] = msg.body_velocity.z
-        self.robots_information[[robot_id][self.robot_data[9]]] = msg.orientation.roll
-        self.robots_information[[robot_id][self.robot_data[10]]] = msg.orientation.pitch
-        self.robots_information[[robot_id][self.robot_data[11]]] = msg.orientation.yaw
 
+       # fill the robots_information array with the robots information received from the NavSts 
+        self.robots_information[robot_id][0] = msg.position.north
+        self.robots_information[robot_id][1] = msg.position.east
+        self.robots_information[robot_id][2] = msg.position.depth
+        self.robots_information[robot_id][3] = msg.altitude
+        self.robots_information[robot_id][4] = msg.global_position.latitude
+        self.robots_information[robot_id][5] = msg.global_position.longitude
+        self.robots_information[robot_id][6] = msg.body_velocity.x
+        self.robots_information[robot_id][7] = msg.body_velocity.y
+        self.robots_information[robot_id][8] = msg.body_velocity.z
+        self.robots_information[robot_id][9] = msg.orientation.roll
+        self.robots_information[robot_id][10] = msg.orientation.pitch
+        self.robots_information[robot_id][11] = msg.orientation.yaw
 
         # check the system initialization
         if(self.system_init == False):
@@ -79,52 +84,51 @@ class communications:
 
     def initialization(self,robot_id):
         # check if all the n robots are publishing their information
-        if(self.robots_information[[robot_id][self.robot_data[0]]] != 0): 
+        if(self.robots_information[[robot_id][0]] != 0): 
             self.robot_initialization[robot_id] = True
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
 
     def distance_between_robots(self,first_robot,second_robot):
-        first_robot_north = self.robots_information[[first_robot][self.robot_data[0]]]
-        first_robot_east = self.robots_information[[first_robot][self.robot_data[1]]]
-        second_robot_north = self.robots_information[[second_robot][self.robot_data[0]]]
-        second_robot_east = self.robots_information[[second_robot][self.robot_data[1]]]
+        first_robot_north = self.robots_information[first_robot][0]
+        first_robot_east = self.robots_information[first_robot][1]
+        second_robot_north = self.robots_information[second_robot][0]
+        second_robot_east = self.robots_information[second_robot][1]
         x_distance = first_robot_north - second_robot_north
         y_distance = first_robot_east - second_robot_east
         self.distance = np.sqrt(x_distance**2 + y_distance**2)
-        self.distance = round(self.distance, 2)   
+        
 
     def communication_noise(self):
         for robot in range(self.number_of_robots):
-            # find the different combinations between the n robots
-            extracted_combinations = combinations(self.robots, 2)
-            robot_combinations = np.array(list(extracted_combinations)[robot])
-            self.distance_between_robots(robot_combinations[0], robot_combinations[1])
+            self.round_robots = np.roll(self.round_robots,1)
+            target = self.round_robots[0]
+            self.distance_between_robots(3, target)
 
             if(self.distance < self.low_distance):
                 self.noise = self.low_noise
                 self.distance_range = "low_distance"
                 self.communication_freq = 1
                 self.rate = rospy.Rate(self.communication_freq)
-                self.robot1_id = robot_combinations[0]
-                self.robot2_id = robot_combinations[1]
+                self.robot1_id = 3
+                self.robot2_id = target
                 self.communication()
 
             elif(self.low_distance <= self.distance <= self.medium_distance):
                 self.distance_range = "medium_distance"
                 self.noise = self.medium_noise
                 self.communication_freq = 0.5
-                self.robot1_id = robot_combinations[0]
-                self.robot2_id = robot_combinations[1]
+                self.robot1_id = 3
+                self.robot2_id = target
                 self.rate = rospy.Rate(self.communication_freq)
                 self.communication()
             else:
                 self.noise = self.high_noise
                 self.communication_freq = 0.1  
                 self.distance_range = "large_distance"
-                self.robot1_id = robot_combinations[0]
-                self.robot2_id = robot_combinations[1]
+                self.robot1_id = 3
+                self.robot2_id = target
                 self.rate = rospy.Rate(self.communication_freq)
                 self.communication()        
 
