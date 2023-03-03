@@ -66,8 +66,8 @@ class DustbinRobot:
         self.initial_storage_disk = 500
         self.AUV_trigger =[self.initial_storage_disk,self.initial_storage_disk,self.initial_storage_disk]
         self.stimulus = np.array([0,0,0],dtype = float)
-        self.max_norm = 100
-        self.min_norm = 0
+        self.max_value = 100
+        self.min_value = 1
 
         tasks = self.area_handler.get_polygon_number()
 
@@ -229,22 +229,33 @@ class DustbinRobot:
         occupied_memory = random.randint(0,4)
         new_value = self.AUV_trigger[robot_id]-occupied_memory
         self.AUV_trigger[robot_id] = new_value
-        
+    
+       
     def normalize(self, values):
         normalized_values = np.array([])
-
-        #find the max_value 
-        # max_value = np.max(values)
         max_value = 1000
-        #find the min_value 
-        # min_value = np.min(values)
         min_value = 0.1
-
         for element in range(len(values)): 
             normalized_value = ((values[element]-min_value)/(max_value-min_value))*100
             normalized_values = np.append (normalized_values,normalized_value)
-
         return(normalized_values)
+
+    def standarize(self, values):
+        mean = np.mean(values)
+        std_dev = np.std(values)
+        standarized_values = np.array([])
+        for element in range(len(values)):
+            std_value = (values[element]-mean)/std_dev
+            standarized_values = np.append(standarized_values,std_value)
+        return(standarized_values)
+
+    def min_max_scale(self,values):
+        scaled_values = np.array([])
+        for value in range(len(values)):
+            calc =(values[value]- self.min_value)/(np.max(values)-self.min_value)*self.max_value
+            scaled_values = np.append(scaled_values,calc)
+        return(scaled_values)
+
 
     def get_stimulus(self,event):
         stimulus_variables = np.array([])
@@ -259,28 +270,30 @@ class DustbinRobot:
             self.get_AUV_trigger(robot)
             stimulus_variables = np.append(stimulus_variables,self.AUV_trigger[robot])
             
-            # normalize the values 
-            normalized_values = self.normalize(stimulus_variables)
+            # rescale the values 
+            # normalized_values = self.normalize(stimulus_variables)
+            # standar_values = self.standarize(stimulus_variables)
+            min_max_scaled = self.min_max_scale(stimulus_variables)
                      
 
             # obtain the stimulus value
-            self.stimulus[robot] = normalized_values[2]*10000 / ((normalized_values[1]**2)*(normalized_values[0]**2))
+            self.stimulus[robot] = min_max_scaled[2] / ((min_max_scaled[1])*(min_max_scaled[0]))
             print("....................................................")
-            print("The stimulus inpust are: "+str(stimulus_variables))
-            print("normalized values are: "+str(normalized_values))
+            # print("The stimulus inpust are: "+str(stimulus_variables))
+            # print("The standarized values are: "+str(standar_values))
+            print("The min_max_scaled values are: "+str(min_max_scaled))
+            # print("normalized values are: "+str(normalized_values))
             print("the result stimulus is: "+str(self.stimulus[robot]))
             stimulus_variables = np.array([]) 
         
-        print("the stimulus are: "+str(self.stimulus[0])+" "+str(self.stimulus[1])+" "+str(self.stimulus[2]))            
+        # print("the stimulus are: "+str(self.stimulus[0])+" "+str(self.stimulus[1])+" "+str(self.stimulus[2]))            
 
         # extract the goal robot ID
-        max_stimulus_value = np.amax(self.stimulus)
-        goal_robot = np.where(self.stimulus==max_stimulus_value)
-        goal_robot = list(self.stimulus).index(max_stimulus_value)
+        # max_stimulus_value = np.amax(self.stimulus)
+        # goal_robot = np.where(self.stimulus==max_stimulus_value)
+        # goal_robot = list(self.stimulus).index(max_stimulus_value)
 
-        print("The goal robot is : "+str(goal_robot)) 
-
-
+        # print("The goal robot is : "+str(goal_robot)) 
 
 
     def time_trigger(self, event):
