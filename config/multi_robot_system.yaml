@@ -14,13 +14,13 @@ exploration_area: "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/23
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_polygon_distance: 5
 # The offset_coverage_distance set the distance between the coverage lines path
-offset_coverage_distance: 10
+offset_coverage_distance: 15
 # Section strategy parameters
 surge_velocity: 0.8
 tolerance: 2
 
 # ------------------ DUSTBIN ROBOT -----------------------
-dutsbin_timer: 1
+dutsbin_timer: 30
 
 # ------------------ TASK ALLOCATION -----------------------
 task_allocation: 1

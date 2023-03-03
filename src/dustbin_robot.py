@@ -87,7 +87,7 @@ class DustbinRobot:
         #Subscribers
         for robot_id in range(self.number_of_robots):
             rospy.Subscriber(
-                '/robot'+str(robot_id+1)+'/navigator/navigation',
+                '/robot'+str(robot_id)+'/navigator/navigation',
                 NavSts,
                 self.update_robots_position,
                 robot_id,
@@ -229,7 +229,6 @@ class DustbinRobot:
         occupied_memory = random.randint(0,4)
         new_value = self.AUV_trigger[robot_id]-occupied_memory
         self.AUV_trigger[robot_id] = new_value
-    
        
     def normalize(self, values):
         normalized_values = np.array([])
@@ -321,7 +320,7 @@ class DustbinRobot:
         if(self.system_init==True):
             # Init periodic timer 
             rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
-            rospy.Timer(rospy.Duration(3), self.get_stimulus)
+            # rospy.Timer(rospy.Duration(3), self.get_stimulus)
             self.get_information = False
     
     def kill_the_process(self,msg):

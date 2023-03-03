@@ -36,8 +36,8 @@ class MultiRobotSystem:
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = Robot("robot")
 
-        self.success_result = False
         self.data_gattered = False
+        self.send_folowing_section = False
         self.points = []
         self.simulation_task_times = []
         self.task_monitoring = []
@@ -149,46 +149,45 @@ class MultiRobotSystem:
         if(self.final_status==0):
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
             self.actual_section = self.actual_sections[self.robot_ID][1]
-            self.success_result = True    
-    
+            self.send_folowing_section = True
+        else: 
+            self.send_folowing_section = False
+  
     def mrs_coverage(self,goal):
-        self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon,self.goal_polygons,self.actual_section)
+        # self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon,self.goal_polygons,self.actual_section)
         self.data_gattered = True
         section_points = self.goal_points[goal]
-        
+       
 
         for section in range(len(section_points)):
-            self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon,self.goal_polygons,self.actual_section)
+            # self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon,self.goal_polygons,self.actual_section)
             self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
             self.current_section = section_points[section]
             # print("************current_section********************* ")
             # print(self.current_section)
             
             if(self.start == True):
-                # send the first section to move the robot from the origin to the start exploration point
-                # print("************** initial section **********************")
-                # self.generate_initial_section(self.robot_position_north,self.robot_position_east,self.current_section)
                 self.start = False
-
-                
+               
                 # send the robot to start the area exploration
                 self.robot_handler.send_section_strategy((0,0),self.point1,self.robot_ID)
                 self.wait_until_section_reached()
+
                 # advise the time when the robot starts the coverage
                 msg = CoverageStartTime()
                 msg.time = rospy.Time.now()
                 msg.robot_id = self.robot_ID
                 self.start_coverage_time.publish(msg)
-                # send the first section over the polygon side in order to cover the hole exploration area
+
+                # send the first section over the largest polygon side in order to cover the hole exploration area
                 self.robot_handler.send_section_strategy(self.point1,self.point2,self.robot_ID)
                 self.wait_until_section_reached()
-
 
             # update_current_section = self.robot_handler.set_current_section(self,self.actual_section)
             # print("--------------------")
             # print(update_current_section)
 
-            if(section >= 1 and self.current_section):
+            if(section >= 1 and self.send_folowing_section == True):
                 self.current_section = section_points[section]
                 # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
                 first_point = self.current_section[0]
@@ -203,10 +202,8 @@ class MultiRobotSystem:
                     initial_point = second_point
                     final_point = first_point
                 
-
                 initial_task_time = rospy.Time.now()
                 self.robot_handler.send_section_strategy(initial_point,final_point,self.robot_ID)
-
                 self.wait_until_section_reached()
             
         final_task_time = rospy.Time.now()
@@ -217,14 +214,6 @@ class MultiRobotSystem:
         # self.task_monitoring[task]= True
 
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon,self.goal_polygons,self.actual_section)
-    
-    def generate_initial_section(self,position_north,position_east,section_points):
-        initial_point = Point(position_north,position_east)
-        initial_point = list(initial_point.coords)[0]
-        final_point = section_points[0]
-        self.robot_handler.send_section_strategy(initial_point,final_point,self.robot_ID)
-        self.wait_until_section_reached()
-
 
     def print_polygon(self,event):
         if(self.data_gattered==True):      

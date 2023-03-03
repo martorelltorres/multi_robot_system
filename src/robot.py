@@ -57,7 +57,7 @@ class Robot:
         #Subscribers
         for robot in range(self.number_of_robots):
             rospy.Subscriber(
-                '/robot'+str(robot+1)+'/navigator/navigation',
+                '/robot'+str(robot)+'/navigator/navigation',
                 NavSts,
                 self.update_robot_position,
                 robot,
@@ -70,18 +70,18 @@ class Robot:
                                         queue_size=1)
         # Services clients
         try:
-            rospy.wait_for_service('/robot'+str(self.robot_ID+1)+'/captain/enable_goto', 20)
+            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/enable_goto', 20)
             self.goto_srv = rospy.ServiceProxy(
-                        '/robot'+str(self.robot_ID+1)+'/captain/enable_goto', Goto)
+                        '/robot'+str(self.robot_ID)+'/captain/enable_goto', Goto)
         except rospy.exceptions.ROSException:
             rospy.logerr('%s: error creating client to goto service',
                          self.name)
             rospy.signal_shutdown('Error creating client to goto service')
         
         try:
-            rospy.wait_for_service('/robot'+str(self.robot_ID+1)+'/captain/disable_all_and_set_idle', 20)
+            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/disable_all_and_set_idle', 20)
             self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
-                        '/robot'+str(self.robot_ID+1)+'/captain/disable_all_and_set_idle', Trigger)
+                        '/robot'+str(self.robot_ID)+'/captain/disable_all_and_set_idle', Trigger)
         except rospy.exceptions.ROSException:
             rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
                          self.name)
@@ -179,7 +179,7 @@ class Robot:
         section_req.tolerance.z = self.tolerance
         section_req.controller_type = WorldSectionGoal.LOSCTE
         section_req.priority = GoalDescriptor.PRIORITY_NORMAL
-        section_req.surge_velocity = self.surge_velocity
+        section_req.surge_velocity = 2
         section_req.timeout = 6000
 
         # send section goal using actionlib
@@ -208,7 +208,7 @@ class Robot:
         self.get_battery_status()
     
     def get_battery_status(self):
-        self.battery_status[self.robot_ID-1] =  self.battery_charge
+        self.battery_status[self.robot_ID] =  self.battery_charge
         return(self.battery_charge)
          
     def update_section_result(self,msg):
