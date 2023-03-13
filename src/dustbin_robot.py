@@ -258,16 +258,21 @@ class DustbinRobot:
 
     def get_stimulus(self,event):
         stimulus_variables = np.array([])
+        robot_sense = np.array([])
 
         for robot in range(self.number_of_robots):
             time_threshold = self.get_time_threshold(robot)
-            stimulus_variables = np.append(stimulus_variables,time_threshold)
+            robot_sense = np.append(robot_sense,time_threshold)
 
             distance = self.get_distance(robot)
-            stimulus_variables = np.append(stimulus_variables,distance)
+            robot_sense = np.append(robot_sense,distance)
 
             self.get_AUV_trigger(robot)
-            stimulus_variables = np.append(stimulus_variables,self.AUV_trigger[robot])
+            robot_sense = np.append(robot_sense,self.AUV_trigger[robot])
+
+            # Append the robot_sense to the stimulus_variables
+            stimulus_variables = np.append(stimulus_variables,robot_sense)
+
             
             # rescale the values 
             # normalized_values = self.normalize(stimulus_variables)
@@ -278,12 +283,13 @@ class DustbinRobot:
             # obtain the stimulus value
             self.stimulus[robot] = min_max_scaled[2] / ((min_max_scaled[1])*(min_max_scaled[0]))
             print("....................................................")
-            # print("The stimulus inpust are: "+str(stimulus_variables))
+            print("The stimulus inpust are: "+str(stimulus_variables))
             # print("The standarized values are: "+str(standar_values))
+
             print("The min_max_scaled values are: "+str(min_max_scaled))
-            # print("normalized values are: "+str(normalized_values))
-            print("the result stimulus is: "+str(self.stimulus[robot]))
-            stimulus_variables = np.array([]) 
+            # # print("normalized values are: "+str(normalized_values))
+            # print("the result stimulus is: "+str(self.stimulus[robot]))
+            # stimulus_variables = np.array([]) 
         
         # print("the stimulus are: "+str(self.stimulus[0])+" "+str(self.stimulus[1])+" "+str(self.stimulus[2]))            
 
@@ -320,7 +326,7 @@ class DustbinRobot:
         if(self.system_init==True):
             # Init periodic timer 
             rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
-            # rospy.Timer(rospy.Duration(3), self.get_stimulus)
+            rospy.Timer(rospy.Duration(3), self.get_stimulus)
             self.get_information = False
     
     def kill_the_process(self,msg):
