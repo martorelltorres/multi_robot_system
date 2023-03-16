@@ -65,8 +65,7 @@ class DustbinRobot:
         self.time_threshold = 400
         self.initial_storage_disk = 500
         self.AUV_trigger =[self.initial_storage_disk,self.initial_storage_disk,self.initial_storage_disk]
-        self.stimulus = np.array([0,0,0],dtype = float)
-        self.max_value = 100
+        self.max_value = 500
         self.min_value = 1
 
         tasks = self.area_handler.get_polygon_number()
@@ -209,9 +208,7 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.comm_delay = self.communication_times_delay 
         self.communication_delay_time.publish(msg)
-
-    # *********************************************************************
-    
+   
     def get_time_threshold(self,robot_id):
         start_time = self.start_recording_time[robot_id]
         current_time = rospy.Time.now()
@@ -230,75 +227,60 @@ class DustbinRobot:
         new_value = self.AUV_trigger[robot_id]-occupied_memory
         self.AUV_trigger[robot_id] = new_value
        
-    def normalize(self, values):
-        normalized_values = np.array([])
-        max_value = 1000
-        min_value = 0.1
-        for element in range(len(values)): 
-            normalized_value = ((values[element]-min_value)/(max_value-min_value))*100
-            normalized_values = np.append (normalized_values,normalized_value)
-        return(normalized_values)
-
-    def standarize(self, values):
-        mean = np.mean(values)
-        std_dev = np.std(values)
-        standarized_values = np.array([])
-        for element in range(len(values)):
-            std_value = (values[element]-mean)/std_dev
-            standarized_values = np.append(standarized_values,std_value)
-        return(standarized_values)
-
     def min_max_scale(self,values):
-        scaled_values = np.array([])
-        for value in range(len(values)):
-            calc =(values[value]- self.min_value)/(np.max(values)-self.min_value)*self.max_value
-            scaled_values = np.append(scaled_values,calc)
-        return(scaled_values)
-
-
-    def get_stimulus(self,event):
-        stimulus_variables = np.array([])
-        robot_sense = np.array([])
+        scaled_senses = np.array([])
+        # intialize the variables
+        for robot in range(self.number_of_robots):
+            scaled_senses = np.append(scaled_senses,0)
+        scaled_senses= np.vstack((scaled_senses,scaled_senses,scaled_senses))
 
         for robot in range(self.number_of_robots):
+            scaled_values = np.array([])
+            for value in range(len(scaled_senses[0])):
+                calc =(values[robot][value]- self.min_value)/(np.max(values)-self.min_value)*self.max_value
+                scaled_values = np.append(scaled_values,calc)
+            scaled_senses[robot] = scaled_values
+
+        return(scaled_senses)
+
+    def get_stimulus(self,event):
+        robots_sense = np.array([])
+        stimulus = np.array([])
+        # intialize the variables
+        for robot in range(self.number_of_robots):
+            robots_sense = np.append(robots_sense,0)
+            stimulus = np.append(stimulus,0)
+
+        stimulus_variables= np.vstack((robots_sense,robots_sense,robots_sense))
+
+        for robot in range(self.number_of_robots):
+
             time_threshold = self.get_time_threshold(robot)
-            robot_sense = np.append(robot_sense,time_threshold)
+            robots_sense[0]=time_threshold
 
             distance = self.get_distance(robot)
-            robot_sense = np.append(robot_sense,distance)
+            robots_sense[1]=distance
 
             self.get_AUV_trigger(robot)
-            robot_sense = np.append(robot_sense,self.AUV_trigger[robot])
+            robots_sense[2]=self.AUV_trigger[robot]
 
-            # Append the robot_sense to the stimulus_variables
-            stimulus_variables = np.append(stimulus_variables,robot_sense)
+            stimulus_variables[robot] = robots_sense
 
-            
-            # rescale the values 
-            # normalized_values = self.normalize(stimulus_variables)
-            # standar_values = self.standarize(stimulus_variables)
-            min_max_scaled = self.min_max_scale(stimulus_variables)
-                     
+        min_max_scaled = self.min_max_scale(stimulus_variables)
+        print("......................................")
+        print("The min_max_scaled values are: ")
+        print(min_max_scaled)
 
-            # obtain the stimulus value
-            self.stimulus[robot] = min_max_scaled[2] / ((min_max_scaled[1])*(min_max_scaled[0]))
-            print("....................................................")
-            print("The stimulus inpust are: "+str(stimulus_variables))
-            # print("The standarized values are: "+str(standar_values))
-
-            print("The min_max_scaled values are: "+str(min_max_scaled))
-            # # print("normalized values are: "+str(normalized_values))
-            # print("the result stimulus is: "+str(self.stimulus[robot]))
-            # stimulus_variables = np.array([]) 
-        
-        # print("the stimulus are: "+str(self.stimulus[0])+" "+str(self.stimulus[1])+" "+str(self.stimulus[2]))            
-
+        # obtain the stimulus value
+        for robot in range(self.number_of_robots):
+            scaled_values = min_max_scaled[robot]
+            stimulus[robot] = abs(scaled_values[2]) /(abs((scaled_values[1]))*abs((scaled_values[0])))
+        print("Stimulus values are:")
+        print(stimulus)
+    
         # extract the goal robot ID
-        # max_stimulus_value = np.amax(self.stimulus)
-        # goal_robot = np.where(self.stimulus==max_stimulus_value)
-        # goal_robot = list(self.stimulus).index(max_stimulus_value)
-
-        # print("The goal robot is : "+str(goal_robot)) 
+        goal_robot = stimulus.argmax()
+        print("The goal robot is : "+str(goal_robot)) 
 
 
     def time_trigger(self, event):
