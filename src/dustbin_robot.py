@@ -67,7 +67,7 @@ class DustbinRobot:
         self.AUV_trigger =[self.initial_storage_disk,self.initial_storage_disk,self.initial_storage_disk]
         self.max_value = 500
         self.min_value = 1
-        self.current_robot_id = 30000
+        self.last_robot_id = 30000
 
         tasks = self.area_handler.get_polygon_number()
 
@@ -163,7 +163,6 @@ class DustbinRobot:
         # Init periodic timers
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
 
-    
     def dustbin_trigger(self, event):
          # start the dustbin_strategy if all the has started the coverage
         if (np.all(self.start_dustbin_strategy) and self.first_time == True):
@@ -245,17 +244,15 @@ class DustbinRobot:
         return(scaled_senses)
 
     def get_stimulus(self):
+        # intialize the variables
         robots_sense = np.array([])
         stimulus = np.array([])
-        # intialize the variables
         for robot in range(self.number_of_robots):
             robots_sense = np.append(robots_sense,0)
             stimulus = np.append(stimulus,0)
-
         stimulus_variables= np.vstack((robots_sense,robots_sense,robots_sense))
 
         for robot in range(self.number_of_robots):
-
             time_threshold = self.get_time_threshold(robot)
             robots_sense[0]=time_threshold
 
@@ -268,24 +265,23 @@ class DustbinRobot:
             stimulus_variables[robot] = robots_sense
 
         min_max_scaled = self.min_max_scale(stimulus_variables)
-        print("......................................")
-        print("The min_max_scaled values are: ")
-        print(min_max_scaled)
+        # print("......................................")
+        # print("The min_max_scaled values are: ")
+        # print(min_max_scaled)
 
         # obtain the stimulus value
         for robot in range(self.number_of_robots):
             scaled_values = min_max_scaled[robot]
             stimulus[robot] = abs(scaled_values[2]) /(abs((scaled_values[1]))*abs((scaled_values[0])))
-        print("Stimulus values are:")
-        print(stimulus)
-
+        # print("Stimulus values are:")
+        # print(stimulus)
         return(stimulus)
 
 
     def time_trigger(self, event):
         stimulus = np.array([])
         # this function set the robot goal id for the dustbin_strategy
-        # The trigger flag is True only when there are no zeros in the self.communication_times_delay array 
+        # The trigger flag becomes True only when there are no zeros in the self.communication_times_delay array 
         if (self.trigger==True):
             self.set_comm_start_time(rospy.Time.now())
 
@@ -293,14 +289,18 @@ class DustbinRobot:
 
         # extract the goal robot ID
         self.robot_goal_id = stimulus.argmax()
-        print("The goal robot is : "+str(self.robot_goal_id)) 
+        
 
         # Avoid track twice the same robot
-        if(self.robot_goal_id==self.current_robot_id):
-            stimulus = np.delete(stimulus, np.where(stimulus == self.robot_goal_id))
+        print( "The goal_robot is :"+str(self.robot_goal_id)+ " and the last_robot is: "+str(self.last_robot_id))
+        if(self.robot_goal_id==self.last_robot_id):
+            stimulus[self.robot_goal_id]= 0.0000000000000000001
+            print("Avoid duplicities")
             self.robot_goal_id = stimulus.argmax()
+            
 
-        self.current_robot_id = self.robot_goal_id
+        print("The goal robot is : "+str(self.robot_goal_id)) 
+        self.last_robot_id = self.robot_goal_id
         self.get_information = True
         self.set_end_time = True
  
@@ -317,7 +317,6 @@ class DustbinRobot:
         if(self.system_init==True):
             # Init periodic timer 
             rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
-            # rospy.Timer(rospy.Duration(3), self.get_stimulus)
             self.get_information = False
     
     def kill_the_process(self,msg):
