@@ -1,7 +1,7 @@
 <launch>
  <!-- Params -->
   <arg name="place" default="cabrera.yaml"/>
-  <arg name="enableIquaASV" default="false"/>
+  <arg name="enableIquaASV" default="true"/>
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
   <arg name="enableCollisonAvoidance" default="false"/>

@@ -20,9 +20,9 @@ surge_velocity: 0.8
 tolerance: 2
 
 # ------------------ DUSTBIN ROBOT -----------------------
-dutsbin_timer: 30
+dutsbin_timer: 50
 
-# ------------------ TASK ALLOCATION -----------------------
+# ------------------ AUV's TASK ALLOCATION -----------------------
 task_allocation: 1
 
 #Task allocation strategies

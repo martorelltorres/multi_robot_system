@@ -67,6 +67,7 @@ class DustbinRobot:
         self.AUV_trigger =[self.initial_storage_disk,self.initial_storage_disk,self.initial_storage_disk]
         self.max_value = 500
         self.min_value = 1
+        self.current_robot_id = 30000
 
         tasks = self.area_handler.get_polygon_number()
 
@@ -243,7 +244,7 @@ class DustbinRobot:
 
         return(scaled_senses)
 
-    def get_stimulus(self,event):
+    def get_stimulus(self):
         robots_sense = np.array([])
         stimulus = np.array([])
         # intialize the variables
@@ -277,21 +278,29 @@ class DustbinRobot:
             stimulus[robot] = abs(scaled_values[2]) /(abs((scaled_values[1]))*abs((scaled_values[0])))
         print("Stimulus values are:")
         print(stimulus)
-    
-        # extract the goal robot ID
-        goal_robot = stimulus.argmax()
-        print("The goal robot is : "+str(goal_robot)) 
+
+        return(stimulus)
 
 
     def time_trigger(self, event):
+        stimulus = np.array([])
         # this function set the robot goal id for the dustbin_strategy
         # The trigger flag is True only when there are no zeros in the self.communication_times_delay array 
         if (self.trigger==True):
             self.set_comm_start_time(rospy.Time.now())
-        
-        self.robots_id = np.roll(self.robots_id,1)
-        self.robot_goal_id = self.robots_id[0]      
-        # flags to handle the data communication time delay
+
+        stimulus = self.get_stimulus()
+
+        # extract the goal robot ID
+        self.robot_goal_id = stimulus.argmax()
+        print("The goal robot is : "+str(self.robot_goal_id)) 
+
+        # Avoid track twice the same robot
+        if(self.robot_goal_id==self.current_robot_id):
+            stimulus = np.delete(stimulus, np.where(stimulus == self.robot_goal_id))
+            self.robot_goal_id = stimulus.argmax()
+
+        self.current_robot_id = self.robot_goal_id
         self.get_information = True
         self.set_end_time = True
  
@@ -308,7 +317,7 @@ class DustbinRobot:
         if(self.system_init==True):
             # Init periodic timer 
             rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
-            rospy.Timer(rospy.Duration(3), self.get_stimulus)
+            # rospy.Timer(rospy.Duration(3), self.get_stimulus)
             self.get_information = False
     
     def kill_the_process(self,msg):
