@@ -13,6 +13,7 @@ class communications:
     def __init__(self, name):
         self.name = name
         self.number_of_robots = self.get_param('number_of_robots')
+        self.robot_ID = self.get_param('~robot_ID',0) 
 
         # communication noise frequency 
         self.low_noise = self.get_param('~low_noise','1') 
@@ -20,9 +21,9 @@ class communications:
         self.high_noise = self.get_param('~high_noise','0.1') 
 
         # distance range
-        self.low_distance = self.get_param('~low_distance','10') 
-        self.medium_distance = self.get_param('~medium_distance','40') 
-        self.large_distance = self.get_param('~large_distance','80') 
+        self.low_distance = self.get_param('~low_distance','40') 
+        self.medium_distance = self.get_param('~medium_distance','80') 
+        self.large_distance = self.get_param('~large_distance','150') 
 
         self.system_init = False
         self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
@@ -37,14 +38,10 @@ class communications:
 
         #Publishers
         node_name = rospy.get_name()
-        self.communication_pub = rospy.Publisher(node_name +"/communication_info",
+        self.communication_pub = rospy.Publisher(node_name +"/robot_communication",
                                         Communication,
                                         queue_size=1)
         #Subscribers
-        rospy.Subscriber(node_name +"/communication_info",
-                         Communication,    
-                         self.monitoring_communications,
-                         queue_size=1)
     
         for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
             rospy.Subscriber(
@@ -152,8 +149,6 @@ class communications:
             communication_msg.communication_freq = self.communication_freq
             self.communication_pub.publish(communication_msg)
 
-    def monitoring_communications(self,msg):
-        distance = msg.distance
        
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

@@ -12,7 +12,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,CommunicationDelay,ExplorationUpdate
+from multi_robot_system.msg import CoverageStartTime,CommunicationDelay,ExplorationUpdate,Communication
 import os
 import sys
 import subprocess
@@ -68,6 +68,7 @@ class DustbinRobot:
         self.max_value = 500
         self.min_value = 1
         self.last_robot_id = 30000
+        self.comm_signal = np.array([])
 
         tasks = self.area_handler.get_polygon_number()
 
@@ -81,6 +82,7 @@ class DustbinRobot:
             self.robots.append(robot_)  
             self.robots_id = np.append(self.robots_id,robot_)
             self.robots_id = self.robots_id.astype(int) #convert float to int type
+            self.comm_signal = np.append(self.comm_signal,0)
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -107,6 +109,15 @@ class DustbinRobot:
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
+        rospy.Subscriber("/mrs/communications_sim/robot_communication",
+                    Communication,    
+                    self.update_communication_state,
+                    queue_size=1)
+            
+        rospy.Subscriber('/robot'+str(self.robot_ID)+'/navigator/navigation',
+            NavSts,    
+            self.update_robot_position,
+            queue_size=1)
         
         for robot in range(self.number_of_robots):
             rospy.Subscriber(
@@ -175,7 +186,13 @@ class DustbinRobot:
         self.asv_yaw = msg.orientation.yaw
 
         if(self.get_information==True and self.enable_tracking==True):
-            self.tracking()     
+            self.tracking()  
+
+    def update_communication_state(self,msg):
+        noise_level = msg.noise_level
+        robot = msg.robot2_id
+        comm_freq = msg.communication_freq
+        self.comm_signal[robot] = 1/(noise_level*comm_freq)
     
     def set_coverage_start_time(self,msg,robot_id):
         self.start_dustbin_strategy[robot_id]= True
@@ -265,16 +282,12 @@ class DustbinRobot:
             stimulus_variables[robot] = robots_sense
 
         min_max_scaled = self.min_max_scale(stimulus_variables)
-        # print("......................................")
-        # print("The min_max_scaled values are: ")
-        # print(min_max_scaled)
 
         # obtain the stimulus value
         for robot in range(self.number_of_robots):
             scaled_values = min_max_scaled[robot]
-            stimulus[robot] = abs(scaled_values[2]) /(abs((scaled_values[1]))*abs((scaled_values[0])))
-        # print("Stimulus values are:")
-        # print(stimulus)
+            s = abs(scaled_values[2]) /(abs((scaled_values[1]))*abs((scaled_values[0])))
+            stimulus[robot] = s**2/(s**2+self.comm_signal[robot])
         return(stimulus)
 
 
@@ -292,14 +305,11 @@ class DustbinRobot:
         
 
         # Avoid track twice the same robot
-        print( "The goal_robot is :"+str(self.robot_goal_id)+ " and the last_robot is: "+str(self.last_robot_id))
         if(self.robot_goal_id==self.last_robot_id):
             stimulus[self.robot_goal_id]= 0.0000000000000000001
-            print("Avoid duplicities")
             self.robot_goal_id = stimulus.argmax()
             
-
-        print("The goal robot is : "+str(self.robot_goal_id)) 
+        print("The goal robot is: "+str(self.robot_goal_id)) 
         self.last_robot_id = self.robot_goal_id
         self.get_information = True
         self.set_end_time = True
@@ -326,7 +336,7 @@ class DustbinRobot:
         print(self.exploration_tasks_update)
         # check if the area is fully explored 
         if all(self.exploration_tasks_update):
-            print("****************The exploration area is totally explored***************")
+            print("****************The target area is totally explored***************")
             list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
             list_output = list_cmd.stdout.read()
             retcode = list_cmd.wait()
