@@ -2,9 +2,7 @@
  <!-- Params -->
   <arg name="place" default="cabrera.yaml"/>
   <arg name="enableIquaASV" default="false"/>
-  <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
-  <arg name="enableCollisonAvoidance" default="false"/>
   <arg name="enableCommunicationModule" default="true"/>
 
   <!-- General robots information -->
