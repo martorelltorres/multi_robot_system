@@ -61,7 +61,7 @@ class DustbinRobot:
         self.exploration_tasks_update = np.array([])
 
         self.init_time = []
-        self.time = []
+        self.time_init = []
         self.record_time = []
         self.storage_disk =[]
         self.max_value = 500
@@ -83,8 +83,7 @@ class DustbinRobot:
             self.robots_id = self.robots_id.astype(int) #convert float to int type
             self.comm_signal = np.append(self.comm_signal,0)
             self.storage_disk.append(0)
-            self.time.append(0)
-            self.init_time.append(0)
+            self.time_init.append(rospy.Time.now().secs)
             self.record_time.append(0)
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -203,13 +202,11 @@ class DustbinRobot:
         self.t_start = msg.time.secs
         self.time_robot_id = msg.robot_id
         self.start_recording_time[self.time_robot_id] = self.t_start 
-        self.time[self.time_robot_id]= self.t_start
 
     def set_comm_start_time(self,time):
         self.t_start = time.secs
         self.start_recording_time[self.robot_goal_id] = self.t_start
         
-    
     def set_comm_end_time(self,time):
         self.t_end = time.secs
         self.communication_times_end[self.robot_goal_id] = self.t_end
@@ -234,7 +231,6 @@ class DustbinRobot:
         
     def reset_values(self,robot_id):
         self.storage_disk[robot_id] = 1
-        print("RESET VALUES")
    
     def get_distance(self, robot_id):
         x_diff =  self.asv_north_position - self.robots_information[robot_id][0]
@@ -248,10 +244,7 @@ class DustbinRobot:
         self.storage_disk[robot_id] = new_value
     
     def get_time_threshold(self,robot_id):
-        if (self.first_time == True):
-            time_threshold = rospy.Time.now().secs - self.start_recording_time[robot_id]
-        else:    
-            time_threshold = rospy.Time.now().secs - self.init_time[robot_id]
+        time_threshold = rospy.Time.now().secs - self.time_init[robot_id]
         return(time_threshold)
        
     def min_max_scale(self,values):
@@ -295,18 +288,15 @@ class DustbinRobot:
 
             stimulus_variables[robot] = robots_sense
 
-        print("1111111111111111111111111111")
+        print("************** STIMULUS VARIABLES ******************")
         print(stimulus_variables)
 
         min_max_scaled = self.min_max_scale(stimulus_variables)
-
-        print("2222222222222222222222222222")
-        print(min_max_scaled)
    
         # obtain the stimulus value using a weighted sum
-        self.alpha = 0.3
-        self.beta = 0.2
-        self.gamma = 0.5
+        self.alpha = 3
+        self.beta = 2
+        self.gamma = 5
 
         for robot in range(self.number_of_robots):
             scaled_values = min_max_scaled[robot]
@@ -316,6 +306,7 @@ class DustbinRobot:
 
 
     def time_trigger(self, event):
+
         stimulus = np.array([])
         # this function set the robot goal id for the dustbin_strategy
         # The trigger flag becomes True only when there are no zeros in the self.communication_times_delay array 
@@ -323,6 +314,9 @@ class DustbinRobot:
             self.set_comm_start_time(rospy.Time.now())
 
         stimulus = self.get_stimulus()
+
+        print("----------------STIMULUUS---------------")
+        print(stimulus)
 
         # extract the goal robot ID
         self.robot_goal_id = stimulus.argmax()
@@ -335,7 +329,7 @@ class DustbinRobot:
         reset_id = self.robot_goal_id
         # reset the sensed values
         self.reset_values(reset_id)
-            
+          
         print("The goal robot is: "+str(self.robot_goal_id)) 
         self.last_robot_id = self.robot_goal_id
         self.get_information = True
@@ -415,7 +409,7 @@ class DustbinRobot:
 
         if( self.radius < (self.adrift_radius+2) and self.set_end_time == True):
             self.set_comm_end_time(rospy.Time.now())
-            self.init_time[self.robot_goal_id]= rospy.Time.now().secs
+            self.time_init[self.robot_goal_id] = rospy.Time.now().secs
             self.set_end_time = False
 
         if(self.radius > self.adrift_radius):
