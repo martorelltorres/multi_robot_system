@@ -60,6 +60,9 @@ class DustbinRobot:
         self.trigger = False
         self.exploration_tasks_update = np.array([])
 
+        self.distance = []
+
+
         self.init_time = []
         self.time_init = []
         self.record_time = []
@@ -85,6 +88,7 @@ class DustbinRobot:
             self.storage_disk.append(0)
             self.time_init.append(rospy.Time.now().secs)
             self.record_time.append(0)
+            self.distance.append(0)
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -150,6 +154,10 @@ class DustbinRobot:
         self.communication_delay_time = rospy.Publisher("communication_time_delay",
                                         CommunicationDelay,
                                         queue_size=1)
+        
+        self.reset_storage_pub = rospy.Publisher('reset_storage_disk',
+                                        Int16,
+                                        queue_size=1)
 
         # Services clients
         try:
@@ -174,7 +182,7 @@ class DustbinRobot:
         if (self.robot_at_center == False):
             self.goto_central_area()
         
-        # Init periodic timers
+        # Init periodic timersself.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
 
     def dustbin_trigger(self, event):
@@ -192,10 +200,11 @@ class DustbinRobot:
             self.tracking()  
 
     def update_communication_state(self,msg):
-        noise_level = msg.noise_level
         robot = msg.robot2_id
         comm_freq = msg.communication_freq
-        self.comm_signal[robot] = 1/(noise_level*comm_freq)
+        self.distance[robot] = msg.distance
+        self.storage_disk[robot] = msg.storage_disk
+        self.comm_signal[robot] = 1/(comm_freq)
     
     def set_coverage_start_time(self,msg,robot_id):
         self.start_dustbin_strategy[robot_id]= True
@@ -279,7 +288,8 @@ class DustbinRobot:
             robots_sense[0] = time_threshold
 
             # get the distance between ASV-AUV's
-            distance = self.get_distance(robot)
+            # distance = self.get_distance(robot)
+            distance = self.distance[robot]
             robots_sense[1] = distance
 
             # get the hard disk storage capacity
@@ -328,7 +338,10 @@ class DustbinRobot:
         
         reset_id = self.robot_goal_id
         # reset the sensed values
-        self.reset_values(reset_id)
+        # advise the reset topic
+        msg = Int16()
+        msg.data = reset_id 
+        self.reset_storage_pub.publish(msg)
           
         print("The goal robot is: "+str(self.robot_goal_id)) 
         self.last_robot_id = self.robot_goal_id

@@ -81,15 +81,7 @@
 
     <!-- Communications module -->
     <group if="$(arg enableCommunicationModule)">
-      <node name="communications_sim" pkg="multi_robot_system" type="communications.py" output="screen" respawn="true">
-        <param name="low_noise" value= "0.9"/>
-        <param name="medium_noise" value="0.6"/>
-        <param name="high_noise" value="0.3"/>
-        <param name="low_distance" value= "10"/>
-        <param name="medium_distance" value="40"/>
-        <param name="large_distance" value="80"/>
-      </node>
-
+      <node name="communications_sim" pkg="multi_robot_system" type="communications.py" output="screen" respawn="true"/>
     </group>
   </group>
 

@@ -3,7 +3,9 @@
 import rospy
 from cola2_msgs.msg import  NavSts
 import numpy as np
+from std_msgs.msg import Empty
 from multi_robot_system.msg import Communication
+from std_msgs.msg import Int16
 import random
 from functools import partial
 from itertools import combinations
@@ -15,26 +17,21 @@ class communications:
         self.number_of_robots = self.get_param('number_of_robots')
         self.robot_ID = self.get_param('~robot_ID',0) 
 
-        # communication noise frequency 
-        self.low_noise = self.get_param('~low_noise','1') 
-        self.medium_noise = self.get_param('~medium_noise','0.5') 
-        self.high_noise = self.get_param('~high_noise','0.1') 
-
-        # distance range
-        self.low_distance = self.get_param('~low_distance','40') 
-        self.medium_distance = self.get_param('~medium_distance','80') 
-        self.large_distance = self.get_param('~large_distance','150') 
-
         self.system_init = False
         self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
+        self.storage_disk =[]
 
        # initialize the robots variables
         for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
             # self.robots_information.append(self.robot_data) #set the self.robots_information initialized to 0
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot)  # self.robots = [0,1,2]
+        
+        for robot_ in range(self.number_of_robots):
+            self.storage_disk.append(0)
+
 
         #Publishers
         node_name = rospy.get_name()
@@ -49,7 +46,12 @@ class communications:
                 NavSts,
                 self.update_robot_position,
                 robot,
-                queue_size=1)      
+                queue_size=1) 
+                 
+        rospy.Subscriber("reset_storage_disk",
+                         Int16,    
+                         self.reset_values,
+                         queue_size=1)
             
         self.round_robots = np.array([],dtype=np.uint32)
 
@@ -95,43 +97,33 @@ class communications:
         x_distance = first_robot_north - second_robot_north
         y_distance = first_robot_east - second_robot_east
         self.distance = np.sqrt(x_distance**2 + y_distance**2)
+    
+    def get_storage_disk(self,robot_id):
+        occupied_memory = random.randint(10,50)
+        new_value = self.storage_disk[robot_id]+abs(occupied_memory)
+        self.storage_disk[robot_id] = new_value
+        return(new_value)
         
 
     def communication_noise(self):
+        # y = -0.0000001 + 0.0000776*x^1 + -0.0141229*x^2 + 0.8483710*x^3
         for robot in range(self.number_of_robots):
             self.round_robots = np.roll(self.round_robots,1)
             target = self.round_robots[0]
             self.distance_between_robots(3, target)
-
-            if(self.distance < self.low_distance):
-                self.noise = self.low_noise
-                self.distance_range = "low_distance"
-                self.communication_freq = 1
-                self.rate = rospy.Rate(self.communication_freq)
-                self.robot1_id = 3
-                self.robot2_id = target
-                self.communication()
-
-            elif(self.low_distance <= self.distance <= self.medium_distance):
-                self.distance_range = "medium_distance"
-                self.noise = self.medium_noise
-                self.communication_freq = 0.5
-                self.robot1_id = 3
-                self.robot2_id = target
-                self.rate = rospy.Rate(self.communication_freq)
-                self.communication()
-            else:
-                self.noise = self.high_noise
-                self.communication_freq = 0.1  
-                self.distance_range = "large_distance"
-                self.robot1_id = 3
-                self.robot2_id = target
-                self.rate = rospy.Rate(self.communication_freq)
-                self.communication()        
+            self.communication_freq = 0.848371 - 0.01412292*self.distance + 0.00007763495*self.distance**2
+            self.rate = rospy.Rate(self.communication_freq)
+            self.robot1_id = 3
+            self.robot2_id = target
+            self.communication()       
 
     def random_interference(self):
         interference = random.randint(0,2)
-        rospy.sleep(interference)
+        # rospy.sleep(interference)
+    
+    def reset_values(self,msg):
+        print("IIIIIIIIIIIIIIIIIIIIIIN")
+        self.storage_disk[msg.data] = 1
 
     def communication(self):
         random_number = random.randint(0,100)
@@ -142,14 +134,14 @@ class communications:
             communication_msg.header.frame_id = "multi_robot_system"
             communication_msg.header.stamp = rospy.Time.now()
             communication_msg.distance = self.distance
-            communication_msg.distance_range = self.distance_range
-            communication_msg.noise_level = self.noise
             communication_msg.robot1_id = self.robot1_id
             communication_msg.robot2_id = self.robot2_id
             communication_msg.communication_freq = self.communication_freq
+            storage = self.get_storage_disk(self.robot2_id)
+            communication_msg.storage_disk = storage
             self.communication_pub.publish(communication_msg)
 
-       
+
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
             param_value = rospy.get_param(param_name)
