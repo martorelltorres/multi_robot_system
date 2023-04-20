@@ -14,6 +14,7 @@ class communications:
 
     def __init__(self, name):
         self.name = name
+        node_name = rospy.get_name()
         self.number_of_robots = self.get_param('number_of_robots')
         self.robot_ID = self.get_param('~robot_ID',0) 
 
@@ -22,10 +23,11 @@ class communications:
         self.robots = []
         self.robot_initialization = np.array([])
         self.storage_disk =[]
+        self.communication_pub = []
+
 
        # initialize the robots variables
         for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
-            # self.robots_information.append(self.robot_data) #set the self.robots_information initialized to 0
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot)  # self.robots = [0,1,2]
         
@@ -34,12 +36,24 @@ class communications:
 
 
         #Publishers
-        node_name = rospy.get_name()
-        self.communication_pub = rospy.Publisher(node_name +"/robot_communication",
+        # for robot in range(self.number_of_robots):
+        #     self.communication_pub.append( rospy.Publisher(node_name +"/robot"+str(robot)+"_communication",
+        #                                 Communication,
+        #                                 queue_size=1))
+
+        self.robot0_comm_pub = rospy.Publisher(node_name +"/robot0_communication",
                                         Communication,
                                         queue_size=1)
+        
+        self.robot1_comm_pub = rospy.Publisher(node_name +"/robot1_communication",
+                                Communication,
+                                queue_size=1)
+        
+        self.robot2_comm_pub = rospy.Publisher(node_name +"/robot2_communication",
+                                Communication,
+                                queue_size=1)
+
         #Subscribers
-    
         for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
             rospy.Subscriber(
                 '/robot'+str(robot)+'/navigator/navigation',
@@ -57,7 +71,7 @@ class communications:
 
         for robot in range(self.number_of_robots):
             self.round_robots = np.append(self.round_robots,robot)
-
+    
     def update_robot_position(self, msg, robot_id):
 
 
@@ -112,6 +126,7 @@ class communications:
             target = self.round_robots[0]
             self.distance_between_robots(3, target)
             self.communication_freq = 0.848371 - 0.01412292*self.distance + 0.00007763495*self.distance**2
+            # Create a rate
             self.rate = rospy.Rate(self.communication_freq)
             self.robot1_id = 3
             self.robot2_id = target
@@ -122,7 +137,6 @@ class communications:
         # rospy.sleep(interference)
     
     def reset_values(self,msg):
-        print("IIIIIIIIIIIIIIIIIIIIIIN")
         self.storage_disk[msg.data] = 1
 
     def communication(self):
@@ -139,7 +153,18 @@ class communications:
             communication_msg.communication_freq = self.communication_freq
             storage = self.get_storage_disk(self.robot2_id)
             communication_msg.storage_disk = storage
-            self.communication_pub.publish(communication_msg)
+
+            if(self.robot2_id==0):
+                self.robot0_comm_pub.publish(communication_msg)
+                self.rate.sleep()
+            elif(self.robot2_id==1):
+                self.robot1_comm_pub.publish(communication_msg)
+                self.rate.sleep()
+            else:
+                self.robot2_comm_pub.publish(communication_msg)
+                self.rate.sleep()
+
+
 
 
     def get_param(self, param_name, default = None):

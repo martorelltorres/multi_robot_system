@@ -116,10 +116,11 @@ class DustbinRobot:
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
         
-        rospy.Subscriber("/mrs/communications_sim/robot_communication",
-                    Communication,    
-                    self.update_communication_state,
-                    queue_size=1)
+        for robot_id in range(self.number_of_robots):
+            rospy.Subscriber("/mrs/communications_sim/robot"+str(robot_id)+"_communication",
+                        Communication,    
+                        self.update_communication_state,
+                        queue_size=1)
             
         rospy.Subscriber('/robot'+str(self.robot_ID)+'/navigator/navigation',
             NavSts,    
