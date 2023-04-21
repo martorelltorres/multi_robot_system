@@ -4,7 +4,7 @@ import rospy
 from cola2_msgs.msg import  NavSts
 import numpy as np
 from std_msgs.msg import Empty
-from multi_robot_system.msg import Communication
+from multi_robot_system.msg import Communication,Distances
 from std_msgs.msg import Int16
 import random
 from functools import partial
@@ -24,6 +24,8 @@ class communications:
         self.robot_initialization = np.array([])
         self.storage_disk =[]
         self.communication_pub = []
+        self.distances = []
+        self.communication_freq = 1
 
 
        # initialize the robots variables
@@ -36,10 +38,6 @@ class communications:
 
 
         #Publishers
-        # for robot in range(self.number_of_robots):
-        #     self.communication_pub.append( rospy.Publisher(node_name +"/robot"+str(robot)+"_communication",
-        #                                 Communication,
-        #                                 queue_size=1))
 
         self.robot0_comm_pub = rospy.Publisher(node_name +"/robot0_communication",
                                         Communication,
@@ -66,16 +64,23 @@ class communications:
                          Int16,    
                          self.reset_values,
                          queue_size=1)
+        
+        rospy.Subscriber("robot_distances",
+                    Distances,    
+                    self.update_distance,
+                    queue_size=1)
             
         self.round_robots = np.array([],dtype=np.uint32)
 
         for robot in range(self.number_of_robots):
             self.round_robots = np.append(self.round_robots,robot)
+            self.distances.append(0)
+    
+    def update_distance(self,msg):
+        self.distances[msg.auv_id] = msg.distance        
     
     def update_robot_position(self, msg, robot_id):
-
-
-       # fill the robots_information array with the robots information received from the NavSts 
+        # fill the robots_information array with the robots information received from the NavSts 
         self.robots_information[robot_id][0] = msg.position.north
         self.robots_information[robot_id][1] = msg.position.east
         self.robots_information[robot_id][2] = msg.position.depth
@@ -93,7 +98,7 @@ class communications:
         if(self.system_init == False):
             self.initialization(robot_id)
         else:
-            self.communication_noise()
+            self.communication_process()
 
     def initialization(self,robot_id):
         # check if all the n robots are publishing their information
@@ -117,55 +122,45 @@ class communications:
         new_value = self.storage_disk[robot_id]+abs(occupied_memory)
         self.storage_disk[robot_id] = new_value
         return(new_value)
-        
-
-    def communication_noise(self):
-        # y = -0.0000001 + 0.0000776*x^1 + -0.0141229*x^2 + 0.8483710*x^3
-        for robot in range(self.number_of_robots):
-            self.round_robots = np.roll(self.round_robots,1)
-            target = self.round_robots[0]
-            self.distance_between_robots(3, target)
-            self.communication_freq = 0.848371 - 0.01412292*self.distance + 0.00007763495*self.distance**2
-            # Create a rate
-            self.rate = rospy.Rate(self.communication_freq)
-            self.robot1_id = 3
-            self.robot2_id = target
-            self.communication()       
-
-    def random_interference(self):
-        interference = random.randint(0,2)
-        # rospy.sleep(interference)
     
+    def get_comm_freq(self,distance):
+        # y = -0.0000001 + 0.0000776*x^1 + -0.0141229*x^2 + 0.8483710*x^3
+        communication_freq = 0.848371 - 0.01412292*distance + 0.00007763495*distance**2
+        # Create a rate
+        self.rate = rospy.Rate(communication_freq)
+        return(communication_freq)
+
+    def communication_process(self):       
+        self.round_robots = np.roll(self.round_robots,1)
+        target = self.round_robots[0]
+        self.auv_id = target
+        self.asv_id = 3
+        distance = self.distances[target]
+        self.communication_freq = self.get_comm_freq(distance)
+
+        communication_msg = Communication()
+        communication_msg.header.frame_id = "multi_robot_system"
+        communication_msg.header.stamp = rospy.Time.now()
+        communication_msg.auv_north = self.robots_information[self.auv_id][0]
+        communication_msg.auv_east = self.robots_information[self.auv_id][1]
+        communication_msg.asv_id = self.asv_id
+        communication_msg.auv_id = self.auv_id
+        communication_msg.communication_freq = self.communication_freq
+        storage = self.get_storage_disk(self.auv_id)
+        communication_msg.storage_disk = storage
+
+        if(self.auv_id==0):
+            self.robot0_comm_pub.publish(communication_msg)
+            self.rate.sleep()
+        elif(self.auv_id==1):
+            self.robot1_comm_pub.publish(communication_msg)
+            self.rate.sleep()
+        else:
+            self.robot2_comm_pub.publish(communication_msg)
+            self.rate.sleep()
+      
     def reset_values(self,msg):
         self.storage_disk[msg.data] = 1
-
-    def communication(self):
-        random_number = random.randint(0,100)
-        if(random_number%2 == 0):
-            self.random_interference()
-        else:
-            communication_msg = Communication()
-            communication_msg.header.frame_id = "multi_robot_system"
-            communication_msg.header.stamp = rospy.Time.now()
-            communication_msg.distance = self.distance
-            communication_msg.robot1_id = self.robot1_id
-            communication_msg.robot2_id = self.robot2_id
-            communication_msg.communication_freq = self.communication_freq
-            storage = self.get_storage_disk(self.robot2_id)
-            communication_msg.storage_disk = storage
-
-            if(self.robot2_id==0):
-                self.robot0_comm_pub.publish(communication_msg)
-                self.rate.sleep()
-            elif(self.robot2_id==1):
-                self.robot1_comm_pub.publish(communication_msg)
-                self.rate.sleep()
-            else:
-                self.robot2_comm_pub.publish(communication_msg)
-                self.rate.sleep()
-
-
-
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

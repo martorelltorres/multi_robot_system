@@ -12,7 +12,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,CommunicationDelay,ExplorationUpdate,Communication
+from multi_robot_system.msg import CoverageStartTime,CommunicationDelay,ExplorationUpdate,Communication,Distances
 import os
 import sys
 import subprocess
@@ -25,6 +25,7 @@ class DustbinRobot:
         """ Init the class """
         rospy.sleep(7)
         self.name = name
+        node_name = rospy.get_name()
 
         # Get config parameters from the parameter server
         self.number_of_robots = self.get_param('number_of_robots')
@@ -159,6 +160,10 @@ class DustbinRobot:
         self.reset_storage_pub = rospy.Publisher('reset_storage_disk',
                                         Int16,
                                         queue_size=1)
+        
+        self.robot_distances_pub = rospy.Publisher("robot_distances",
+                                        Distances,
+                                        queue_size=1)
 
         # Services clients
         try:
@@ -201,11 +206,22 @@ class DustbinRobot:
             self.tracking()  
 
     def update_communication_state(self,msg):
-        robot = msg.robot2_id
+        robot = msg.auv_id
         comm_freq = msg.communication_freq
-        self.distance[robot] = msg.distance
         self.storage_disk[robot] = msg.storage_disk
         self.comm_signal[robot] = 1/(comm_freq)
+
+        # get the distance
+        distance = self.get_distance(robot)
+        self.distance[robot] = distance
+
+        # publish the distance to the AUV
+        msg = Distances()
+        msg.header.stamp = rospy.Time.now()
+        msg.auv_id = robot 
+        msg.distance = distance
+        self.robot_distances_pub.publish(msg)
+
     
     def set_coverage_start_time(self,msg,robot_id):
         self.start_dustbin_strategy[robot_id]= True
@@ -238,21 +254,13 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.comm_delay = self.communication_times_delay 
         self.communication_delay_time.publish(msg)
-        
-    def reset_values(self,robot_id):
-        self.storage_disk[robot_id] = 1
-   
+          
     def get_distance(self, robot_id):
         x_diff =  self.asv_north_position - self.robots_information[robot_id][0]
         y_diff =  self.asv_east_position - self.robots_information[robot_id][1] 
         distance =  sqrt(x_diff**2 + y_diff**2)
         return(distance)
-
-    def get_storage_disk(self,robot_id):
-        occupied_memory = random.randint(10,50)
-        new_value = self.storage_disk[robot_id]+abs(occupied_memory)
-        self.storage_disk[robot_id] = new_value
-    
+   
     def get_time_threshold(self,robot_id):
         time_threshold = rospy.Time.now().secs - self.time_init[robot_id]
         return(time_threshold)
@@ -289,12 +297,10 @@ class DustbinRobot:
             robots_sense[0] = time_threshold
 
             # get the distance between ASV-AUV's
-            # distance = self.get_distance(robot)
             distance = self.distance[robot]
             robots_sense[1] = distance
 
             # get the hard disk storage capacity
-            self.get_storage_disk(robot)
             robots_sense[2] = self.storage_disk[robot]
 
             stimulus_variables[robot] = robots_sense
