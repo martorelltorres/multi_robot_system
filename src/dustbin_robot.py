@@ -209,7 +209,7 @@ class DustbinRobot:
         robot = msg.auv_id
         comm_freq = msg.communication_freq
         self.storage_disk[robot] = msg.storage_disk
-        self.comm_signal[robot] = 1/(comm_freq)
+        self.comm_signal[robot] = comm_freq* 2000
 
         # get the distance
         distance = self.get_distance(robot)
@@ -221,7 +221,6 @@ class DustbinRobot:
         msg.auv_id = robot 
         msg.distance = distance
         self.robot_distances_pub.publish(msg)
-
     
     def set_coverage_start_time(self,msg,robot_id):
         self.start_dustbin_strategy[robot_id]= True
@@ -264,6 +263,10 @@ class DustbinRobot:
     def get_time_threshold(self,robot_id):
         time_threshold = rospy.Time.now().secs - self.time_init[robot_id]
         return(time_threshold)
+
+    def scale_value(self, value):
+        scaled_value =(value- self.min_value)/(self.max_value-self.min_value)
+        return(scaled_value)
        
     def min_max_scale(self,values):
         scaled_senses = np.array([])
@@ -302,23 +305,26 @@ class DustbinRobot:
 
             # get the hard disk storage capacity
             robots_sense[2] = self.storage_disk[robot]
-
             stimulus_variables[robot] = robots_sense
 
         print("************** STIMULUS VARIABLES ******************")
         print(stimulus_variables)
 
         min_max_scaled = self.min_max_scale(stimulus_variables)
+
+        print("************** SCALED STIMULUS VARIABLES ******************")
+        print(min_max_scaled)
    
         # obtain the stimulus value using a weighted sum
         self.alpha = 3
         self.beta = 2
         self.gamma = 5
+        self.n = 4
 
         for robot in range(self.number_of_robots):
             scaled_values = min_max_scaled[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
-            stimulus[robot] = s**2/(s**2+self.comm_signal[robot])
+            stimulus[robot] = s**self.n/(s**self.n+self.comm_signal[robot]**self.n)
         return(stimulus)
 
 
