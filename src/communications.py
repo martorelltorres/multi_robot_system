@@ -6,6 +6,7 @@ import numpy as np
 from std_msgs.msg import Empty
 from multi_robot_system.msg import Communication,Distances
 from std_msgs.msg import Int16
+from sensor_msgs.msg import BatteryState
 import random
 from functools import partial
 from itertools import combinations
@@ -25,6 +26,7 @@ class communications:
         self.storage_disk =[]
         self.communication_pub = []
         self.distances = []
+        self.battery_charge = []
         self.communication_freq = 1
 
 
@@ -35,6 +37,7 @@ class communications:
         
         for robot_ in range(self.number_of_robots):
             self.storage_disk.append(0)
+            self.battery_charge.append(0)
 
 
         #Publishers
@@ -52,6 +55,14 @@ class communications:
                                 queue_size=1)
 
         #Subscribers
+        for robot in range(self.number_of_robots):
+            rospy.Subscriber(
+                '/robot'+str(robot)+'/batteries/status',
+                BatteryState,
+                self.update_battery_state,
+                robot,
+                queue_size=1) 
+            
         for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
             rospy.Subscriber(
                 '/robot'+str(robot)+'/navigator/navigation',
@@ -77,7 +88,10 @@ class communications:
             self.distances.append(0)
     
     def update_distance(self,msg):
-        self.distances[msg.auv_id] = msg.distance        
+        self.distances[msg.auv_id] = msg.distance      
+
+    def update_battery_state(self,msg,robot_id): 
+        self.battery_charge[robot_id]= msg.charge
     
     def update_robot_position(self, msg, robot_id):
         # fill the robots_information array with the robots information received from the NavSts 
@@ -107,16 +121,7 @@ class communications:
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
-
-    def distance_between_robots(self,first_robot,second_robot):
-        first_robot_north = self.robots_information[first_robot][0]
-        first_robot_east = self.robots_information[first_robot][1]
-        second_robot_north = self.robots_information[second_robot][0]
-        second_robot_east = self.robots_information[second_robot][1]
-        x_distance = first_robot_north - second_robot_north
-        y_distance = first_robot_east - second_robot_east
-        self.distance = np.sqrt(x_distance**2 + y_distance**2)
-    
+   
     def get_storage_disk(self,robot_id):
         occupied_memory = random.randint(10,50)
         new_value = self.storage_disk[robot_id]+abs(occupied_memory)
@@ -137,12 +142,12 @@ class communications:
         self.asv_id = 3
         distance = self.distances[target]
         self.communication_freq = self.get_comm_freq(distance)
-
         communication_msg = Communication()
         communication_msg.header.frame_id = "multi_robot_system"
         communication_msg.header.stamp = rospy.Time.now()
         communication_msg.auv_north = self.robots_information[self.auv_id][0]
         communication_msg.auv_east = self.robots_information[self.auv_id][1]
+        communication_msg.battery_charge = self.battery_charge[self.auv_id]
         communication_msg.asv_id = self.asv_id
         communication_msg.auv_id = self.auv_id
         communication_msg.communication_freq = self.communication_freq
@@ -151,13 +156,12 @@ class communications:
 
         if(self.auv_id==0):
             self.robot0_comm_pub.publish(communication_msg)
-            self.rate.sleep()
         elif(self.auv_id==1):
             self.robot1_comm_pub.publish(communication_msg)
-            self.rate.sleep()
         else:
             self.robot2_comm_pub.publish(communication_msg)
-            self.rate.sleep()
+        
+        self.rate.sleep()
       
     def reset_values(self,msg):
         self.storage_disk[msg.data] = 1

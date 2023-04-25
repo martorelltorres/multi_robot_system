@@ -3,6 +3,7 @@ import rospy
 import math
 import numpy as np
 import random 
+import csv
 from math import *
 import matplotlib
 import actionlib       
@@ -60,7 +61,10 @@ class DustbinRobot:
         self.first_time = True
         self.trigger = False
         self.exploration_tasks_update = np.array([])
-
+        self.battery_charge= []
+        self.time_threshold = []
+        self.s_sum = 0
+        self.s_norm = []
         self.distance = []
 
 
@@ -71,7 +75,9 @@ class DustbinRobot:
         self.max_value = 500
         self.min_value = 1
         self.last_robot_id = 30000
-        self.comm_signal = np.array([])
+        self.comm_signal = []
+        self.stimulus = np.array([])
+        self.robots_sense = np.array([])
 
         tasks = self.area_handler.get_polygon_number()
 
@@ -85,11 +91,16 @@ class DustbinRobot:
             self.robots.append(robot_)  
             self.robots_id = np.append(self.robots_id,robot_)
             self.robots_id = self.robots_id.astype(int) #convert float to int type
-            self.comm_signal = np.append(self.comm_signal,0)
+            self.comm_signal.append(0)
             self.storage_disk.append(0)
             self.time_init.append(rospy.Time.now().secs)
             self.record_time.append(0)
             self.distance.append(0)
+            self.battery_charge.append(0)
+            self.stimulus = np.append(self.stimulus,0)
+            self.robots_sense = np.append(self.robots_sense,0)
+            self.time_threshold.append(0)
+            self.s_norm.append(0) 
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -209,7 +220,8 @@ class DustbinRobot:
         robot = msg.auv_id
         comm_freq = msg.communication_freq
         self.storage_disk[robot] = msg.storage_disk
-        self.comm_signal[robot] = comm_freq* 2000
+        self.battery_charge[robot] = msg.battery_charge
+        self.comm_signal[robot] = comm_freq* (self.max_value*self.number_of_robots)
 
         # get the distance
         distance = self.get_distance(robot)
@@ -285,37 +297,31 @@ class DustbinRobot:
         return(scaled_senses)
 
     def get_stimulus(self):
-        # intialize the variables
-        robots_sense = np.array([])
-        stimulus = np.array([])
-        for robot in range(self.number_of_robots):
-            robots_sense = np.append(robots_sense,0)
-            stimulus = np.append(stimulus,0)
-        stimulus_variables= np.vstack((robots_sense,robots_sense,robots_sense))
+        stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
 
         for robot in range(self.number_of_robots):
 
             # get time delay
-            time_threshold = self.get_time_threshold(robot)
-            robots_sense[0] = time_threshold
+            self.time_threshold[robot] = self.get_time_threshold(robot)
+            self.robots_sense[0] = self.time_threshold[robot]
 
             # get the distance between ASV-AUV's
             distance = self.distance[robot]
-            robots_sense[1] = distance
+            self.robots_sense[1] = distance
 
             # get the hard disk storage capacity
-            robots_sense[2] = self.storage_disk[robot]
-            stimulus_variables[robot] = robots_sense
+            self.robots_sense[2] = self.storage_disk[robot]
+            stimulus_variables[robot] = self.robots_sense
 
-        print("************** STIMULUS VARIABLES ******************")
+        print(".................. STIMULUS VARIABLES ..................")
         print(stimulus_variables)
 
         min_max_scaled = self.min_max_scale(stimulus_variables)
 
-        print("************** SCALED STIMULUS VARIABLES ******************")
+        print(".................. SCALED STIMULUS VARIABLES ..................")
         print(min_max_scaled)
    
-        # obtain the stimulus value using a weighted sum
+        # 1 obtain the stimulus value using a weighted sum
         self.alpha = 3
         self.beta = 2
         self.gamma = 5
@@ -324,31 +330,34 @@ class DustbinRobot:
         for robot in range(self.number_of_robots):
             scaled_values = min_max_scaled[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
-            stimulus[robot] = s**self.n/(s**self.n+self.comm_signal[robot]**self.n)
-        return(stimulus)
+            self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
+        return(self.stimulus)
 
 
     def time_trigger(self, event):
-
-        stimulus = np.array([])
         # this function set the robot goal id for the dustbin_strategy
         # The trigger flag becomes True only when there are no zeros in the self.communication_times_delay array 
         if (self.trigger==True):
             self.set_comm_start_time(rospy.Time.now())
 
-        stimulus = self.get_stimulus()
+        s = self.get_stimulus()
 
-        print("----------------STIMULUUS---------------")
-        print(stimulus)
+        # # S normalization
+        # for element in range(self.number_of_robots):
+        #     self.s_sum = self.s_sum + self.stimulus[element]
+
+        # for element in range(self.number_of_robots):
+        #     self.s_norm[element] = self.stimulus[element]/self.s_sum
+        # # create a random number between 0 and 1
+        # random_number = random.random()
+
+
+        print("Communication signal: "+str(self.comm_signal))
+        print("Probability function: "+str(s))
+        print("")
 
         # extract the goal robot ID
-        self.robot_goal_id = stimulus.argmax()
-    
-        # avoid track twice the same robot
-        if(self.robot_goal_id==self.last_robot_id):
-            stimulus[self.robot_goal_id]= 0.0000000000000000001
-            self.robot_goal_id = stimulus.argmax()
-        
+        self.robot_goal_id = self.stimulus.argmax()     
         reset_id = self.robot_goal_id
         # reset the sensed values
         # advise the reset topic
@@ -360,6 +369,20 @@ class DustbinRobot:
         self.last_robot_id = self.robot_goal_id
         self.get_information = True
         self.set_end_time = True
+        self.write_data_to_csv()
+
+    def write_data_to_csv(self):
+        # list of column names 
+        data = [
+            # temps--goal_id--storage_disk--elapsed_time    
+            [rospy.Time.now(), self.robot_goal_id, self.storage_disk[self.robot_goal_id], self.time_threshold[self.robot_goal_id]]
+        ]
+        # Open CSV file for writing in append mode
+        with open('/mnt/storage_disk/data.csv', 'a') as file:
+            writer = csv.writer(file)
+            # Write data to CSV file
+            writer.writerow(data)
+        
  
     def update_robots_position(self, msg, robot_id):
         # fill the robots_information array with the robots information received from the NavSts 
