@@ -61,20 +61,17 @@ class DustbinRobot:
         self.trigger = False
         self.exploration_tasks_update = np.array([])
         self.battery_charge= []
-        self.time_threshold = []
         self.s_norm = []
         self.distance = []
         self.time_init = []
         self.storage_disk =[]
         self.max_value = 500
         self.min_value = 1
-        self.last_robot_id = 30000
         self.comm_signal = []
         self.stimulus = np.array([])
         self.robots_sense = np.array([])
         tasks = self.area_handler.get_polygon_number()
-        self.max_stimulus= []
-        self.min_stimulus = []
+        self.max_stimulus=[]
 
         for task in range(tasks):
             self.exploration_tasks_update = np.append(self.exploration_tasks_update,False)
@@ -93,10 +90,8 @@ class DustbinRobot:
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
             self.robots_sense = np.append(self.robots_sense,0)
-            self.time_threshold.append(0)
             self.s_norm.append(0)
             self.max_stimulus.append(0)
-            self.min_stimulus.append(0)
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -296,9 +291,9 @@ class DustbinRobot:
         stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
 
         for robot in range(self.number_of_robots):
+
             # get time delay
-            self.time_threshold[robot] = self.get_time_threshold(robot)
-            self.robots_sense[0] = self.time_threshold[robot]
+            self.robots_sense[0] = self.get_time_threshold(robot)
 
             # get the distance between ASV-AUV's
             distance = self.distance[robot]
@@ -337,15 +332,20 @@ class DustbinRobot:
         self.get_stimulus()
         # self.use_max_prob()
         # self.use_min_prob()
-        # self.use_random_prob()
         self.use_max_stimulus()
         # self.use_min_stimulus()
+        # self.use_random_prob()
 
-        # reset the storage value
+        # reset the sensed values
+        # advise the reset topic
         reset_id = self.robot_goal_id
         msg = Int16()
         msg.data = reset_id 
         self.reset_storage_pub.publish(msg)
+
+        self.get_information = True
+        self.set_end_time = True
+        print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
     
     def use_max_stimulus(self):
         for element in range(self.number_of_robots):
@@ -354,18 +354,15 @@ class DustbinRobot:
 
         print("The maximum stimulus value is: "+str(maximum_value))
         self.robot_goal_id = self.max_stimulus.index(maximum_value)
-        print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
-    
+        
     def use_min_stimulus(self):
         for element in range(self.number_of_robots):
-            self.min_stimulus[element] = min(self.min_max_scaled[element])
-        minimum_value = min(self.min_stimulus)
+            self.max_stimulus[element] = min(self.min_max_scaled[element])
+        maximum_value = min(self.max_stimulus)
 
-        print("The maximum stimulus value is: "+str(minimum_value))
-        self.robot_goal_id = self.min_stimulus.index(minimum_value)
-        print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
-
-    
+        print("The maximum stimulus value is: "+str(maximum_value))
+        self.robot_goal_id = self.max_stimulus.index(maximum_value)
+        
     def use_random_prob(self):
         print("Communication signal: "+str(self.comm_signal))
         print("Probability function: "+str(self.stimulus))
@@ -395,8 +392,6 @@ class DustbinRobot:
         else:
             self.robot_goal_id = 2
         
-        print ("The goal id is: "+str(self.robot_goal_id))
-
     def use_min_prob(self):
         print("Communication signal: "+str(self.comm_signal))
         print("Probability function: "+str(self.stimulus))
@@ -411,12 +406,6 @@ class DustbinRobot:
         msg.data = reset_id 
         self.reset_storage_pub.publish(msg)
         
-        print("The goal robot is: "+str(self.robot_goal_id)) 
-        self.last_robot_id = self.robot_goal_id
-        self.get_information = True
-        self.set_end_time = True
-        self.write_data_to_csv()
-
     def use_max_prob(self):
         print("Communication signal: "+str(self.comm_signal))
         print("Probability function: "+str(self.stimulus))
@@ -424,13 +413,7 @@ class DustbinRobot:
 
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmax()     
-               
-        print("The goal robot is: "+str(self.robot_goal_id)) 
-        self.last_robot_id = self.robot_goal_id
-        self.get_information = True
-        self.set_end_time = True
-        self.write_data_to_csv()
-
+        
     def write_data_to_csv(self):
         data = [
             # temps--goal_id--storage_disk--elapsed_time    
