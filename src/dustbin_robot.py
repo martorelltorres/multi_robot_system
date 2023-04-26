@@ -39,7 +39,6 @@ class DustbinRobot:
         self.adrift_radius = self.get_param("adrift_radius",20)
         self.tracking_radius = self.get_param("tracking_radius",40)
         self.dutsbin_timer = self.get_param("dutsbin_timer",1)
-
         self.area_handler =  area_partition("area_partition")
 
         # Initialize some variables
@@ -63,14 +62,9 @@ class DustbinRobot:
         self.exploration_tasks_update = np.array([])
         self.battery_charge= []
         self.time_threshold = []
-        self.s_sum = 0
         self.s_norm = []
         self.distance = []
-
-
-        self.init_time = []
         self.time_init = []
-        self.record_time = []
         self.storage_disk =[]
         self.max_value = 500
         self.min_value = 1
@@ -78,8 +72,9 @@ class DustbinRobot:
         self.comm_signal = []
         self.stimulus = np.array([])
         self.robots_sense = np.array([])
-
         tasks = self.area_handler.get_polygon_number()
+        self.max_stimulus= []
+        self.min_stimulus = []
 
         for task in range(tasks):
             self.exploration_tasks_update = np.append(self.exploration_tasks_update,False)
@@ -94,13 +89,14 @@ class DustbinRobot:
             self.comm_signal.append(0)
             self.storage_disk.append(0)
             self.time_init.append(rospy.Time.now().secs)
-            self.record_time.append(0)
             self.distance.append(0)
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
             self.robots_sense = np.append(self.robots_sense,0)
             self.time_threshold.append(0)
-            self.s_norm.append(0) 
+            self.s_norm.append(0)
+            self.max_stimulus.append(0)
+            self.min_stimulus.append(0)
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -221,7 +217,7 @@ class DustbinRobot:
         comm_freq = msg.communication_freq
         self.storage_disk[robot] = msg.storage_disk
         self.battery_charge[robot] = msg.battery_charge
-        self.comm_signal[robot] = comm_freq* (self.max_value*self.number_of_robots)
+        self.comm_signal[robot] = comm_freq* (self.max_value*(self.number_of_robots+2))
 
         # get the distance
         distance = self.get_distance(robot)
@@ -300,7 +296,6 @@ class DustbinRobot:
         stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
 
         for robot in range(self.number_of_robots):
-
             # get time delay
             self.time_threshold[robot] = self.get_time_threshold(robot)
             self.robots_sense[0] = self.time_threshold[robot]
@@ -316,23 +311,22 @@ class DustbinRobot:
         print(".................. STIMULUS VARIABLES ..................")
         print(stimulus_variables)
 
-        min_max_scaled = self.min_max_scale(stimulus_variables)
+        self.min_max_scaled = self.min_max_scale(stimulus_variables)
 
         print(".................. SCALED STIMULUS VARIABLES ..................")
-        print(min_max_scaled)
+        print(self.min_max_scaled)
    
-        # 1 obtain the stimulus value using a weighted sum
+        # obtain the stimulus value using a weighted sum
         self.alpha = 3
         self.beta = 2
         self.gamma = 5
         self.n = 4
 
         for robot in range(self.number_of_robots):
-            scaled_values = min_max_scaled[robot]
+            scaled_values = self.min_max_scaled[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
         return(self.stimulus)
-
 
     def time_trigger(self, event):
         # this function set the robot goal id for the dustbin_strategy
@@ -340,31 +334,97 @@ class DustbinRobot:
         if (self.trigger==True):
             self.set_comm_start_time(rospy.Time.now())
 
-        s = self.get_stimulus()
+        self.get_stimulus()
+        # self.use_max_prob()
+        # self.use_min_prob()
+        # self.use_random_prob()
+        self.use_max_stimulus()
+        # self.use_min_stimulus()
 
-        # # S normalization
-        # for element in range(self.number_of_robots):
-        #     self.s_sum = self.s_sum + self.stimulus[element]
+        # reset the storage value
+        reset_id = self.robot_goal_id
+        msg = Int16()
+        msg.data = reset_id 
+        self.reset_storage_pub.publish(msg)
+    
+    def use_max_stimulus(self):
+        for element in range(self.number_of_robots):
+            self.max_stimulus[element] = max(self.min_max_scaled[element])
+        maximum_value = max(self.max_stimulus)
 
-        # for element in range(self.number_of_robots):
-        #     self.s_norm[element] = self.stimulus[element]/self.s_sum
-        # # create a random number between 0 and 1
-        # random_number = random.random()
+        print("The maximum stimulus value is: "+str(maximum_value))
+        self.robot_goal_id = self.max_stimulus.index(maximum_value)
+        print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
+    
+    def use_min_stimulus(self):
+        for element in range(self.number_of_robots):
+            self.min_stimulus[element] = min(self.min_max_scaled[element])
+        minimum_value = min(self.min_stimulus)
 
+        print("The maximum stimulus value is: "+str(minimum_value))
+        self.robot_goal_id = self.min_stimulus.index(minimum_value)
+        print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
 
+    
+    def use_random_prob(self):
         print("Communication signal: "+str(self.comm_signal))
-        print("Probability function: "+str(s))
+        print("Probability function: "+str(self.stimulus))
+        # reset values
+        self.s_sum = 0
+        for element in range(self.number_of_robots):
+            self.s_norm[element] = 0
+
+        # S normalization
+        for element in range(self.number_of_robots):
+            self.s_sum = self.s_sum + self.stimulus[element]
+        print("The summ of the s elements is: "+str(self.s_sum))
+
+        for element in range(self.number_of_robots):
+            self.s_norm[element] = self.stimulus[element]/self.s_sum
+        print("The normalized probabilistic values are: "+str(self.s_norm))
+
+        # create a random number between 0 and 1
+        random_number = random.random()
+        print("The random number is: "+str(random_number))
+
+        # obtain the goal_id        
+        if(random_number<=self.s_norm[0]):
+            self.robot_goal_id = 0
+        elif(self.s_norm[0]<random_number<=(self.s_norm[0]+self.s_norm[1])):
+            self.robot_goal_id = 1
+        else:
+            self.robot_goal_id = 2
+        
+        print ("The goal id is: "+str(self.robot_goal_id))
+
+    def use_min_prob(self):
+        print("Communication signal: "+str(self.comm_signal))
+        print("Probability function: "+str(self.stimulus))
         print("")
 
         # extract the goal robot ID
-        self.robot_goal_id = self.stimulus.argmax()     
+        self.robot_goal_id = self.stimulus.argmin()     
         reset_id = self.robot_goal_id
         # reset the sensed values
         # advise the reset topic
         msg = Int16()
         msg.data = reset_id 
         self.reset_storage_pub.publish(msg)
-          
+        
+        print("The goal robot is: "+str(self.robot_goal_id)) 
+        self.last_robot_id = self.robot_goal_id
+        self.get_information = True
+        self.set_end_time = True
+        self.write_data_to_csv()
+
+    def use_max_prob(self):
+        print("Communication signal: "+str(self.comm_signal))
+        print("Probability function: "+str(self.stimulus))
+        print("")
+
+        # extract the goal robot ID
+        self.robot_goal_id = self.stimulus.argmax()     
+               
         print("The goal robot is: "+str(self.robot_goal_id)) 
         self.last_robot_id = self.robot_goal_id
         self.get_information = True
@@ -372,7 +432,6 @@ class DustbinRobot:
         self.write_data_to_csv()
 
     def write_data_to_csv(self):
-        # list of column names 
         data = [
             # temps--goal_id--storage_disk--elapsed_time    
             [rospy.Time.now(), self.robot_goal_id, self.storage_disk[self.robot_goal_id], self.time_threshold[self.robot_goal_id]]
