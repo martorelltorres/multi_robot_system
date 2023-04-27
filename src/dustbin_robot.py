@@ -72,10 +72,20 @@ class DustbinRobot:
         self.robots_sense = np.array([])
         tasks = self.area_handler.get_polygon_number()
         self.max_stimulus=[]
-
+        self.time_threshold=[]
+        self.scaled_senses = []
+        self.senses = []
+        self.number_of_stimulus = 3
+        self.active_robots = self.number_of_robots
+        # intialize the variables
+        for robot in range(self.number_of_stimulus):
+            self.senses.append(0)
+            
+        for i in range(self.active_robots):
+            self.scaled_senses.append(self.senses)
+       
         for task in range(tasks):
             self.exploration_tasks_update = np.append(self.exploration_tasks_update,False)
-
 
         # initialize the robots variables
         for robot_ in range(self.number_of_robots):
@@ -92,6 +102,10 @@ class DustbinRobot:
             self.robots_sense = np.append(self.robots_sense,0)
             self.s_norm.append(0)
             self.max_stimulus.append(0)
+            self.time_threshold.append(0)
+        
+        self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
+
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -264,51 +278,44 @@ class DustbinRobot:
         return(distance)
    
     def get_time_threshold(self,robot_id):
-        time_threshold = rospy.Time.now().secs - self.time_init[robot_id]
-        return(time_threshold)
+        time = rospy.Time.now().secs - self.time_init[robot_id]
+        self.time_threshold[robot_id]= time
+        return(time)
 
     def scale_value(self, value):
         scaled_value =(value- self.min_value)/(self.max_value-self.min_value)
         return(scaled_value)
        
     def min_max_scale(self,values):
-        scaled_senses = np.array([])
-        # intialize the variables
-        for robot in range(self.number_of_robots):
-            scaled_senses = np.append(scaled_senses,0)
-        scaled_senses= np.vstack((scaled_senses,scaled_senses,scaled_senses))
-
-        for robot in range(self.number_of_robots):
+        for robot in range(len(self.robots_id)):
             scaled_values = np.array([])
-            for value in range(len(scaled_senses[0])):
+            for value in range(3):
                 calc =((values[robot][value]- self.min_value)*self.max_value)/(np.max(values)-self.min_value)
                 scaled_values = np.append(scaled_values,calc)
-            scaled_senses[robot] = scaled_values
+            self.scaled_senses[robot] = scaled_values
 
-        return(scaled_senses)
+        return(self.scaled_senses)
 
     def get_stimulus(self):
-        stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
-
-        for robot in range(self.number_of_robots):
-
+        for robot in range(len(self.robots_id)):
+            # The self.robots_id variable stores the active AUV explorer robots
             # get time delay
-            self.robots_sense[0] = self.get_time_threshold(robot)
+            self.robots_sense[0] = self.get_time_threshold(self.robots_id[robot])
 
             # get the distance between ASV-AUV's
-            distance = self.distance[robot]
+            distance = self.distance[self.robots_id[robot]]
             self.robots_sense[1] = distance
 
             # get the hard disk storage capacity
-            self.robots_sense[2] = self.storage_disk[robot]
-            stimulus_variables[robot] = self.robots_sense
+            self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
+            self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
 
         print(".................. STIMULUS VARIABLES ..................")
-        print(stimulus_variables)
+        print(self.stimulus_variables)
+        
+        self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
 
-        self.min_max_scaled = self.min_max_scale(stimulus_variables)
-
-        print(".................. SCALED STIMULUS VARIABLES ..................")
+        print(".................. 33333333333333333333 SCALED STIMULUS VARIABLES ..................")
         print(self.min_max_scaled)
    
         # obtain the stimulus value using a weighted sum
@@ -317,7 +324,7 @@ class DustbinRobot:
         self.gamma = 5
         self.n = 4
 
-        for robot in range(self.number_of_robots):
+        for robot in range(len(self.robots_id)):
             scaled_values = self.min_max_scaled[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
@@ -336,8 +343,7 @@ class DustbinRobot:
         # self.use_min_stimulus()
         # self.use_random_prob()
 
-        # reset the sensed values
-        # advise the reset topic
+        # reset the storage values
         reset_id = self.robot_goal_id
         msg = Int16()
         msg.data = reset_id 
@@ -346,9 +352,10 @@ class DustbinRobot:
         self.get_information = True
         self.set_end_time = True
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
+        self.write_data_to_csv()
     
     def use_max_stimulus(self):
-        for element in range(self.number_of_robots):
+        for element in range(len(self.robots_id)):
             self.max_stimulus[element] = max(self.min_max_scaled[element])
         maximum_value = max(self.max_stimulus)
 
@@ -356,7 +363,7 @@ class DustbinRobot:
         self.robot_goal_id = self.max_stimulus.index(maximum_value)
         
     def use_min_stimulus(self):
-        for element in range(self.number_of_robots):
+        for element in range(len(self.robots_id)):
             self.max_stimulus[element] = min(self.min_max_scaled[element])
         maximum_value = min(self.max_stimulus)
 
@@ -368,15 +375,15 @@ class DustbinRobot:
         print("Probability function: "+str(self.stimulus))
         # reset values
         self.s_sum = 0
-        for element in range(self.number_of_robots):
+        for element in range(len(self.robots_id)):
             self.s_norm[element] = 0
 
         # S normalization
-        for element in range(self.number_of_robots):
+        for element in range(len(self.robots_id)):
             self.s_sum = self.s_sum + self.stimulus[element]
         print("The summ of the s elements is: "+str(self.s_sum))
 
-        for element in range(self.number_of_robots):
+        for element in range(len(self.robots_id)):
             self.s_norm[element] = self.stimulus[element]/self.s_sum
         print("The normalized probabilistic values are: "+str(self.s_norm))
 
@@ -399,12 +406,6 @@ class DustbinRobot:
 
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmin()     
-        reset_id = self.robot_goal_id
-        # reset the sensed values
-        # advise the reset topic
-        msg = Int16()
-        msg.data = reset_id 
-        self.reset_storage_pub.publish(msg)
         
     def use_max_prob(self):
         print("Communication signal: "+str(self.comm_signal))
@@ -417,7 +418,7 @@ class DustbinRobot:
     def write_data_to_csv(self):
         data = [
             # temps--goal_id--storage_disk--elapsed_time    
-            [rospy.Time.now(), self.robot_goal_id, self.storage_disk[self.robot_goal_id], self.time_threshold[self.robot_goal_id]]
+            rospy.Time.now(), self.robot_goal_id, self.storage_disk[self.robot_goal_id], self.time_threshold[self.robot_goal_id]
         ]
         # Open CSV file for writing in append mode
         with open('/mnt/storage_disk/data.csv', 'a') as file:
@@ -462,6 +463,8 @@ class DustbinRobot:
         # remove the robot from the dustbin goals
         robot_id = msg.data
         self.robots_id = np.delete(self.robots_id, np.where(self.robots_id == robot_id))
+        self.robot_to_remove = robot_id
+        self.active_robots = self.active_robots -1
         self.check_dustbin_robot()
     
     def check_dustbin_robot(self):
