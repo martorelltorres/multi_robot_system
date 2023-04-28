@@ -77,10 +77,12 @@ class DustbinRobot:
         self.senses = []
         self.number_of_stimulus = 3
         self.active_robots = self.number_of_robots
+        self.robot_to_remove = 999
+        self.removed_robots= []
         # intialize the variables
         for robot in range(self.number_of_stimulus):
             self.senses.append(0)
-            
+
         for i in range(self.active_robots):
             self.scaled_senses.append(self.senses)
        
@@ -287,17 +289,16 @@ class DustbinRobot:
         return(scaled_value)
        
     def min_max_scale(self,values):
-        for robot in range(len(self.robots_id)):
+        for robot in range(self.active_robots):
             scaled_values = np.array([])
-            for value in range(3):
+            for value in range(self.number_of_stimulus):
                 calc =((values[robot][value]- self.min_value)*self.max_value)/(np.max(values)-self.min_value)
                 scaled_values = np.append(scaled_values,calc)
             self.scaled_senses[robot] = scaled_values
-
         return(self.scaled_senses)
 
     def get_stimulus(self):
-        for robot in range(len(self.robots_id)):
+        for robot in range(self.active_robots):
             # The self.robots_id variable stores the active AUV explorer robots
             # get time delay
             self.robots_sense[0] = self.get_time_threshold(self.robots_id[robot])
@@ -309,13 +310,19 @@ class DustbinRobot:
             # get the hard disk storage capacity
             self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
-
+        
+        # set at minimum value the robots that have completed their work 
+        if(self.robot_to_remove!=999 and self.remove_robot==True):
+            for element in range(len(self.removed_robots)):
+                self.stimulus_variables[self.removed_robots[element]] = [0.1,0.1,0.1]
+            self.remove_robot=False
+           
         print(".................. STIMULUS VARIABLES ..................")
         print(self.stimulus_variables)
         
         self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
 
-        print(".................. 33333333333333333333 SCALED STIMULUS VARIABLES ..................")
+        print(".................. SCALED STIMULUS VARIABLES ..................")
         print(self.min_max_scaled)
    
         # obtain the stimulus value using a weighted sum
@@ -324,7 +331,7 @@ class DustbinRobot:
         self.gamma = 5
         self.n = 4
 
-        for robot in range(len(self.robots_id)):
+        for robot in range(self.active_robots):
             scaled_values = self.min_max_scaled[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
@@ -464,6 +471,8 @@ class DustbinRobot:
         robot_id = msg.data
         self.robots_id = np.delete(self.robots_id, np.where(self.robots_id == robot_id))
         self.robot_to_remove = robot_id
+        self.remove_robot=True
+        self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1
         self.check_dustbin_robot()
     
