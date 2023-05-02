@@ -343,7 +343,8 @@ class DustbinRobot:
             
         # remove the robots that have completed their work
         for element in range(len(self.removed_robots)):
-                self.stimulus = np.delete(self.stimulus,self.removed_robots[element])
+            # self.stimulus = np.delete(self.stimulus,self.removed_robots[element])
+            self.stimulus[self.removed_robots[element]] = 0.001
         return(self.stimulus)
 
     def time_trigger(self, event):
@@ -352,11 +353,11 @@ class DustbinRobot:
         if (self.trigger==True):
             self.set_comm_start_time(rospy.Time.now())
 
-        stimulus =self.get_stimulus()
+        self.get_stimulus()
         # Choose the optimization strategy
         # self.use_max_prob()
-        self.use_min_prob()
-        # self.use_random_prob()
+        # self.use_min_prob()
+        self.use_random_prob()
         # self.use_max_stimulus()
         # self.use_min_stimulus()
 
@@ -391,15 +392,15 @@ class DustbinRobot:
         print("Probability function: "+str(self.stimulus))
         # reset values
         self.s_sum = 0
-        for element in range(len(self.robots_id)):
+        for element in range(self.active_robots):
             self.s_norm[element] = 0
 
         # S normalization
-        for element in range(len(self.robots_id)):
+        for element in range(self.active_robots):
             self.s_sum = self.s_sum + self.stimulus[element]
         print("The summ of the s elements is: "+str(self.s_sum))
 
-        for element in range(len(self.robots_id)):
+        for element in range(self.active_robots):
             self.s_norm[element] = self.stimulus[element]/self.s_sum
         print("The normalized probabilistic values are: "+str(self.s_norm))
 
@@ -407,13 +408,21 @@ class DustbinRobot:
         random_number = random.random()
         print("The random number is: "+str(random_number))
 
-        # obtain the goal_id        
-        if(random_number<=self.s_norm[0]):
-            self.robot_goal_id = 0
-        elif(self.s_norm[0]<random_number<=(self.s_norm[0]+self.s_norm[1])):
-            self.robot_goal_id = 1
+        # obtain the goal_id    
+        if(self.active_robots == self.number_of_robots):    
+            if(random_number<=self.s_norm[0]):
+                self.robot_goal_id = self.robots_id[0]
+            elif(self.s_norm[0]<random_number<=(self.s_norm[0]+self.s_norm[1])):
+                self.robot_goal_id = self.robots_id[1]
+            else:
+                self.robot_goal_id = self.robots_id[2]
+        elif(self.active_robots == self.number_of_robots-1):
+            if(random_number<=self.s_norm[0]):
+                self.robot_goal_id = self.robots_id[0]
+            else:
+                self.robot_goal_id = self.robots_id[1]
         else:
-            self.robot_goal_id = 2
+            self.robot_goal_id = self.robots_id[0]
         
     def use_min_prob(self):
         print("Probability function: "+str(self.stimulus))
