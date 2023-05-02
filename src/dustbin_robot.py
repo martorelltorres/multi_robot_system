@@ -4,6 +4,7 @@ import math
 import numpy as np
 import random 
 import csv
+import time
 from math import *
 import matplotlib
 import actionlib       
@@ -72,6 +73,7 @@ class DustbinRobot:
         self.robots_sense = np.array([])
         tasks = self.area_handler.get_polygon_number()
         self.max_stimulus=[]
+        self.min_stimulus = []
         self.time_threshold=[]
         self.scaled_senses = []
         self.senses = []
@@ -79,12 +81,15 @@ class DustbinRobot:
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
         self.removed_robots= []
+        self.communication=True
         # intialize the variables
         for robot in range(self.number_of_stimulus):
             self.senses.append(0)
 
         for i in range(self.active_robots):
             self.scaled_senses.append(self.senses)
+            self.max_stimulus.append(0)
+            self.min_stimulus.append(0)
        
         for task in range(tasks):
             self.exploration_tasks_update = np.append(self.exploration_tasks_update,False)
@@ -97,13 +102,12 @@ class DustbinRobot:
             self.robots_id = self.robots_id.astype(int) #convert float to int type
             self.comm_signal.append(0)
             self.storage_disk.append(0)
-            self.time_init.append(rospy.Time.now().secs)
+            self.time_init.append(0)
             self.distance.append(0)
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
             self.robots_sense = np.append(self.robots_sense,0)
             self.s_norm.append(0)
-            self.max_stimulus.append(0)
             self.time_threshold.append(0)
         
         self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
@@ -206,7 +210,7 @@ class DustbinRobot:
         if (self.robot_at_center == False):
             self.goto_central_area()
         
-        # Init periodic timersself.distance
+        # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
 
     def dustbin_trigger(self, event):
@@ -245,6 +249,7 @@ class DustbinRobot:
         self.start_dustbin_strategy[robot_id]= True
         self.t_start = msg.time.secs
         self.time_robot_id = msg.robot_id
+        self.time_init[robot_id] = msg.time.secs
         self.start_recording_time[self.time_robot_id] = self.t_start 
 
     def set_comm_start_time(self,time):
@@ -314,7 +319,7 @@ class DustbinRobot:
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0.1,0.1,0.1]
+                self.stimulus_variables[self.removed_robots[element]] = [0.01,0.01,0.01]
             self.remove_robot=False
            
         print(".................. STIMULUS VARIABLES ..................")
@@ -335,6 +340,10 @@ class DustbinRobot:
             scaled_values = self.min_max_scaled[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
+            
+        # remove the robots that have completed their work
+        for element in range(len(self.removed_robots)):
+                self.stimulus = np.delete(self.stimulus,self.removed_robots[element])
         return(self.stimulus)
 
     def time_trigger(self, event):
@@ -343,12 +352,13 @@ class DustbinRobot:
         if (self.trigger==True):
             self.set_comm_start_time(rospy.Time.now())
 
-        self.get_stimulus()
+        stimulus =self.get_stimulus()
+        # Choose the optimization strategy
         # self.use_max_prob()
-        # self.use_min_prob()
-        self.use_max_stimulus()
-        # self.use_min_stimulus()
+        self.use_min_prob()
         # self.use_random_prob()
+        # self.use_max_stimulus()
+        # self.use_min_stimulus()
 
         # reset the storage values
         reset_id = self.robot_goal_id
@@ -371,14 +381,13 @@ class DustbinRobot:
         
     def use_min_stimulus(self):
         for element in range(len(self.robots_id)):
-            self.max_stimulus[element] = min(self.min_max_scaled[element])
-        maximum_value = min(self.max_stimulus)
+            self.min_stimulus[element] = min(self.min_max_scaled[element])
+        min_value = min(self.min_stimulus)
 
-        print("The maximum stimulus value is: "+str(maximum_value))
-        self.robot_goal_id = self.max_stimulus.index(maximum_value)
+        print("The minimum stimulus value is: "+str(min_value))
+        self.robot_goal_id = self.min_stimulus.index(min_value)
         
     def use_random_prob(self):
-        print("Communication signal: "+str(self.comm_signal))
         print("Probability function: "+str(self.stimulus))
         # reset values
         self.s_sum = 0
@@ -407,18 +416,12 @@ class DustbinRobot:
             self.robot_goal_id = 2
         
     def use_min_prob(self):
-        print("Communication signal: "+str(self.comm_signal))
         print("Probability function: "+str(self.stimulus))
-        print("")
-
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmin()     
         
     def use_max_prob(self):
-        print("Communication signal: "+str(self.comm_signal))
         print("Probability function: "+str(self.stimulus))
-        print("")
-
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmax()     
         
@@ -444,7 +447,7 @@ class DustbinRobot:
             self.initialization(robot_id) 
 
     def dustbin_strategy(self):
-        if(self.system_init==True):
+        if(self.system_init==True and self.communication==True):
             # Init periodic timer 
             rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
             self.get_information = False
@@ -494,6 +497,14 @@ class DustbinRobot:
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
+
+    def communicate(self):
+        print("_____COMMUNICATE_____")
+        time = self.storage_disk[self.robot_goal_id]/5
+        while(rospy.Time.now().secs-self.time_init[self.robot_goal_id] < time):
+            self.communication=False
+        print("______ COMMUNICATION FINISHED ______")
+        self.communication=True
                  
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
@@ -510,14 +521,18 @@ class DustbinRobot:
         self.radius = sqrt((self.x_distance)**2 + (self.y_distance)**2)
         self.initialized = True
 
+        # Communication area
         if( self.radius < (self.adrift_radius+2) and self.set_end_time == True):
             self.set_comm_end_time(rospy.Time.now())
             self.time_init[self.robot_goal_id] = rospy.Time.now().secs
             self.set_end_time = False
+            self.communicate()
 
+        # Tracking area
         if(self.radius > self.adrift_radius):
             self.tracking_strategy()
 
+        # Repulsion area
         elif(self.radius <= self.repulsion_radius):
             self.extract_safety_position()
             self.repulsion_strategy(self.x, self.y)
