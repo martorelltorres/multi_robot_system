@@ -145,10 +145,6 @@ class DustbinRobot:
                         self.update_communication_state,
                         queue_size=1)
             
-        rospy.Subscriber('/robot'+str(self.robot_ID)+'/navigator/navigation',
-            NavSts,    
-            self.update_robot_position,
-            queue_size=1)
         
         for robot in range(self.number_of_robots):
             rospy.Subscriber(
@@ -216,6 +212,7 @@ class DustbinRobot:
     def dustbin_trigger(self, event):
         # start the dustbin_strategy if all the has started the coverage
         if (np.all(self.start_dustbin_strategy) and self.first_time == True):
+            self.get_information = True
             self.dustbin_strategy()
             self.first_time = False
    
@@ -251,6 +248,7 @@ class DustbinRobot:
         self.time_robot_id = msg.robot_id
         self.time_init[robot_id] = msg.time.secs
         self.start_recording_time[self.time_robot_id] = self.t_start 
+            
 
     def set_comm_start_time(self,time):
         self.t_start = time.secs
@@ -345,9 +343,9 @@ class DustbinRobot:
         for element in range(len(self.removed_robots)):
             # self.stimulus = np.delete(self.stimulus,self.removed_robots[element])
             self.stimulus[self.removed_robots[element]] = 0.001
-        return(self.stimulus)
+        return(self.stimulus)time_trigger
 
-    def time_trigger(self, event):
+    def time_trigger(self):
         # this function set the robot goal id for the dustbin_strategy
         # The trigger flag becomes True only when there are no zeros in the self.communication_times_delay array 
         if (self.trigger==True):
@@ -458,8 +456,8 @@ class DustbinRobot:
     def dustbin_strategy(self):
         if(self.system_init==True and self.communication==True):
             # Init periodic timer 
-            rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
-            self.get_information = False
+            # rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
+            self.time_trigger()
     
     def kill_the_process(self,msg):
         # update area explored
@@ -509,11 +507,12 @@ class DustbinRobot:
 
     def communicate(self):
         print("_____COMMUNICATE_____")
-        time = self.storage_disk[self.robot_goal_id]/5
+        time = self.storage_disk[self.robot_goal_id]/50
         while(rospy.Time.now().secs-self.time_init[self.robot_goal_id] < time):
             self.communication=False
         print("______ COMMUNICATION FINISHED ______")
         self.communication=True
+        self.dustbin_strategy()
                  
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
