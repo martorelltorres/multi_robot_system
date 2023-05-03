@@ -82,6 +82,7 @@ class DustbinRobot:
         self.robot_to_remove = 999
         self.removed_robots= []
         self.communication=True
+        self.transferred_data = 0
         # intialize the variables
         for robot in range(self.number_of_stimulus):
             self.senses.append(0)
@@ -182,6 +183,27 @@ class DustbinRobot:
         self.robot_distances_pub = rospy.Publisher("robot_distances",
                                         Distances,
                                         queue_size=1)
+        # ---------------------------------------------------------------------------
+        self.goal_id_pub = rospy.Publisher('goal_id',
+                                        Int16,
+                                        queue_size=1)
+        
+        self.transferred_data_pub = rospy.Publisher('transferred_data',
+                                Int16,
+                                queue_size=1)
+        
+        self.comm_lat_0_pub= rospy.Publisher('comm_lat_0',
+                                Int16,
+                                queue_size=1)
+        
+        self.comm_lat_1_pub= rospy.Publisher('comm_lat_1',
+                                Int16,
+                                queue_size=1)
+        
+        self.comm_lat_2_pub= rospy.Publisher('comm_lat_2',
+                                Int16,
+                                queue_size=2)
+        
 
         # Services clients
         try:
@@ -208,6 +230,10 @@ class DustbinRobot:
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
+    #     rospy.Timer(rospy.Duration(1), self.publish_info)
+    
+    # def publish_info(self, event):
+
 
     def dustbin_trigger(self, event):
         # start the dustbin_strategy if all the has started the coverage
@@ -248,8 +274,7 @@ class DustbinRobot:
         self.time_robot_id = msg.robot_id
         self.time_init[robot_id] = msg.time.secs
         self.start_recording_time[self.time_robot_id] = self.t_start 
-            
-
+           
     def set_comm_start_time(self,time):
         self.t_start = time.secs
         self.start_recording_time[self.robot_goal_id] = self.t_start
@@ -317,7 +342,7 @@ class DustbinRobot:
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0.01,0.01,0.01]
+                self.stimulus_variables[self.removed_robots[element]] = [0.001,0.001,0.001]
             self.remove_robot=False
            
         print(".................. STIMULUS VARIABLES ..................")
@@ -343,7 +368,7 @@ class DustbinRobot:
         for element in range(len(self.removed_robots)):
             # self.stimulus = np.delete(self.stimulus,self.removed_robots[element])
             self.stimulus[self.removed_robots[element]] = 0.001
-        return(self.stimulus)time_trigger
+        return(self.stimulus)
 
     def time_trigger(self):
         # this function set the robot goal id for the dustbin_strategy
@@ -353,23 +378,21 @@ class DustbinRobot:
 
         self.get_stimulus()
         # Choose the optimization strategy
-        # self.use_max_prob()
+        self.use_max_prob()
         # self.use_min_prob()
-        self.use_random_prob()
+        # self.use_random_prob()
         # self.use_max_stimulus()
         # self.use_min_stimulus()
-
-        # reset the storage values
-        reset_id = self.robot_goal_id
-        msg = Int16()
-        msg.data = reset_id 
-        self.reset_storage_pub.publish(msg)
 
         self.get_information = True
         self.set_end_time = True
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
-        self.write_data_to_csv()
-    
+
+        # publish the goal_id
+        msg = Int16()
+        msg.data = self.robot_goal_id 
+        self.goal_id_pub.publish(msg)
+
     def use_max_stimulus(self):
         for element in range(len(self.robots_id)):
             self.max_stimulus[element] = max(self.min_max_scaled[element])
@@ -438,12 +461,11 @@ class DustbinRobot:
             rospy.Time.now(), self.robot_goal_id, self.storage_disk[self.robot_goal_id], self.time_threshold[self.robot_goal_id]
         ]
         # Open CSV file for writing in append mode
-        with open('/mnt/storage_disk/data.csv', 'a') as file:
+        with open('/mnt/storage_disk/random_prob.csv', 'a') as file:
             writer = csv.writer(file)
             # Write data to CSV file
             writer.writerow(data)
         
- 
     def update_robots_position(self, msg, robot_id):
         # fill the robots_information array with the robots information received from the NavSts 
         self.robots_information[robot_id][0] = msg.position.north
@@ -455,8 +477,6 @@ class DustbinRobot:
 
     def dustbin_strategy(self):
         if(self.system_init==True and self.communication==True):
-            # Init periodic timer 
-            # rospy.Timer(rospy.Duration(self.dutsbin_timer), self.time_trigger)
             self.time_trigger()
     
     def kill_the_process(self,msg):
@@ -475,7 +495,6 @@ class DustbinRobot:
                 if (str.startswith('/record_')):
                     os.system("rosnode kill " + str)
 
-    
     def remove_robot_from_dustbin_goals(self,msg):
         # remove the robot from the dustbin goals
         robot_id = msg.data
@@ -504,16 +523,56 @@ class DustbinRobot:
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
-
+    
+    
     def communicate(self):
         print("_____COMMUNICATE_____")
-        time = self.storage_disk[self.robot_goal_id]/50
-        while(rospy.Time.now().secs-self.time_init[self.robot_goal_id] < time):
+        time = self.storage_disk[self.robot_goal_id]/100
+        communication_init = rospy.Time.now().secs
+
+        while(rospy.Time.now().secs-communication_init < time):
             self.communication=False
+        
+        self.get_time_threshold(self.robot_goal_id)
+        self.write_data_to_csv()
+
+        self.transferred_data = self.transferred_data + self.storage_disk[self.robot_goal_id]
+
+        # publish the total transferred data
+        msg = Int16()
+        msg.data = self.transferred_data 
+        self.transferred_data_pub.publish(msg)
+
+        # reset the storage values
+        self.storage_disk[self.robot_goal_id] = 0
+        reset_id = self.robot_goal_id
+        msg = Int16()
+        msg.data = reset_id 
+        self.reset_storage_pub.publish(msg)
+
+        # publish the communication latency
+        msg = Int16()
+        msg.data = rospy.Time.now().secs - self.time_init[0]
+        self.comm_lat_0_pub.publish(msg)
+
+        msg = Int16()
+        msg.data = rospy.Time.now().secs - self.time_init[1]
+        self.comm_lat_1_pub.publish(msg)
+
+        msg = Int16()
+        msg.data = rospy.Time.now().secs - self.time_init[2]
+        self.comm_lat_2_pub.publish(msg)
+
+        self.time_init[self.robot_goal_id] = rospy.Time.now().secs
+
         print("______ COMMUNICATION FINISHED ______")
+        
         self.communication=True
         self.dustbin_strategy()
-                 
+
+    def wait_time(self, event):
+        print("transfering information...")
+
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
         self.asv_position_north = self.asv_north_position
@@ -532,7 +591,6 @@ class DustbinRobot:
         # Communication area
         if( self.radius < (self.adrift_radius+2) and self.set_end_time == True):
             self.set_comm_end_time(rospy.Time.now())
-            self.time_init[self.robot_goal_id] = rospy.Time.now().secs
             self.set_end_time = False
             self.communicate()
 
@@ -566,7 +624,6 @@ class DustbinRobot:
         self.xr = linear_velocity*cos(angle_error)
         self.yr = linear_velocity*sin(angle_error)
         self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
-
 
     def tracking_strategy(self):
         constant_linear_velocity = 3
