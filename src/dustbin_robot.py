@@ -9,12 +9,12 @@ from math import *
 import matplotlib
 import actionlib       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16
+from std_msgs.msg import Int16,Header
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,CommunicationDelay,ExplorationUpdate,Communication,Distances
+from multi_robot_system.msg import CoverageStartTime,CommunicationDelay,ExplorationUpdate,Communication,Distances, Data
 import os
 import sys
 import subprocess
@@ -83,6 +83,7 @@ class DustbinRobot:
         self.removed_robots= []
         self.communication=True
         self.transferred_data = 0
+        self.communication_latency = []
         # intialize the variables
         for robot in range(self.number_of_stimulus):
             self.senses.append(0)
@@ -110,6 +111,7 @@ class DustbinRobot:
             self.robots_sense = np.append(self.robots_sense,0)
             self.s_norm.append(0)
             self.time_threshold.append(0)
+            self.communication_latency.append(0)
         
         self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
 
@@ -185,26 +187,29 @@ class DustbinRobot:
                                         queue_size=1)
         # ---------------------------------------------------------------------------
         self.goal_id_pub = rospy.Publisher('goal_id',
-                                        Int16,
+                                        Data,
                                         queue_size=1)
         
         self.transferred_data_pub = rospy.Publisher('transferred_data',
-                                Int16,
+                                Data,
                                 queue_size=1)
         
         self.comm_lat_0_pub= rospy.Publisher('comm_lat_0',
-                                Int16,
+                                Data,
                                 queue_size=1)
         
         self.comm_lat_1_pub= rospy.Publisher('comm_lat_1',
-                                Int16,
+                                Data,
                                 queue_size=1)
         
         self.comm_lat_2_pub= rospy.Publisher('comm_lat_2',
-                                Int16,
+                                Data,
                                 queue_size=2)
         
-
+        self.communication_latency_pub = rospy.Publisher('communication_latency',
+                                CommunicationDelay,
+                                queue_size=2)
+        
         # Services clients
         try:
             rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/enable_goto', 20)
@@ -230,10 +235,6 @@ class DustbinRobot:
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
-    #     rospy.Timer(rospy.Duration(1), self.publish_info)
-    
-    # def publish_info(self, event):
-
 
     def dustbin_trigger(self, event):
         # start the dustbin_strategy if all the has started the coverage
@@ -274,6 +275,13 @@ class DustbinRobot:
         self.time_robot_id = msg.robot_id
         self.time_init[robot_id] = msg.time.secs
         self.start_recording_time[self.time_robot_id] = self.t_start 
+
+        # reset the storage values
+        self.storage_disk[robot_id] = 0
+        reset_id = robot_id
+        msg = Int16()
+        msg.data = reset_id 
+        self.reset_storage_pub.publish(msg)
            
     def set_comm_start_time(self,time):
         self.t_start = time.secs
@@ -339,16 +347,19 @@ class DustbinRobot:
             self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
         
-        # set at minimum value the robots that have completed their work 
-        if(self.robot_to_remove!=999 and self.remove_robot==True):
-            for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0.001,0.001,0.001]
-            self.remove_robot=False
            
         print(".................. STIMULUS VARIABLES ..................")
         print(self.stimulus_variables)
         
         self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
+
+        # set at minimum value the robots that have completed their work 
+        if(self.robot_to_remove!=999 and self.remove_robot==True):
+            for element in range(len(self.removed_robots)):
+                self.stimulus_variables[self.removed_robots[element]] = [0.001,0.001,0.001]
+                self.min_max_scaled[self.removed_robots[element]] = [0.001,0.001,0.001]
+            self.remove_robot=False
+    
 
         print(".................. SCALED STIMULUS VARIABLES ..................")
         print(self.min_max_scaled)
@@ -378,10 +389,10 @@ class DustbinRobot:
 
         self.get_stimulus()
         # Choose the optimization strategy
-        self.use_max_prob()
+        # self.use_max_prob()
         # self.use_min_prob()
         # self.use_random_prob()
-        # self.use_max_stimulus()
+        self.use_max_stimulus()
         # self.use_min_stimulus()
 
         self.get_information = True
@@ -389,8 +400,9 @@ class DustbinRobot:
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
 
         # publish the goal_id
-        msg = Int16()
-        msg.data = self.robot_goal_id 
+        msg = Data()
+        msg.header.stamp = rospy.Time.now()
+        msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
 
     def use_max_stimulus(self):
@@ -539,8 +551,9 @@ class DustbinRobot:
         self.transferred_data = self.transferred_data + self.storage_disk[self.robot_goal_id]
 
         # publish the total transferred data
-        msg = Int16()
-        msg.data = self.transferred_data 
+        msg = Data()
+        msg.header.stamp = rospy.Time.now()
+        msg.data = self.transferred_data
         self.transferred_data_pub.publish(msg)
 
         # reset the storage values
@@ -551,18 +564,37 @@ class DustbinRobot:
         self.reset_storage_pub.publish(msg)
 
         # publish the communication latency
-        msg = Int16()
-        msg.data = rospy.Time.now().secs - self.time_init[0]
-        self.comm_lat_0_pub.publish(msg)
+        print("------------------------------------------------")
+        print("STOP THE TIMER FOR ROBOT: "+str(self.robot_goal_id))
+        print("------------------------------------------------")
 
-        msg = Int16()
-        msg.data = rospy.Time.now().secs - self.time_init[1]
-        self.comm_lat_1_pub.publish(msg)
+        self.communication_latency[self.robot_goal_id] = rospy.Time.now().secs - self.time_init[self.robot_goal_id]
+        msg = CommunicationDelay()
+        msg.header.stamp = rospy.Time.now()
+        msg.comm_delay = self.communication_latency 
+        self.communication_latency_pub.publish(msg)
 
-        msg = Int16()
-        msg.data = rospy.Time.now().secs - self.time_init[2]
-        self.comm_lat_2_pub.publish(msg)
+        # if(self.robot_goal_id==0):
+        #     msg = Data()
+        #     msg.header.stamp = rospy.Time.now()
+        #     msg.data = 
+        #     self.comm_lat_0_pub.publish(msg)
 
+        # elif(self.robot_goal_id==1):
+        #     msg = Data()
+        #     msg.header.stamp = rospy.Time.now()
+        #     msg.data = rospy.Time.now().secs - self.time_init[1]
+        #     self.comm_lat_1_pub.publish(msg)
+
+        # else:
+        #     msg = Data()
+        #     msg.header.stamp = rospy.Time.now()
+        #     msg.data = rospy.Time.now().secs - self.time_init[2]
+        #     self.comm_lat_2_pub.publish(msg)
+        
+        print("The latency was: "+str(msg.comm_delay))
+
+        print("INIT THE TIMER FOR ROBOT: "+str(self.robot_goal_id))
         self.time_init[self.robot_goal_id] = rospy.Time.now().secs
 
         print("______ COMMUNICATION FINISHED ______")
