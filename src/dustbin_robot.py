@@ -193,19 +193,7 @@ class DustbinRobot:
         self.transferred_data_pub = rospy.Publisher('transferred_data',
                                 Data,
                                 queue_size=1)
-        
-        self.comm_lat_0_pub= rospy.Publisher('comm_lat_0',
-                                Data,
-                                queue_size=1)
-        
-        self.comm_lat_1_pub= rospy.Publisher('comm_lat_1',
-                                Data,
-                                queue_size=1)
-        
-        self.comm_lat_2_pub= rospy.Publisher('comm_lat_2',
-                                Data,
-                                queue_size=2)
-        
+               
         self.communication_latency_pub = rospy.Publisher('communication_latency',
                                 CommunicationDelay,
                                 queue_size=2)
@@ -389,11 +377,10 @@ class DustbinRobot:
 
         self.get_stimulus()
         # Choose the optimization strategy
-        # self.use_max_prob()
-        # self.use_min_prob()
+        self.use_max_prob()
         # self.use_random_prob()
-        self.use_max_stimulus()
-        # self.use_min_stimulus()
+        # self.use_max_stimulus()
+        # self.max_min_stimulus()
 
         self.get_information = True
         self.set_end_time = True
@@ -404,6 +391,17 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
+    
+    def max_min_stimulus(self):
+        minimum_values = []
+        max_value = 0
+        for element in range(len(self.robots_id)):
+            minimum_values.append(min(self.min_max_scaled[element])) 
+        print("The minimum values are: "+str(minimum_values))
+        max_value = max(minimum_values)
+        print("The max min value is: "+str(max_value))
+        self.robot_goal_id = minimum_values.index(max_value)
+    
 
     def use_max_stimulus(self):
         for element in range(len(self.robots_id)):
@@ -412,15 +410,7 @@ class DustbinRobot:
 
         print("The maximum stimulus value is: "+str(maximum_value))
         self.robot_goal_id = self.max_stimulus.index(maximum_value)
-        
-    def use_min_stimulus(self):
-        for element in range(len(self.robots_id)):
-            self.min_stimulus[element] = min(self.min_max_scaled[element])
-        min_value = min(self.min_stimulus)
-
-        print("The minimum stimulus value is: "+str(min_value))
-        self.robot_goal_id = self.min_stimulus.index(min_value)
-        
+              
     def use_random_prob(self):
         print("Probability function: "+str(self.stimulus))
         # reset values
@@ -455,12 +445,7 @@ class DustbinRobot:
             else:
                 self.robot_goal_id = self.robots_id[1]
         else:
-            self.robot_goal_id = self.robots_id[0]
-        
-    def use_min_prob(self):
-        print("Probability function: "+str(self.stimulus))
-        # extract the goal robot ID
-        self.robot_goal_id = self.stimulus.argmin()     
+            self.robot_goal_id = self.robots_id[0] 
         
     def use_max_prob(self):
         print("Probability function: "+str(self.stimulus))
@@ -539,16 +524,20 @@ class DustbinRobot:
     
     def communicate(self):
         print("_____COMMUNICATE_____")
-        time = self.storage_disk[self.robot_goal_id]/100
+        time = self.storage_disk[self.robot_goal_id]/50
         communication_init = rospy.Time.now().secs
 
         while(rospy.Time.now().secs-communication_init < time):
             self.communication=False
         
         self.get_time_threshold(self.robot_goal_id)
-        self.write_data_to_csv()
-
+        # self.write_data_to_csv()
+        print("     ")
+        print("Current transferred data is: "+str(self.transferred_data))
+        print("Data to summ to transferred data is: "+str(self.storage_disk[self.robot_goal_id]))
         self.transferred_data = self.transferred_data + self.storage_disk[self.robot_goal_id]
+        print("Total transferred data is: "+str(self.transferred_data))
+        print("     ")
 
         # publish the total transferred data
         msg = Data()
@@ -573,25 +562,7 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.comm_delay = self.communication_latency 
         self.communication_latency_pub.publish(msg)
-
-        # if(self.robot_goal_id==0):
-        #     msg = Data()
-        #     msg.header.stamp = rospy.Time.now()
-        #     msg.data = 
-        #     self.comm_lat_0_pub.publish(msg)
-
-        # elif(self.robot_goal_id==1):
-        #     msg = Data()
-        #     msg.header.stamp = rospy.Time.now()
-        #     msg.data = rospy.Time.now().secs - self.time_init[1]
-        #     self.comm_lat_1_pub.publish(msg)
-
-        # else:
-        #     msg = Data()
-        #     msg.header.stamp = rospy.Time.now()
-        #     msg.data = rospy.Time.now().secs - self.time_init[2]
-        #     self.comm_lat_2_pub.publish(msg)
-        
+       
         print("The latency was: "+str(msg.comm_delay))
 
         print("INIT THE TIMER FOR ROBOT: "+str(self.robot_goal_id))
