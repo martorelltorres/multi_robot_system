@@ -53,6 +53,7 @@ add_message_files(
   TaskMonitoring.msg
   Distances.msg
   Communication.msg
+  Data.msg
   AvoidCollision.msg
   CommunicationDelay.msg
   CoverageStartTime.msg
