@@ -84,7 +84,7 @@ class DustbinRobot:
         self.communication=True
         self.transferred_data = 0
         self.communication_latency = []
-        self.first_time = True
+        self.first_distance = True
         self.travelled_distance = 0
         # intialize the variables
         for robot in range(self.number_of_stimulus):
@@ -232,13 +232,13 @@ class DustbinRobot:
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
     
     def update_travelled_distance(self,event):
-        if (self.first_time == True):
+        if (self.first_distance == True):
             self.x_old_position = 0
             self.y_old_position = 0
             self.x_current_position = self.asv_north_position
             self.y_current_position = self.asv_east_position
             self.update_distance()
-            self.first_time = False
+            self.first_distance = False
 
         else:
             self.x_old_position = self.x_current_position
@@ -412,10 +412,11 @@ class DustbinRobot:
         self.get_stimulus()
 
         # Choose the optimization strategy
-        # self.use_max_prob()
-        self.use_random_prob()
+        self.use_max_prob()
+        # self.use_random_prob()
         # self.use_max_stimulus()
         # self.max_min_stimulus()
+        # self.round_robin()
 
         self.get_information = True
         self.set_end_time = True
@@ -427,6 +428,10 @@ class DustbinRobot:
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
     
+    def round_robin(self):
+        self.robots_id = np.roll(self.robots_id,1)
+        self.robot_goal_id = self.robots_id[0]   
+   
     def max_min_stimulus(self):
         minimum_values = []
         max_value = 0
