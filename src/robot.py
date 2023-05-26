@@ -32,8 +32,8 @@ class Robot:
         self.robot_name = self.get_param('~robot_name','turbot1')
         self.distance = []
         self.travelled_distance = []
-        self.robots_travelled_distances = [0,0,0]
-        self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
+        self.robots_travelled_distances = [0,0,0,0,0,0]
+        # self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
         # self.distance_travelled
         self.robot_alive = False
         self.is_section_actionlib_running = False
@@ -41,17 +41,17 @@ class Robot:
         self.first_time = True
         self.ns = rospy.get_namespace()
 
-        # robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
-        # self.robots_information = []
+        robot_data = [0,0,0,0,0,0,0,0,0,0,0,0]
+        self.robots_information = []
         # self.robots = []
         # self.robot_initialization = np.array([])
 
-        # for robot in range(self.number_of_robots):
-        #     self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
-        #     # self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
-        #     # self.robots.append(robot)  # self.robots = [0,1,2]
-        #     print("***********---------------------")
-        #     print(self.robots_information)
+        for robot in range(self.number_of_robots):
+            self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
+            # self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
+            # self.robots.append(robot)  # self.robots = [0,1,2]
+            # print("***********---------------------")
+            # print(self.robots_information)
         
 
         #Subscribers

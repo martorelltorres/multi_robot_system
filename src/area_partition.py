@@ -11,7 +11,9 @@ import math
 import os
 import pprint
 import re
-from shapely.geometry import Polygon,LineString,Point
+from shapely.geometry import Polygon,LineString,Point,box
+from shapely import affinity
+from random import uniform
 from std_srvs.srv import Empty, EmptyResponse
 from scipy.spatial import Voronoi, voronoi_plot_2d
 from shapely.ops import split, LineString,triangulate
@@ -21,36 +23,46 @@ import matplotlib.pyplot as plt
 from std_srvs.srv import Empty, EmptyRequest
 from cola2_msgs.srv import Goto, GotoRequest
 from cola2_msgs.msg import  NavSts
+from shapely.prepared import prep
+import geopandas as gpd
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 
 class area_partition:
 
     def __init__(self, name):
         self.name = name
-        self.ned_origin_lat = get_param(self,'ned_origin_lat')
-        self.ned_origin_lon = get_param(self,'ned_origin_lon')
-        self.offset_polygon_distance = get_param(self,'offset_polygon_distance')
-        self.offset_coverage_distance = get_param(self,'offset_coverage_distance')
-        self.surge_velocity = get_param(self,'surge_velocity')
-        self.exploration_area = get_param(self,'exploration_area')
+        # Get config parameters from the parameter server
+        self.ned_origin_lat = get_param(self,'ned_origin_lat',39.14803625)
+        self.ned_origin_lon = get_param(self,'ned_origin_lon',2.93195323)
+        self.offset_polygon_distance = get_param(self,'offset_polygon_distance',5)
+        self.offset_coverage_distance = get_param(self,'offset_coverage_distance',10)
+        self.surge_velocity = get_param(self,'surge_velocity',0.8)
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
+        self.number_of_robots = get_param(self,'number_of_robots',6)
+        self.robot_ID = get_param(self,'~robot_ID',0) 
         self.offset_distance = 0
         self.goal_polygon_defined = False
-        
+        self.equal_regions = []
+        self.points = np.array([])
         self.coverage_distance = 0
         self.fixed_offset = 1
         self.distance = []
         self.goal_points = []
+        self.first_time = True
 
-        #Publishers
-        self.goal_position = rospy.Publisher("/mrs/goal_position",
-                                                PointStamped,
-                                                queue_size=1)
         #Subscribers
-        self.read_file()
-        self.extract_NED_positions()
-        self.divide_polygon()
-        self.define_voronoi_offset_polygons(self.offset_polygon_distance)
+
     
+        if(self.first_time==True and self.robot_ID==0):
+            self.read_file()
+            self.extract_NED_positions()
+            self.divide_polygon()
+            self.define_voronoi_offset_polygons(self.offset_polygon_distance)
+            self.first_time=False
+
     def get_polygon_points(self,polygon):
         polygon_points = self.voronoi_polygons[polygon]
         polygon_coords_x,polygon_coords_y = polygon_points.exterior.coords.xy
@@ -365,7 +377,101 @@ class area_partition:
             self.east_position.append(east) 
             
         self.north_position.append(self.north_position[0])
-        self.east_position.append(self.east_position[0])      
+        self.east_position.append(self.east_position[0])    
+
+    def shape_to_points(self,shape, num = 10, smaller_versions = 10):
+        points = []
+
+        # Take the shape, shrink it by a factor (first iteration factor=1), and then 
+        # take points around the contours
+        for shrink_factor in range(0,smaller_versions,1):
+            # calculate the shrinking factor
+            shrink_factor = smaller_versions - shrink_factor
+            shrink_factor = shrink_factor / float(smaller_versions)
+            # actually shrink - first iteration it remains at 1:1
+            smaller_shape = affinity.scale(shape, shrink_factor, shrink_factor)
+            # Interpolate numbers around the boundary of the shape
+            for i in range(0,int(num*shrink_factor),1):
+                i = i / int(num*shrink_factor)
+                x,y =  smaller_shape.interpolate(i, normalized=True).xy
+                points.append( (x[0],y[0]))
+        
+        # add the origin
+        x,y = smaller_shape.centroid.xy
+        points.append( (x[0], y[0]) ) # near, but usually not add (0,0)
+        
+        points = np.array(points)
+        return points
+    
+    def grid_bounds(self,geom, delta):
+        minx, miny, maxx, maxy = geom.bounds
+        nx = int((maxx - minx)/delta)
+        ny = int((maxy - miny)/delta)
+        gx, gy = np.linspace(minx,maxx,nx), np.linspace(miny,maxy,ny)
+        grid = []
+        for i in range(len(gx)-1):
+            for j in range(len(gy)-1):
+                poly_ij = Polygon([[gx[i],gy[j]],[gx[i],gy[j+1]],[gx[i+1],gy[j+1]],[gx[i+1],gy[j]]])
+                grid.append( poly_ij )
+        return grid
+    
+    def partition(self,geom):
+        prepared_geom = prep(geom)
+        grid = list(filter(prepared_geom.intersects, self.g))
+        return grid
+
+    def clustering(self):
+        # reduced_data = PCA(n_components=2).fit_transform(self.points)
+        print("************************ CLUSTERIIIING *********************************")
+        print("************************ CLUSTERIIIING *********************************")
+        reduced_data = self.points
+        kmeans = KMeans(init="k-means++", n_clusters=self.number_of_robots, n_init=4)
+        kmeans.fit(reduced_data)
+
+        # Step size of the mesh. Decrease to increase the quality of the VQ.
+        h = 0.02  # point in the mesh [x_min, x_max]x[y_min, y_max].
+
+        # Plot the decision boundary. For that, we will assign a color to each
+        x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1
+        y_min, y_max = reduced_data[:, 1].min() - 1, reduced_data[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+
+        # Obtain labels for each point in mesh. Use last trained model.
+        Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
+
+        # Put the result into a color plot
+        Z = Z.reshape(xx.shape)
+        plt.figure(1)
+        plt.clf()
+        plt.imshow(
+            Z,
+            interpolation="nearest",
+            extent=(xx.min(), xx.max(), yy.min(), yy.max()),
+            cmap=plt.cm.Paired,
+            aspect="auto",
+            origin="lower",
+        )
+
+        plt.plot(reduced_data[:, 0], reduced_data[:, 1], "k.", markersize=2)
+        # Plot the centroids as a white X
+        self.cluster_centroids = kmeans.cluster_centers_
+        plt.scatter(
+            self.cluster_centroids[:, 0],
+            self.cluster_centroids[:, 1],
+            marker="x",
+            s=169,
+            linewidths=3,
+            color="w",
+            zorder=10,
+        )
+
+        plt.xlim(x_min, x_max)
+        plt.ylim(y_min, y_max)
+        plt.xticks(())
+        plt.yticks(())
+        # plt.show()
+
+
     
     def divide_polygon(self):
         #obtain the global_points (lat,long) of the polygon
@@ -389,14 +495,29 @@ class area_partition:
         poligonized_points =Polygon(self.polygon_points)
         triangles = triangulate(poligonized_points)
         self.centroid_points = []
-        # extract centroid points of the triangles
-        for triangle in triangles:
-            triangle_centroid = triangle.centroid
-            self.centroid_points.append([triangle_centroid.x,triangle_centroid.y])
-        self.centroid_points.append([polygon_centroid.x,polygon_centroid.y])
-   
+        # .........................................................................
+        # Generate random points within the polygon
+        num_points = 1000
+    
+        while len(self.centroid_points) < num_points:
+            # Generate random coordinates within the polygon's bounds
+            x = uniform(self.main_polygon.bounds[0], self.main_polygon.bounds[2])
+            y = uniform(self.main_polygon.bounds[1], self.main_polygon.bounds[3])
+            # Create a point object
+            point = Point(x,y)
+            # Check if the point is within the polygon
+            if self.main_polygon.contains(point):
+                self.centroid_points.append([x,y])
+        self.points = np.array(self.centroid_points)
+
+        print("-----------------------------------------------------")
+        print("-----------------------------------------------------")
+        print(self.points)
+        self.clustering()
+        
+
         # compute Voronoi tesselation
-        voronoi_regions = Voronoi(self.centroid_points)
+        voronoi_regions = Voronoi(self.cluster_centroids)
         regions, vertices = self.voronoi_finite_polygons_2d(voronoi_regions)
         voronoi_plot_2d(voronoi_regions)
         min_x = voronoi_regions.min_bound[0] - 10
@@ -427,9 +548,10 @@ class area_partition:
         
         plt.plot(*zip(*self.polygon_points))
         plt.axis('equal')
-        plt.xlim(-200,100)
+        plt.xlim(-100,100)
         plt.ylim(-100,100)
-        # plt.show()
+        plt.show()
+        
 
     def voronoi_finite_polygons_2d(self,vor, radius=None):
         if vor.points.shape[1] != 2:

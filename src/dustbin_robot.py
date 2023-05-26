@@ -52,7 +52,8 @@ class DustbinRobot:
         self.communication_times_end = [0,0,0]
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[0,0],[0,0],[0,0]]
+        # self.robots_information = [[0,0],[0,0],[0,0]]
+        self.robots_information = []
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = True
@@ -114,6 +115,7 @@ class DustbinRobot:
             self.s_norm.append(0)
             self.time_threshold.append(0)
             self.communication_latency.append(0)
+            self.robots_information.append (self.robot_data)
         
         self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
 

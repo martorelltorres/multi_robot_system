@@ -3,7 +3,7 @@
 # ---------------------------------------------------------
 
 # ------------------ ROBOTS INFO -----------------------
-number_of_robots: 3
+number_of_robots: 6 
 # be sure that all the simulated architectures has the same NED origin (Bendinat)
 ned_origin_lat: 39.14803625
 ned_origin_lon: 2.93195323

@@ -20,7 +20,9 @@ class communications:
         self.robot_ID = self.get_param('~robot_ID',0) 
 
         self.system_init = False
-        self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
+        # self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
+        self.robots_information = []
+        self.data = [0,0,0,0,0,0,0,0,0,0,0,0]
         self.robots = []
         self.robot_initialization = np.array([])
         self.storage_disk =[]
@@ -34,10 +36,12 @@ class communications:
         for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot)  # self.robots = [0,1,2]
+            self.robots_information.append(self.data)
         
         for robot_ in range(self.number_of_robots):
             self.storage_disk.append(0)
             self.battery_charge.append(0)
+            
 
 
         #Publishers
