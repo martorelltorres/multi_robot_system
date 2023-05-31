@@ -3,7 +3,7 @@
   <arg name="place" default="cabrera.yaml"/>
   <arg name="enableIquaASV" default="true"/>
   <arg name="enableIquaAUV" default="false"/>
-  <arg name="enableRviz" default="false"/>
+  <arg name="enableRviz" default="true"/>
   <arg name="enableCollisonAvoidance" default="false"/>
   <arg name="enableCommunicationModule" default="true"/>
 
@@ -11,9 +11,9 @@
   <arg name="robot_0" default="robot0"/>  <!--AUV0-->
   <arg name="robot_1" default="robot1"/>  <!--AUV1-->
   <arg name="robot_2" default="robot2"/>  <!--AUV2-->
-  <arg name="robot_3" default="robot3"/>  <!--AUV0-->
-  <arg name="robot_4" default="robot4"/>  <!--AUV1-->
-  <arg name="robot_5" default="robot5"/>  <!--AUV2-->
+  <arg name="robot_3" default="robot3"/>  <!--AUV3-->
+  <arg name="robot_4" default="robot4"/>  <!--AUV4-->
+  <arg name="robot_5" default="robot5"/>  <!--AUV5-->
   <arg name="robot_6" default="robot6"/>  <!--ASV-->
 
   <!-- Launch the AUV Simulation -->
@@ -38,6 +38,10 @@
 
     <!-- load the multi_robot_system.yaml parameters file -->
     <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
+
+    <!-- divide the exploration area -->
+    <node name="polygon_division" pkg="multi_robot_system" type="polygon_division.py" output="screen" respawn="true"/>
+
   
     <!-- Robot 0-->
     <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">

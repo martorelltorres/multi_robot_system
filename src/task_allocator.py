@@ -48,8 +48,8 @@ class task_allocation:
                                         TaskMonitoring,
                                         queue_size=1)
         # Timers
-        rospy.Timer(rospy.Duration(1.0), self.task_monitoring_publisher)
-        self.update_task_status(self.robot_ID,0,0,0,[0,0],0)
+        # rospy.Timer(rospy.Duration(1.0), self.task_monitoring_publisher)
+        # self.update_task_status(self.robot_ID,0,0,0,[0,0],0)
 
     def update_robot_position(self,msg):
         self.robot_position_north = msg.position.north
@@ -63,13 +63,15 @@ class task_allocation:
 
         # task_allocator==1 --> Split the tasks depending of the number of robots
         if(self.task_allocator==1):
-            polygon_number = self.area_handler.get_polygon_number()
+            # polygon_number = self.area_handler.get_polygon_number()
+            
             # create an array with the goal polygon_ids, from 0 to n
-            for polygon in range(polygon_number):
+            for polygon in range(self.number_of_robots):
                 self.polygons.append(polygon)
-            self.central_polygon_id = self.define_meeting_point()
+            print("*********** number of polygons *************")
+            # self.central_polygon_id = self.define_meeting_point()
             # add the central polygon to the tasks in order to cover the hole area
-            self.polygons.append(self.central_polygon_id)
+            # self.polygons.append(self.central_polygon_id)
             self.robot_goals = np.array_split(self.polygons,self.number_of_robots)
             # create a goal_polygons array for every robot
             robot_names = []
@@ -192,7 +194,7 @@ class task_allocation:
 
           
 
-        return(self.robots_tasks,self.central_polygon_id)
+        return(self.robots_tasks)
 
     def initialize_task_status(self):
         for robot in range(self.number_of_robots):

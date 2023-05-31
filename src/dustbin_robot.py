@@ -72,7 +72,8 @@ class DustbinRobot:
         self.comm_signal = []
         self.stimulus = np.array([])
         self.robots_sense = np.array([])
-        tasks = self.area_handler.get_polygon_number()
+        # tasks = self.area_handler.get_polygon_number()
+        tasks = self.number_of_robots
         self.max_stimulus=[]
         self.min_stimulus = []
         self.time_threshold=[]
@@ -521,11 +522,11 @@ class DustbinRobot:
             self.initialization(robot_id) 
 
     def dustbin_strategy(self):
-        if(self.system_init==True and self.communication==True):
+        if(self.system_init==True and self.communication==True and self.area_handler.get_voronoi_polygons_status()==True):
             self.time_trigger()
     
     def kill_the_process(self,msg):
-        # update area explored
+        # update area explored 
         self.exploration_tasks_update[msg.explored_sub_area] = True
         print("__________TASK UPDATE__________")
         print(self.exploration_tasks_update)
@@ -556,8 +557,10 @@ class DustbinRobot:
             self.goto_central_area()
                   
     def goto_central_area(self):
-        self.central_point = self.area_handler.get_main_polygon_centroid()
-        self.pose = [self.central_point.x, self.central_point.y]
+        # self.central_point = self.area_handler.get_main_polygon_centroid()
+        # print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")
+        # print(self.central_point)
+        self.pose = [58.13982479, 39.09317517]
         self.transit_to(self.pose)
         self.robot_at_center = True
 

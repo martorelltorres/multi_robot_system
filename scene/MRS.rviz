@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /tf1/Frames1
+        - /Marker4
       Splitter Ratio: 0.5382353067398071
     Tree Height: 845
   - Class: rviz/Views
@@ -110,7 +111,15 @@ Visualization Manager:
           Value: true
         robot3/base_link:
           Value: true
+        robot3/depth:
+          Value: true
+        robot3/dvl:
+          Value: true
+        robot3/dvl_altitude:
+          Value: true
         robot3/dynamics:
+          Value: true
+        robot3/echosounder:
           Value: true
         robot3/gps:
           Value: true
@@ -118,13 +127,89 @@ Visualization Manager:
           Value: true
         robot3/imu_filter:
           Value: true
-        robot3/odom:
+        robot3/modem:
+          Value: true
+        robot3/pressure:
+          Value: true
+        robot3/thruster_0:
           Value: true
         robot3/thruster_1:
           Value: true
         robot3/thruster_2:
           Value: true
-        robot3/usbl:
+        robot4/base_link:
+          Value: true
+        robot4/depth:
+          Value: true
+        robot4/dvl:
+          Value: true
+        robot4/dvl_altitude:
+          Value: true
+        robot4/dynamics:
+          Value: true
+        robot4/echosounder:
+          Value: true
+        robot4/gps:
+          Value: true
+        robot4/imu:
+          Value: true
+        robot4/imu_filter:
+          Value: true
+        robot4/modem:
+          Value: true
+        robot4/pressure:
+          Value: true
+        robot4/thruster_0:
+          Value: true
+        robot4/thruster_1:
+          Value: true
+        robot4/thruster_2:
+          Value: true
+        robot5/base_link:
+          Value: true
+        robot5/depth:
+          Value: true
+        robot5/dvl:
+          Value: true
+        robot5/dvl_altitude:
+          Value: true
+        robot5/dynamics:
+          Value: true
+        robot5/echosounder:
+          Value: true
+        robot5/gps:
+          Value: true
+        robot5/imu:
+          Value: true
+        robot5/imu_filter:
+          Value: true
+        robot5/modem:
+          Value: true
+        robot5/pressure:
+          Value: true
+        robot5/thruster_0:
+          Value: true
+        robot5/thruster_1:
+          Value: true
+        robot5/thruster_2:
+          Value: true
+        robot6/base_link:
+          Value: true
+        robot6/dynamics:
+          Value: true
+        robot6/gps:
+          Value: true
+        robot6/imu:
+          Value: true
+        robot6/imu_filter:
+          Value: true
+        robot6/odom:
+          Value: true
+        robot6/thruster_1:
+          Value: true
+        robot6/thruster_2:
+          Value: true
+        robot6/usbl:
           Value: true
         world_ned:
           Value: false
@@ -210,21 +295,96 @@ Visualization Manager:
               {}
           robot2/dynamics:
             {}
+          robot3/base_link:
+            robot3/dvl:
+              robot3/dvl_altitude:
+                {}
+            robot3/echosounder:
+              {}
+            robot3/gps:
+              {}
+            robot3/imu:
+              {}
+            robot3/imu_filter:
+              {}
+            robot3/modem:
+              {}
+            robot3/pressure:
+              robot3/depth:
+                {}
+            robot3/thruster_0:
+              {}
+            robot3/thruster_1:
+              {}
+            robot3/thruster_2:
+              {}
           robot3/dynamics:
             {}
-          robot3/odom:
-            robot3/base_link:
-              robot3/gps:
+          robot4/base_link:
+            robot4/dvl:
+              robot4/dvl_altitude:
                 {}
-              robot3/imu:
+            robot4/echosounder:
+              {}
+            robot4/gps:
+              {}
+            robot4/imu:
+              {}
+            robot4/imu_filter:
+              {}
+            robot4/modem:
+              {}
+            robot4/pressure:
+              robot4/depth:
                 {}
-              robot3/imu_filter:
+            robot4/thruster_0:
+              {}
+            robot4/thruster_1:
+              {}
+            robot4/thruster_2:
+              {}
+          robot4/dynamics:
+            {}
+          robot5/base_link:
+            robot5/dvl:
+              robot5/dvl_altitude:
                 {}
-              robot3/thruster_1:
+            robot5/echosounder:
+              {}
+            robot5/gps:
+              {}
+            robot5/imu:
+              {}
+            robot5/imu_filter:
+              {}
+            robot5/modem:
+              {}
+            robot5/pressure:
+              robot5/depth:
                 {}
-              robot3/thruster_2:
+            robot5/thruster_0:
+              {}
+            robot5/thruster_1:
+              {}
+            robot5/thruster_2:
+              {}
+          robot5/dynamics:
+            {}
+          robot6/dynamics:
+            {}
+          robot6/odom:
+            robot6/base_link:
+              robot6/gps:
                 {}
-              robot3/usbl:
+              robot6/imu:
+                {}
+              robot6/imu_filter:
+                {}
+              robot6/thruster_1:
+                {}
+              robot6/thruster_2:
+                {}
+              robot6/usbl:
                 {}
       Update Interval: 0
       Value: true
@@ -407,6 +567,22 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        robot3/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         robot3/gps:
           Alpha: 1
           Show Axes: false
@@ -419,6 +595,18 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        robot3/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         robot3/thruster_1:
           Alpha: 1
           Show Axes: false
@@ -427,12 +615,77 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/usbl:
+      Name: RobotModel
+      Robot Description: robot3/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        robot3/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot3/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/thruster_2:
           Alpha: 1
           Show Axes: false
           Show Trail: false
       Name: RobotModel
-      Robot Description: robot3/robot_description
+      Robot Description: /robot3/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -571,6 +824,144 @@ Visualization Manager:
           Show Trail: false
       Name: RobotModel
       Robot Description: robot0/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        robot5/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot5/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: robot5/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        robot4/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot4/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot4/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: robot4/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -716,7 +1107,7 @@ Visualization Manager:
       Marker Topic: /mrs/tracking_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -724,7 +1115,7 @@ Visualization Manager:
       Marker Topic: /mrs/adrift_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -732,7 +1123,7 @@ Visualization Manager:
       Marker Topic: /mrs/repulsion_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -759,11 +1150,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 5.617927551269531
+      Scale: 7.765537261962891
       Target Frame: turbot/base_link
       Value: TopDownOrtho (rviz)
-      X: -29.183202743530273
-      Y: 13.882829666137695
+      X: -5.087452411651611
+      Y: 15.473320960998535
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875

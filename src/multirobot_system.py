@@ -8,6 +8,7 @@ from numpy import *
 import numpy as np
 import os
 import subprocess
+import pickle
 from shapely.geometry import Polygon,LineString,Point
 import actionlib
 from cola2_msgs.msg import WorldSectionActionResult
@@ -83,50 +84,52 @@ class MultiRobotSystem:
         
         # Init periodic timers
         rospy.Timer(rospy.Duration(1.0), self.print_polygon)
-        rospy.Timer(rospy.Duration(1.0), self.print_offset_polygon)
+        # rospy.Timer(rospy.Duration(1.0), self.print_offset_polygon)
 
         self.initialization()
 
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
+    
+    def read_area_info(self):
+        # Open the pickle file in binary mode
+        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+            # Load the data from the file
+            data = pickle.load(file)
 
+        # Access different data from the loaded data
+        self.cluster_centroids = data['array1']
+        self.voronoi_polygons = data['array2']
+        self.main_polygon = data['array3']
 
     def initialization(self): 
         # wait 7 seconds in order to initialize the different robot architectures
-        rospy.sleep(7)      
+        rospy.sleep(10)      
         if np.all(self.robot_initialization == False):
             for robot in range(self.number_of_robots):
                 self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
+        
+        self.read_area_info()
 
         print("             *************************")
         print("                 ROBOT "+str(self.robot_ID)+ " INITIALIZED   ")
         print("             *************************")
 
-        self.goals,self.central_polygon = self.task_allocation_handler.task_allocation()
-        # init the task_time variable
+        self.goals = self.task_allocation_handler.task_allocation()
         for task in range(len(self.goals)):
             self.task_monitoring.append(0)
-
+            
         self.goal_polygons = self.goals[self.robot_ID][1]
-        # print("The central polygon meeting point is the polygon: "+str(self.central_polygon))
         print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
-        # times = self.area_handler.get_estimated_polygons_coverage_time()
-        self.goal_points = self.area_handler.define_path_coverage()
+        self.goal_points = self.area_handler.define_path_coverage(self.voronoi_polygons)
         self.coverage()
 
-    def coverage(self):          
+    def coverage(self):      
         for task in range(len(self.goal_polygons)):
             print("The robot_"+str(self.robot_ID)+" is covering the polygon: "+str(self.goal_polygons[task]))
             # get the points of the largest polygon side
-            voronoi_polygons = self.area_handler.get_voronoi_polygons()
-            self.point1, self.point2 = self.area_handler.find_largest_side_distance(voronoi_polygons[self.goal_polygons[task]])
+            self.point1, self.point2 = self.area_handler.find_largest_side_distance(self.voronoi_polygons[self.goal_polygons[task]])
             self.mrs_coverage(self.goal_polygons[task])
-
-            # task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
-            # print(".......................................")
-            # print("The spended time is "+ str(task_time)+ " seconds")
-            # self.simulation_task_times[task] = self.task_time
-            # self.task_monitoring[task]= True
 
             # advise the robot_id of the robot that finishes the task
             msg = ExplorationUpdate()
@@ -163,8 +166,6 @@ class MultiRobotSystem:
             # self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon,self.goal_polygons,self.actual_section)
             self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
             self.current_section = section_points[section]
-            # print("************current_section********************* ")
-            # print(self.current_section)
             
             if(self.start == True):
                 self.start = False
@@ -182,10 +183,6 @@ class MultiRobotSystem:
                 # send the first section over the largest polygon side in order to cover the hole exploration area
                 self.robot_handler.send_section_strategy(self.point1,self.point2,self.robot_ID)
                 self.wait_until_section_reached()
-
-            # update_current_section = self.robot_handler.set_current_section(self,self.actual_section)
-            # print("--------------------")
-            # print(update_current_section)
 
             if(section >= 1 and self.send_folowing_section == True):
                 self.current_section = section_points[section]
@@ -208,11 +205,6 @@ class MultiRobotSystem:
             
         final_task_time = rospy.Time.now()
         self.task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
-        # print(".......................................")
-        # print("The spended time is "+ str(self.task_time)+ " seconds")
-        # self.simulation_task_times[task] = task_time
-        # self.task_monitoring[task]= True
-
         self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon,self.goal_polygons,self.actual_section)
 
     def print_polygon(self,event):
@@ -266,8 +258,6 @@ class MultiRobotSystem:
                     polygon_stamped_msg.header.stamp = rospy.Time.now()
                     polygon_stamped_msg.polygon = polygon_msg
                     self.polygon_offset_pub.publish(polygon_stamped_msg)
-        # else:
-        #     rospy.logwarn("Unable to print polygon, data not gattered yet")  
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

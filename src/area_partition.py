@@ -11,7 +11,7 @@ import math
 import os
 import pprint
 import re
-from shapely.geometry import Polygon,LineString,Point,box
+from shapely.geometry import Polygon,LineString,Point
 from shapely import affinity
 from random import uniform
 from std_srvs.srv import Empty, EmptyResponse
@@ -28,9 +28,20 @@ import geopandas as gpd
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+import pickle
 
 
 class area_partition:
+    voronoy_polygons_settled = False
+    local_points=[]
+    local_coords=[]
+    polygon_coords_x =0
+    polygon_coords_y= 0
+    voronoi_polygons= []
+    first_time = False
+    centroid_points = []
+    cluster_centroids = []
+    voronoi_polygons = []
 
     def __init__(self, name):
         self.name = name
@@ -52,16 +63,28 @@ class area_partition:
         self.distance = []
         self.goal_points = []
         self.first_time = True
+        self.voronoy_polygons_settled = False
+        self.local_points=[]
+        self.local_coords=[]
+        self.centroid_points = []
+        self.cluster_centroids = []
+        self.voronoi_polygons = []
 
-        #Subscribers
+        self.read_area_info()
+   
+    def read_area_info(self):
+        # Open the pickle file in binary mode
+        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+            # Load the data from the file
+            data = pickle.load(file)
 
+        # Access different data from the loaded data
+        self.cluster_centroids = data['array1']
+        self.voronoi_polygons = data['array2']
+        self.main_polygon = data['array3']
     
-        if(self.first_time==True and self.robot_ID==0):
-            self.read_file()
-            self.extract_NED_positions()
-            self.divide_polygon()
-            self.define_voronoi_offset_polygons(self.offset_polygon_distance)
-            self.first_time=False
+    def get_voronoi_polygons_status(self): 
+        return(self.voronoy_polygons_settled)
 
     def get_polygon_points(self,polygon):
         polygon_points = self.voronoi_polygons[polygon]
@@ -88,7 +111,8 @@ class area_partition:
 
     def get_voronoi_polygons(self):
         return(self.voronoi_polygons)
-    
+
+   
     def get_main_polygon_centroid(self):
         self.main_polygon = Polygon(self.local_points)
         polygon_centroid = self.main_polygon.centroid
@@ -100,11 +124,6 @@ class area_partition:
     def get_voronoi_offset_polygons(self):
         return(self.voronoi_offset_polygons)
     
-    # def get_central_polygon_id(self):
-    #     polygon_centroid = self.get_main_polygon_centroid
-    #     central_polygon = self.get_central_polygon(self.voronoi_offset_polygons,polygon_centroid)
-    #     return(central_polygon)
-
     def get_sections_number(self):
         goal_points = self.define_path_coverage()
         number_of_sections = []
@@ -147,15 +166,15 @@ class area_partition:
             estimated_coverage_time.append(total_time)
         return(estimated_coverage_time)
 
-    def define_path_coverage(self):
+    def define_path_coverage(self, voronoi_polygons):
         #create the loop for the diferent voronoi offset polygons
         # for self.polygon_id in range(len(self.voronoi_offset_polygons)):
         #     self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
         #     goal_points = self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
         # return(goal_points)
-        for self.polygon_id in range(len(self.voronoi_polygons)):
-            self.find_largest_side(self.voronoi_polygons[self.polygon_id])
-            goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
+        for self.polygon_id in range(self.number_of_robots):
+            self.find_largest_side(voronoi_polygons[self.polygon_id])
+            goal_points = self.cover_lines(voronoi_polygons[self.polygon_id])
         return(goal_points)
 
     def distance_between_points(self,point_a, point_b):
@@ -282,15 +301,11 @@ class area_partition:
         plt.show()
     
     def get_initial_section(self, polygon):
-        polygons = self.get_voronoi_offset_polygons()
-        # polygons = self.get_voronoi_polygons()
-        reference_points = self.find_largest_side(polygons[polygon])
-        polygon_coords_x,polygon_coords_y = self.get_offset_polygon_points(polygon)
-        # x,y = self.get_polygon_points(polygon)
+        reference_points = self.find_largest_side(self.voronoi_polygons[polygon])
+        polygon_coords_x,polygon_coords_y = self.get_polygon_points(polygon)
         initial_point = Point(polygon_coords_x[reference_points[0]],polygon_coords_y[reference_points[0]])
         final_point = Point(polygon_coords_x[reference_points[1]],polygon_coords_y[reference_points[1]])
         initial_section = list(initial_point.coords),list(final_point.coords)
-        # print("Polygon "+str(polygon)+" has the following initial_section: "+str(initial_section))
         return(initial_section)
 
 
@@ -378,52 +393,10 @@ class area_partition:
             
         self.north_position.append(self.north_position[0])
         self.east_position.append(self.east_position[0])    
-
-    def shape_to_points(self,shape, num = 10, smaller_versions = 10):
-        points = []
-
-        # Take the shape, shrink it by a factor (first iteration factor=1), and then 
-        # take points around the contours
-        for shrink_factor in range(0,smaller_versions,1):
-            # calculate the shrinking factor
-            shrink_factor = smaller_versions - shrink_factor
-            shrink_factor = shrink_factor / float(smaller_versions)
-            # actually shrink - first iteration it remains at 1:1
-            smaller_shape = affinity.scale(shape, shrink_factor, shrink_factor)
-            # Interpolate numbers around the boundary of the shape
-            for i in range(0,int(num*shrink_factor),1):
-                i = i / int(num*shrink_factor)
-                x,y =  smaller_shape.interpolate(i, normalized=True).xy
-                points.append( (x[0],y[0]))
-        
-        # add the origin
-        x,y = smaller_shape.centroid.xy
-        points.append( (x[0], y[0]) ) # near, but usually not add (0,0)
-        
-        points = np.array(points)
-        return points
-    
-    def grid_bounds(self,geom, delta):
-        minx, miny, maxx, maxy = geom.bounds
-        nx = int((maxx - minx)/delta)
-        ny = int((maxy - miny)/delta)
-        gx, gy = np.linspace(minx,maxx,nx), np.linspace(miny,maxy,ny)
-        grid = []
-        for i in range(len(gx)-1):
-            for j in range(len(gy)-1):
-                poly_ij = Polygon([[gx[i],gy[j]],[gx[i],gy[j+1]],[gx[i+1],gy[j+1]],[gx[i+1],gy[j]]])
-                grid.append( poly_ij )
-        return grid
-    
-    def partition(self,geom):
-        prepared_geom = prep(geom)
-        grid = list(filter(prepared_geom.intersects, self.g))
-        return grid
+      
 
     def clustering(self):
         # reduced_data = PCA(n_components=2).fit_transform(self.points)
-        print("************************ CLUSTERIIIING *********************************")
-        print("************************ CLUSTERIIIING *********************************")
         reduced_data = self.points
         kmeans = KMeans(init="k-means++", n_clusters=self.number_of_robots, n_init=4)
         kmeans.fit(reduced_data)
@@ -441,34 +414,35 @@ class area_partition:
 
         # Put the result into a color plot
         Z = Z.reshape(xx.shape)
-        plt.figure(1)
-        plt.clf()
-        plt.imshow(
-            Z,
-            interpolation="nearest",
-            extent=(xx.min(), xx.max(), yy.min(), yy.max()),
-            cmap=plt.cm.Paired,
-            aspect="auto",
-            origin="lower",
-        )
-
-        plt.plot(reduced_data[:, 0], reduced_data[:, 1], "k.", markersize=2)
-        # Plot the centroids as a white X
         self.cluster_centroids = kmeans.cluster_centers_
-        plt.scatter(
-            self.cluster_centroids[:, 0],
-            self.cluster_centroids[:, 1],
-            marker="x",
-            s=169,
-            linewidths=3,
-            color="w",
-            zorder=10,
-        )
+        # plt.figure(1)
+        # plt.clf()
+        # plt.imshow(
+        #     Z,
+        #     interpolation="nearest",
+        #     extent=(xx.min(), xx.max(), yy.min(), yy.max()),
+        #     cmap=plt.cm.Paired,
+        #     aspect="auto",
+        #     origin="lower",
+        # )
 
-        plt.xlim(x_min, x_max)
-        plt.ylim(y_min, y_max)
-        plt.xticks(())
-        plt.yticks(())
+        # plt.plot(reduced_data[:, 0], reduced_data[:, 1], "k.", markersize=2)
+        # # Plot the centroids as a white X
+        
+        # plt.scatter(
+        #     self.cluster_centroids[:, 0],
+        #     self.cluster_centroids[:, 1],
+        #     marker="x",
+        #     s=169,
+        #     linewidths=3,
+        #     color="w",
+        #     zorder=10,
+        # )
+
+        # plt.xlim(x_min, x_max)
+        # plt.ylim(y_min, y_max)
+        # plt.xticks(())
+        # plt.yticks(())
         # plt.show()
 
 
@@ -482,22 +456,17 @@ class area_partition:
         self.global_coords.append(self.global_points[i])
 
         #obtain the local_points (lat,long) of the polygon
-        self.local_points=[]
-        self.local_coords=[]
         for i in range(len(self.north_position)):
             self.local_points.append([self.north_position[i],self.east_position[i]])
 
         # Define the main polygon object
         self.main_polygon = Polygon(self.local_points)
-        polygon_centroid = self.main_polygon.centroid
         self.polygon_points = self.local_points
         # Triangulate the polygon
         poligonized_points =Polygon(self.polygon_points)
-        triangles = triangulate(poligonized_points)
-        self.centroid_points = []
         # .........................................................................
         # Generate random points within the polygon
-        num_points = 1000
+        num_points = 500
     
         while len(self.centroid_points) < num_points:
             # Generate random coordinates within the polygon's bounds
@@ -509,12 +478,10 @@ class area_partition:
             if self.main_polygon.contains(point):
                 self.centroid_points.append([x,y])
         self.points = np.array(self.centroid_points)
-
-        print("-----------------------------------------------------")
-        print("-----------------------------------------------------")
-        print(self.points)
         self.clustering()
+        self.conpute_voronoi_tesselation()
         
+    def conpute_voronoi_tesselation(self):
 
         # compute Voronoi tesselation
         voronoi_regions = Voronoi(self.cluster_centroids)
@@ -531,7 +498,6 @@ class area_partition:
         bounded_vertices = np.min((bounded_vertices, maxs), axis=0)
 
         # colorize
-        self.voronoi_polygons = []
         self.voronoi_offset_polygons = []
         self.voronoi_polygons_points = []
         for region in regions:
@@ -545,6 +511,8 @@ class area_partition:
             self.voronoi_polygons.append(sub_polygons)
             self.voronoi_polygons_points.append(polygon_coords)
             plt.fill(*zip(*polygon), alpha=0.4)
+        
+        self.voronoy_polygons_settled = True
         
         plt.plot(*zip(*self.polygon_points))
         plt.axis('equal')
