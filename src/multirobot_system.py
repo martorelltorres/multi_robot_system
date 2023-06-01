@@ -101,6 +101,7 @@ class MultiRobotSystem:
         self.cluster_centroids = data['array1']
         self.voronoi_polygons = data['array2']
         self.main_polygon = data['array3']
+        self.main_polygon_centroid = data['array4']
 
     def initialization(self): 
         # wait 7 seconds in order to initialize the different robot architectures
@@ -121,7 +122,7 @@ class MultiRobotSystem:
             
         self.goal_polygons = self.goals[self.robot_ID][1]
         print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
-        self.goal_points = self.area_handler.define_path_coverage(self.voronoi_polygons)
+        self.goal_points = self.area_handler.define_path_coverage()
         self.coverage()
 
     def coverage(self):      
@@ -205,14 +206,14 @@ class MultiRobotSystem:
             
         final_task_time = rospy.Time.now()
         self.task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
-        self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.central_polygon,self.goal_polygons,self.actual_section)
+        self.task_allocation_handler.update_task_status(self.robot_ID,goal,3,self.goal_polygons,self.actual_section)
 
     def print_polygon(self,event):
         if(self.data_gattered==True):      
             points = []
-            polygon_number = self.area_handler.get_polygon_number()
-            polygon_number = polygon_number -1
-            for polygon in range(polygon_number):
+            # polygon_number = self.area_handler.get_polygon_number()
+            # polygon_number = polygon_number -1
+            for polygon in range(self.number_of_robots):
                 polygon_coords_x,polygon_coords_y = self.area_handler.get_polygon_points(polygon)
 
                 for coord in range(len(polygon_coords_x)):

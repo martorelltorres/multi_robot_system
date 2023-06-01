@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /tf1/Frames1
-        - /Marker4
       Splitter Ratio: 0.5382353067398071
     Tree Height: 845
   - Class: rviz/Views
@@ -418,17 +417,17 @@ Visualization Manager:
       History Length: 1
       Name: PointStamped
       Radius: 3
-      Topic: /robot1/pilot/goal
+      Topic: /robot0/pilot/goal
       Unreliable: false
       Value: true
     - Alpha: 1
       Class: rviz/PointStamped
-      Color: 239; 41; 41
+      Color: 252; 233; 79
       Enabled: true
       History Length: 1
       Name: PointStamped
       Radius: 3
-      Topic: /robot3/pilot/goal
+      Topic: /robot1/pilot/goal
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -448,8 +447,46 @@ Visualization Manager:
       History Length: 1
       Name: PointStamped
       Radius: 3
-      Topic: /robot0/pilot/goal
+      Topic: /robot3/pilot/goal
       Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 252; 233; 79
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Radius: 3
+      Topic: /robot4/pilot/goal
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 252; 233; 79
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Radius: 3
+      Topic: /robot5/pilot/goal
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 239; 41; 41
+      Enabled: false
+      History Length: 1
+      Name: PointStamped
+      Radius: 3
+      Topic: /robot6/pilot/goal
+      Unreliable: false
+      Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /robot0/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /robot0/pilot: true
+      Queue Size: 100
       Value: true
     - Class: rviz/Marker
       Enabled: true
@@ -477,12 +514,166 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /robot0/pilot/waypoint_marker
+      Marker Topic: /robot4/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /robot0/pilot: true
+        /robot4/pilot: true
       Queue Size: 100
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /robot5/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /robot5/pilot: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /robot6/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /robot6/pilot: true
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        robot0/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot0/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot0/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: robot0/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        robot1/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot1/depth:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/echosounder:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/thruster_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot1/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: /robot1/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -631,199 +822,61 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        robot3/base_link:
+        robot4/base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        robot3/depth:
+        robot4/depth:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/dvl:
+        robot4/dvl:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/dvl_altitude:
+        robot4/dvl_altitude:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/echosounder:
+        robot4/echosounder:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/gps:
+        robot4/gps:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/imu:
+        robot4/imu:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/imu_filter:
+        robot4/imu_filter:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/modem:
+        robot4/modem:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/pressure:
+        robot4/pressure:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/thruster_0:
+        robot4/thruster_0:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/thruster_1:
+        robot4/thruster_1:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/thruster_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-      Name: RobotModel
-      Robot Description: /robot3/robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        robot1/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot1/depth:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/dvl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/dvl_altitude:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/echosounder:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/gps:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/imu_filter:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/modem:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/pressure:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/thruster_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/thruster_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot1/thruster_2:
+        robot4/thruster_2:
           Alpha: 1
           Show Axes: false
           Show Trail: false
       Name: RobotModel
-      Robot Description: /robot1/robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        robot0/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot0/depth:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/dvl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/dvl_altitude:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/echosounder:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/gps:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/imu_filter:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/modem:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/pressure:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/thruster_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/thruster_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot0/thruster_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-      Name: RobotModel
-      Robot Description: robot0/robot_description
+      Robot Description: robot4/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -907,61 +960,37 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        robot4/base_link:
+        robot6/base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        robot4/depth:
+        robot6/gps:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot4/dvl:
+        robot6/imu:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot4/dvl_altitude:
+        robot6/imu_filter:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot4/echosounder:
+        robot6/thruster_1:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot4/gps:
+        robot6/thruster_2:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot4/imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/imu_filter:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/modem:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/pressure:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/thruster_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/thruster_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/thruster_2:
+        robot6/usbl:
           Alpha: 1
           Show Axes: false
           Show Trail: false
       Name: RobotModel
-      Robot Description: robot4/robot_description
+      Robot Description: /robot6/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -1102,6 +1131,108 @@ Visualization Manager:
       Topic: /robot3/dynamics/odometry
       Unreliable: false
       Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /robot4/navigator/odometry_throttle
+      Unreliable: false
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /robot5/navigator/odometry_throttle
+      Unreliable: false
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /robot6/ekf_map/odometry
+      Unreliable: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /mrs/tracking_radius
@@ -1140,21 +1271,26 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 2.885002613067627
-      Class: rviz/TopDownOrtho
+      Class: rviz/Orbit
+      Distance: 60.36697769165039
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Invert Z Axis: false
+      Focal Point:
+        X: 6.7660088539123535
+        Y: 5.915698528289795
+        Z: 13.080689430236816
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: true
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 7.765537261962891
+      Pitch: 0.3097964823246002
       Target Frame: turbot/base_link
-      Value: TopDownOrtho (rviz)
-      X: -5.087452411651611
-      Y: 15.473320960998535
+      Value: Orbit (rviz)
+      Yaw: 0.6599999666213989
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875

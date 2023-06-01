@@ -25,6 +25,7 @@ class polygon_division:
         self.points = np.array([])
         self.local_points=[]
         self.centroid_points = []
+        self.main_polygon_centroid =[]
 
 
         self.read_file()
@@ -38,7 +39,8 @@ class polygon_division:
         data = {
             'array1': self.cluster_centroids,
             'array2': self.voronoi_polygons,
-            'array3': self.main_polygon
+            'array3': self.main_polygon,
+            'array4': self.main_polygon_centroid
         }
 
         with open('/home/uib/area_partition_data.pickle', 'wb') as file:
@@ -149,6 +151,7 @@ class polygon_division:
 
             # Define the main polygon object
             self.main_polygon = Polygon(self.local_points)
+            self.main_polygon_centroid = self.main_polygon.centroid
             self.polygon_points = self.local_points
             # Triangulate the polygon
             poligonized_points =Polygon(self.polygon_points)

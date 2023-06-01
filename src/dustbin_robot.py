@@ -7,6 +7,7 @@ import csv
 import time
 from math import *
 import matplotlib
+import pickle
 import actionlib       
 import matplotlib.pyplot as plt
 from std_msgs.msg import Int16,Header
@@ -47,18 +48,17 @@ class DustbinRobot:
         self.get_information = False
         self.robot_at_center = False
         self.robots_id = np.array([])
-        self.communication_times_delay = [0,0,0]
-        self.start_recording_time = [0,0,0]
-        self.communication_times_end = [0,0,0]
+        self.communication_times_delay = []
+        self.start_recording_time = []
+        self.communication_times_end = []
         self.system_init = False
         self.robot_data = [0,0]
-        # self.robots_information = [[0,0],[0,0],[0,0]]
         self.robots_information = []
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = True
         self.set_end_time = True
-        self.start_dustbin_strategy =np.array([False,False,False])
+        self.start_dustbin_strategy =np.array([])
         self.first_time = True
         self.trigger = False
         self.exploration_tasks_update = np.array([])
@@ -72,7 +72,6 @@ class DustbinRobot:
         self.comm_signal = []
         self.stimulus = np.array([])
         self.robots_sense = np.array([])
-        # tasks = self.area_handler.get_polygon_number()
         tasks = self.number_of_robots
         self.max_stimulus=[]
         self.min_stimulus = []
@@ -88,7 +87,7 @@ class DustbinRobot:
         self.communication_latency = []
         self.first_distance = True
         self.travelled_distance = 0
-        # intialize the variables
+
         for robot in range(self.number_of_stimulus):
             self.senses.append(0)
 
@@ -117,8 +116,12 @@ class DustbinRobot:
             self.time_threshold.append(0)
             self.communication_latency.append(0)
             self.robots_information.append (self.robot_data)
+            self.start_dustbin_strategy =np.append(self.start_dustbin_strategy, False)
+            self.communication_times_delay.append(0)
+            self.start_recording_time.append(0)
+            self.communication_times_end.append(0)
         
-        self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense))
+        self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense))
 
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -226,13 +229,24 @@ class DustbinRobot:
                          self.name)
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
         
-        # move the robot to the central area
-        if (self.robot_at_center == False):
-            self.goto_central_area()
+        self.read_area_info()
         
+       
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
+    
+    def read_area_info(self):
+        # Open the pickle file in binary mode
+        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+            # Load the data from the file
+            data = pickle.load(file)
+
+        # Access different data from the loaded data
+        self.cluster_centroids = data['array1']
+        self.voronoi_polygons = data['array2']
+        self.main_polygon = data['array3']
+        self.main_polygon_centroid = data['array4']
     
     def update_travelled_distance(self,event):
         if (self.first_distance == True):
@@ -520,9 +534,13 @@ class DustbinRobot:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_id) 
+        else:
+            # move the ASV to the central area
+            if (self.robot_at_center == False):
+                self.goto_central_area()
 
     def dustbin_strategy(self):
-        if(self.system_init==True and self.communication==True and self.area_handler.get_voronoi_polygons_status()==True):
+        if(self.system_init==True and self.communication==True):
             self.time_trigger()
     
     def kill_the_process(self,msg):
@@ -557,11 +575,7 @@ class DustbinRobot:
             self.goto_central_area()
                   
     def goto_central_area(self):
-        # self.central_point = self.area_handler.get_main_polygon_centroid()
-        # print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")
-        # print(self.central_point)
-        self.pose = [58.13982479, 39.09317517]
-        self.transit_to(self.pose)
+        self.transit_to(self.main_polygon_centroid)
         self.robot_at_center = True
 
     def initialization(self,robot_id):
@@ -581,13 +595,7 @@ class DustbinRobot:
             self.communication=False
         
         self.get_time_threshold(self.robot_goal_id)
-        # self.write_data_to_csv()
-        # print("     ")
-        # print("Current transferred data is: "+str(self.transferred_data))
-        # print("Data to summ to transferred data is: "+str(self.storage_disk[self.robot_goal_id]))
         self.transferred_data = self.transferred_data + self.storage_disk[self.robot_goal_id]
-        # print("Total transferred data is: "+str(self.transferred_data))
-        # print("     ")
 
         # publish the total transferred data
         msg = Data()
@@ -602,27 +610,18 @@ class DustbinRobot:
         msg.data = reset_id 
         self.reset_storage_pub.publish(msg)
 
-        # publish the communication latency
-        # print("------------------------------------------------")
-        # print("STOP THE TIMER FOR ROBOT: "+str(self.robot_goal_id))
-        # print("------------------------------------------------")
-
         self.communication_latency[self.robot_goal_id] = rospy.Time.now().secs - self.time_init[self.robot_goal_id]
         msg = CommunicationDelay()
         msg.header.stamp = rospy.Time.now()
         msg.comm_delay = self.communication_latency 
         self.communication_latency_pub.publish(msg)
-       
-        # print("The latency was: "+str(msg.comm_delay))
 
-        # print("INIT THE TIMER FOR ROBOT: "+str(self.robot_goal_id))
         self.time_init[self.robot_goal_id] = rospy.Time.now().secs
 
         print("______ COMMUNICATION FINISHED ______")
         
         self.communication=True
         self.dustbin_strategy()
-
 
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
@@ -731,8 +730,8 @@ class DustbinRobot:
         goto_req.altitude = 0
         goto_req.altitude_mode = False
         goto_req.linear_velocity.x = 1
-        goto_req.position.x = pose[0]
-        goto_req.position.y = pose[1]
+        goto_req.position.x = pose.x
+        goto_req.position.y = pose.y
         goto_req.position.z = 0.0
         goto_req.position_tolerance.x = 5
         goto_req.position_tolerance.y = 5
