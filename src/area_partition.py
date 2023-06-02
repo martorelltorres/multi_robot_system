@@ -80,6 +80,8 @@ class area_partition:
         self.cluster_centroids = data['array1']
         self.voronoi_polygons = data['array2']
         self.main_polygon = data['array3']
+        self.main_polygon_centroid = data['array4']
+        self.voronoi_offset_polygons = data['array5']
     
 
     def get_polygon_points(self,polygon):
@@ -232,7 +234,7 @@ class area_partition:
         x,y = polygon.exterior.coords.xy
         slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
         y_coordinate =[]
-        x_threshold = 200 #take care with this harcoded parameter
+        x_threshold = 100 #take care with this harcoded parameter
  
         if(x[self.reference_points[0]] > x[self.reference_points[1]]):
             x_0 = x[self.reference_points[0]] + x_threshold

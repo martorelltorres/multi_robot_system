@@ -210,7 +210,7 @@ class task_allocation:
         self.task_msg.current_task = task_id
         self.task_msg.task_status = status_update
         task_sections = self.area_handler.get_sections_number()
-        self.task_msg.sections = task_sections[task_id]
+        # self.task_msg.sections = task_sections[task_id]
         self.task_msg.current_section = current_section
         self.task_msg.goal_points = self.area_handler.get_goal_points(task_id)
 

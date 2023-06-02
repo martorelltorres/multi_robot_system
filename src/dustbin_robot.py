@@ -26,7 +26,7 @@ class DustbinRobot:
   
     def __init__(self, name):
         """ Init the class """
-        rospy.sleep(7)
+        rospy.sleep(5)
         self.name = name
         node_name = rospy.get_name()
 
@@ -247,6 +247,7 @@ class DustbinRobot:
         self.voronoi_polygons = data['array2']
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
+        self.voronoi_offset_polygons = data['array5']
     
     def update_travelled_distance(self,event):
         if (self.first_distance == True):
@@ -388,21 +389,20 @@ class DustbinRobot:
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
         
            
-        print(".................. STIMULUS VARIABLES ..................")
-        print(self.stimulus_variables)
+        # print(".................. STIMULUS VARIABLES ..................")
+        # print(self.stimulus_variables)
         
         self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
 
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0,0,0]
-                self.min_max_scaled[self.removed_robots[element]] = [0,0,0]
-            self.remove_robot=False
-    
+                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0,0,0] #make it scalable
+                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0,0,0] #make it scalable
+            self.remove_robot = False
 
-        print(".................. SCALED STIMULUS VARIABLES ..................")
-        print(self.min_max_scaled)
+        # print(".................. SCALED STIMULUS VARIABLES ..................")
+        # print(self.min_max_scaled)
    
         # obtain the stimulus value using a weighted sum
         self.alpha = 3
@@ -434,6 +434,7 @@ class DustbinRobot:
         # self.use_max_stimulus()
         # self.max_min_stimulus()
         # self.round_robin()
+        # self.owa()
 
         self.get_information = True
         self.set_end_time = True
@@ -444,6 +445,7 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
+
     
     def round_robin(self):
         self.robots_id = np.roll(self.robots_id,1)
@@ -514,18 +516,7 @@ class DustbinRobot:
         print("Probability function: "+str(self.stimulus))
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmax()     
-        
-    def write_data_to_csv(self):
-        data = [
-            # temps--goal_id--storage_disk--elapsed_time    
-            rospy.Time.now(), self.robot_goal_id, self.storage_disk[self.robot_goal_id], self.time_threshold[self.robot_goal_id]
-        ]
-        # Open CSV file for writing in append mode
-        with open('/mnt/storage_disk/random_prob.csv', 'a') as file:
-            writer = csv.writer(file)
-            # Write data to CSV file
-            writer.writerow(data)
-        
+               
     def update_robots_position(self, msg, robot_id):
         # fill the robots_information array with the robots information received from the NavSts 
         self.robots_information[robot_id][0] = msg.position.north

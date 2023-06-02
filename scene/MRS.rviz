@@ -20,373 +20,19 @@ Visualization Manager:
   Class: ""
   Displays:
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        robot0/base_link:
-          Value: true
-        robot0/depth:
-          Value: true
-        robot0/dvl:
-          Value: true
-        robot0/dvl_altitude:
-          Value: true
-        robot0/dynamics:
-          Value: true
-        robot0/echosounder:
-          Value: true
-        robot0/gps:
-          Value: true
-        robot0/imu:
-          Value: true
-        robot0/imu_filter:
-          Value: true
-        robot0/modem:
-          Value: true
-        robot0/pressure:
-          Value: true
-        robot0/thruster_0:
-          Value: true
-        robot0/thruster_1:
-          Value: true
-        robot0/thruster_2:
-          Value: true
-        robot1/base_link:
-          Value: true
-        robot1/depth:
-          Value: true
-        robot1/dvl:
-          Value: true
-        robot1/dvl_altitude:
-          Value: true
-        robot1/dynamics:
-          Value: true
-        robot1/echosounder:
-          Value: true
-        robot1/gps:
-          Value: true
-        robot1/imu:
-          Value: true
-        robot1/imu_filter:
-          Value: true
-        robot1/modem:
-          Value: true
-        robot1/pressure:
-          Value: true
-        robot1/thruster_0:
-          Value: true
-        robot1/thruster_1:
-          Value: true
-        robot1/thruster_2:
-          Value: true
-        robot2/base_link:
-          Value: true
-        robot2/depth:
-          Value: true
-        robot2/dvl:
-          Value: true
-        robot2/dvl_altitude:
-          Value: true
-        robot2/dynamics:
-          Value: true
-        robot2/echosounder:
-          Value: true
-        robot2/gps:
-          Value: true
-        robot2/imu:
-          Value: true
-        robot2/imu_filter:
-          Value: true
-        robot2/modem:
-          Value: true
-        robot2/pressure:
-          Value: true
-        robot2/thruster_0:
-          Value: true
-        robot2/thruster_1:
-          Value: true
-        robot2/thruster_2:
-          Value: true
-        robot3/base_link:
-          Value: true
-        robot3/depth:
-          Value: true
-        robot3/dvl:
-          Value: true
-        robot3/dvl_altitude:
-          Value: true
-        robot3/dynamics:
-          Value: true
-        robot3/echosounder:
-          Value: true
-        robot3/gps:
-          Value: true
-        robot3/imu:
-          Value: true
-        robot3/imu_filter:
-          Value: true
-        robot3/modem:
-          Value: true
-        robot3/pressure:
-          Value: true
-        robot3/thruster_0:
-          Value: true
-        robot3/thruster_1:
-          Value: true
-        robot3/thruster_2:
-          Value: true
-        robot4/base_link:
-          Value: true
-        robot4/depth:
-          Value: true
-        robot4/dvl:
-          Value: true
-        robot4/dvl_altitude:
-          Value: true
-        robot4/dynamics:
-          Value: true
-        robot4/echosounder:
-          Value: true
-        robot4/gps:
-          Value: true
-        robot4/imu:
-          Value: true
-        robot4/imu_filter:
-          Value: true
-        robot4/modem:
-          Value: true
-        robot4/pressure:
-          Value: true
-        robot4/thruster_0:
-          Value: true
-        robot4/thruster_1:
-          Value: true
-        robot4/thruster_2:
-          Value: true
-        robot5/base_link:
-          Value: true
-        robot5/depth:
-          Value: true
-        robot5/dvl:
-          Value: true
-        robot5/dvl_altitude:
-          Value: true
-        robot5/dynamics:
-          Value: true
-        robot5/echosounder:
-          Value: true
-        robot5/gps:
-          Value: true
-        robot5/imu:
-          Value: true
-        robot5/imu_filter:
-          Value: true
-        robot5/modem:
-          Value: true
-        robot5/pressure:
-          Value: true
-        robot5/thruster_0:
-          Value: true
-        robot5/thruster_1:
-          Value: true
-        robot5/thruster_2:
-          Value: true
-        robot6/base_link:
-          Value: true
-        robot6/dynamics:
-          Value: true
-        robot6/gps:
-          Value: true
-        robot6/imu:
-          Value: true
-        robot6/imu_filter:
-          Value: true
-        robot6/odom:
-          Value: true
-        robot6/thruster_1:
-          Value: true
-        robot6/thruster_2:
-          Value: true
-        robot6/usbl:
-          Value: true
-        world_ned:
-          Value: false
       Marker Scale: 2
       Name: tf
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        world_ned:
-          robot0/base_link:
-            robot0/dvl:
-              robot0/dvl_altitude:
-                {}
-            robot0/echosounder:
-              {}
-            robot0/gps:
-              {}
-            robot0/imu:
-              {}
-            robot0/imu_filter:
-              {}
-            robot0/modem:
-              {}
-            robot0/pressure:
-              robot0/depth:
-                {}
-            robot0/thruster_0:
-              {}
-            robot0/thruster_1:
-              {}
-            robot0/thruster_2:
-              {}
-          robot0/dynamics:
-            {}
-          robot1/base_link:
-            robot1/dvl:
-              robot1/dvl_altitude:
-                {}
-            robot1/echosounder:
-              {}
-            robot1/gps:
-              {}
-            robot1/imu:
-              {}
-            robot1/imu_filter:
-              {}
-            robot1/modem:
-              {}
-            robot1/pressure:
-              robot1/depth:
-                {}
-            robot1/thruster_0:
-              {}
-            robot1/thruster_1:
-              {}
-            robot1/thruster_2:
-              {}
-          robot1/dynamics:
-            {}
-          robot2/base_link:
-            robot2/dvl:
-              robot2/dvl_altitude:
-                {}
-            robot2/echosounder:
-              {}
-            robot2/gps:
-              {}
-            robot2/imu:
-              {}
-            robot2/imu_filter:
-              {}
-            robot2/modem:
-              {}
-            robot2/pressure:
-              robot2/depth:
-                {}
-            robot2/thruster_0:
-              {}
-            robot2/thruster_1:
-              {}
-            robot2/thruster_2:
-              {}
-          robot2/dynamics:
-            {}
-          robot3/base_link:
-            robot3/dvl:
-              robot3/dvl_altitude:
-                {}
-            robot3/echosounder:
-              {}
-            robot3/gps:
-              {}
-            robot3/imu:
-              {}
-            robot3/imu_filter:
-              {}
-            robot3/modem:
-              {}
-            robot3/pressure:
-              robot3/depth:
-                {}
-            robot3/thruster_0:
-              {}
-            robot3/thruster_1:
-              {}
-            robot3/thruster_2:
-              {}
-          robot3/dynamics:
-            {}
-          robot4/base_link:
-            robot4/dvl:
-              robot4/dvl_altitude:
-                {}
-            robot4/echosounder:
-              {}
-            robot4/gps:
-              {}
-            robot4/imu:
-              {}
-            robot4/imu_filter:
-              {}
-            robot4/modem:
-              {}
-            robot4/pressure:
-              robot4/depth:
-                {}
-            robot4/thruster_0:
-              {}
-            robot4/thruster_1:
-              {}
-            robot4/thruster_2:
-              {}
-          robot4/dynamics:
-            {}
-          robot5/base_link:
-            robot5/dvl:
-              robot5/dvl_altitude:
-                {}
-            robot5/echosounder:
-              {}
-            robot5/gps:
-              {}
-            robot5/imu:
-              {}
-            robot5/imu_filter:
-              {}
-            robot5/modem:
-              {}
-            robot5/pressure:
-              robot5/depth:
-                {}
-            robot5/thruster_0:
-              {}
-            robot5/thruster_1:
-              {}
-            robot5/thruster_2:
-              {}
-          robot5/dynamics:
-            {}
-          robot6/dynamics:
-            {}
-          robot6/odom:
-            robot6/base_link:
-              robot6/gps:
-                {}
-              robot6/imu:
-                {}
-              robot6/imu_filter:
-                {}
-              robot6/thruster_1:
-                {}
-              robot6/thruster_2:
-                {}
-              robot6/usbl:
-                {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Class: rviz/Axes
       Enabled: true
       Length: 1
@@ -416,7 +62,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: PointStamped
-      Radius: 3
+      Radius: 1
       Topic: /robot0/pilot/goal
       Unreliable: false
       Value: true
@@ -426,7 +72,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: PointStamped
-      Radius: 3
+      Radius: 1
       Topic: /robot1/pilot/goal
       Unreliable: false
       Value: true
@@ -436,7 +82,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: PointStamped
-      Radius: 3
+      Radius: 1
       Topic: /robot2/pilot/goal
       Unreliable: false
       Value: true
@@ -446,7 +92,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: PointStamped
-      Radius: 3
+      Radius: 1
       Topic: /robot3/pilot/goal
       Unreliable: false
       Value: true
@@ -456,7 +102,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: PointStamped
-      Radius: 3
+      Radius: 1
       Topic: /robot4/pilot/goal
       Unreliable: false
       Value: true
@@ -466,20 +112,20 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: PointStamped
-      Radius: 3
+      Radius: 1
       Topic: /robot5/pilot/goal
       Unreliable: false
       Value: true
     - Alpha: 1
       Class: rviz/PointStamped
       Color: 239; 41; 41
-      Enabled: false
+      Enabled: true
       History Length: 1
       Name: PointStamped
-      Radius: 3
+      Radius: 1
       Topic: /robot6/pilot/goal
       Unreliable: false
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /robot0/pilot/waypoint_marker
@@ -1128,7 +774,7 @@ Visualization Manager:
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /robot3/dynamics/odometry
+      Topic: /robot3/navigator/odometry_throttle
       Unreliable: false
       Value: true
     - Angle Tolerance: 0.10000000149011612
@@ -1234,29 +880,29 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /mrs/tracking_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /mrs/adrift_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /mrs/repulsion_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 114; 159; 207
@@ -1271,26 +917,21 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz/Orbit
-      Distance: 60.36697769165039
+      Angle: 0.4799998998641968
+      Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Focal Point:
-        X: 6.7660088539123535
-        Y: 5.915698528289795
-        Z: 13.080689430236816
-      Focal Shape Fixed Size: true
-      Focal Shape Size: 0.05000000074505806
-      Invert Z Axis: true
+      Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3097964823246002
+      Scale: 4.304912567138672
       Target Frame: turbot/base_link
-      Value: Orbit (rviz)
-      Yaw: 0.6599999666213989
+      Value: TopDownOrtho (rviz)
+      X: 2.2169954776763916
+      Y: 20.83365249633789
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875

@@ -26,6 +26,7 @@ class polygon_division:
         self.local_points=[]
         self.centroid_points = []
         self.main_polygon_centroid =[]
+        self.voronoi_offset_polygons = []
 
 
         self.read_file()
@@ -40,7 +41,8 @@ class polygon_division:
             'array1': self.cluster_centroids,
             'array2': self.voronoi_polygons,
             'array3': self.main_polygon,
-            'array4': self.main_polygon_centroid
+            'array4': self.main_polygon_centroid,
+            'array5': self.voronoi_offset_polygons
         }
 
         with open('/home/uib/area_partition_data.pickle', 'wb') as file:
@@ -87,7 +89,6 @@ class polygon_division:
         
 
     def clustering(self):
-        # reduced_data = PCA(n_components=2).fit_transform(self.points)
         print("************************ CLUSTERIIIING *********************************")
         reduced_data = self.points
         kmeans = KMeans(init="k-means++", n_clusters=self.number_of_robots, n_init=4)
@@ -192,7 +193,6 @@ class polygon_division:
 
         # colorize
         self.voronoi_polygons = []
-        self.voronoi_offset_polygons = []
         self.voronoi_polygons_points = []
         for region in regions:
             polygon = vertices[region]
@@ -213,6 +213,17 @@ class polygon_division:
         # plt.xlim(-100,100)
         # plt.ylim(-100,100)
         # plt.show()
+    
+    def define_voronoi_offset_polygons(self,offset):
+        # create voronoi_offset_polygons in order to ensure the complete coverage of the areas
+        for voronoi_polygon in range(len(self.voronoi_polygons)):
+            new_polygon = self.create_voronoi_offset_polygon(voronoi_polygon,offset)
+            self.voronoi_offset_polygons.append(new_polygon)
+    
+    def create_voronoi_offset_polygon(self,polygon,offset):
+        goal_polygon = self.voronoi_polygons[polygon]
+        offset_polygon = goal_polygon.buffer(offset,cap_style=3, join_style=2)
+        return(offset_polygon)
         
 
     def voronoi_finite_polygons_2d(self,vor, radius=None):

@@ -102,10 +102,11 @@ class MultiRobotSystem:
         self.voronoi_polygons = data['array2']
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
+        self.voronoi_offset_polygons = data['array5']
 
     def initialization(self): 
         # wait 7 seconds in order to initialize the different robot architectures
-        rospy.sleep(10)      
+        # rospy.sleep(10)      
         if np.all(self.robot_initialization == False):
             for robot in range(self.number_of_robots):
                 self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
@@ -119,26 +120,35 @@ class MultiRobotSystem:
         self.goals = self.task_allocation_handler.task_allocation()
         for task in range(len(self.goals)):
             self.task_monitoring.append(0)
-            
         self.goal_polygons = self.goals[self.robot_ID][1]
-        print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
+        # print("The robot_"+str(self.robot_ID)+" has the following goals: "+str(self.goal_polygons))
         self.goal_points = self.area_handler.define_path_coverage()
         self.coverage()
 
     def coverage(self):      
-        for task in range(len(self.goal_polygons)):
-            print("The robot_"+str(self.robot_ID)+" is covering the polygon: "+str(self.goal_polygons[task]))
-            # get the points of the largest polygon side
-            self.point1, self.point2 = self.area_handler.find_largest_side_distance(self.voronoi_polygons[self.goal_polygons[task]])
-            self.mrs_coverage(self.goal_polygons[task])
+        print("The robot_"+str(self.robot_ID)+" is covering the polygon: "+str(self.goal_polygons[0]))
+        # get the points of the largest polygon side
+        self.point1, self.point2 = self.area_handler.find_largest_side_distance(self.voronoi_polygons[self.goal_polygons[0]])
+        # obtain the closest point AUV-larges poligon side
+        self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
+        dist_p1 = self.robot_handler.get_robot_distance_to_point(self.robot_position_north, self.robot_position_east,self.point1[0],self.point1[1])
+        dist_p2 = self.robot_handler.get_robot_distance_to_point(self.robot_position_north, self.robot_position_east,self.point2[0],self.point2[1])
+        if(dist_p1>dist_p2):
+            self.first_point = self.point1
+            self.second_point = self.point2
+        else: 
+            self.first_point = self.point2
+            self.second_point = self.point1
 
-            # advise the robot_id of the robot that finishes the task
-            msg = ExplorationUpdate()
-            msg.header.frame_id = "exploration_area"
-            msg.header.stamp = rospy.Time.now()
-            msg.robot_id = self.robot_ID 
-            msg.explored_sub_area = self.goal_polygons[task]
-            self.exploration_update_pub.publish(msg)
+        self.mrs_coverage(self.goal_polygons[0])
+
+        # advise the robot_id of the robot that finishes the task
+        msg = ExplorationUpdate()
+        msg.header.frame_id = "exploration_area"
+        msg.header.stamp = rospy.Time.now()
+        msg.robot_id = self.robot_ID 
+        msg.explored_sub_area = self.goal_polygons[0]
+        self.exploration_update_pub.publish(msg)
         
         # advise the robot_id of the robot that finishes ALL the tasks
         msg = Int16()
@@ -158,21 +168,17 @@ class MultiRobotSystem:
             self.send_folowing_section = False
   
     def mrs_coverage(self,goal):
-        # self.task_allocation_handler.update_task_status(self.robot_ID,goal,1,self.central_polygon,self.goal_polygons,self.actual_section)
         self.data_gattered = True
         section_points = self.goal_points[goal]
-       
 
         for section in range(len(section_points)):
-            # self.task_allocation_handler.update_task_status(self.robot_ID,goal,2,self.central_polygon,self.goal_polygons,self.actual_section)
-            self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
             self.current_section = section_points[section]
             
             if(self.start == True):
                 self.start = False
                
                 # send the robot to start the area exploration
-                self.robot_handler.send_section_strategy((0,0),self.point1,self.robot_ID)
+                self.robot_handler.send_section_strategy((0,0),self.first_point,self.robot_ID)
                 self.wait_until_section_reached()
 
                 # advise the time when the robot starts the coverage
@@ -182,11 +188,12 @@ class MultiRobotSystem:
                 self.start_coverage_time.publish(msg)
 
                 # send the first section over the largest polygon side in order to cover the hole exploration area
-                self.robot_handler.send_section_strategy(self.point1,self.point2,self.robot_ID)
+                self.robot_handler.send_section_strategy(self.first_point,self.second_point,self.robot_ID)
                 self.wait_until_section_reached()
 
             if(section >= 1 and self.send_folowing_section == True):
                 self.current_section = section_points[section]
+                self.robot_position_north,self.robot_position_east,self.robot_position_depth,self.robot_orientation_yaw = self.robot_handler.get_robot_position(self.robot_ID)
                 # Check the order of the initial and final points, set the initial point to the nearest point and the final to the furthest point 
                 first_point = self.current_section[0]
                 first_point_distance = self.robot_handler.get_robot_distance_to_point(self.robot_position_north,self.robot_position_east,first_point[0],first_point[1])
