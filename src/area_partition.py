@@ -21,7 +21,6 @@ from cola2_lib.utils.ned import NED
 from geometry_msgs.msg import PointStamped
 import matplotlib.pyplot as plt
 from std_srvs.srv import Empty, EmptyRequest
-from cola2_msgs.srv import Goto, GotoRequest
 from cola2_msgs.msg import  NavSts
 from shapely.prepared import prep
 import geopandas as gpd
@@ -165,11 +164,6 @@ class area_partition:
         return(estimated_coverage_time)
 
     def define_path_coverage(self):
-        #create the loop for the diferent voronoi offset polygons
-        # for self.polygon_id in range(len(self.voronoi_offset_polygons)):
-        #     self.find_largest_side(self.voronoi_offset_polygons[self.polygon_id])
-        #     goal_points = self.cover_lines(self.voronoi_offset_polygons[self.polygon_id])
-        # return(goal_points)
         for self.polygon_id in range(self.number_of_robots):
             self.find_largest_side(self.voronoi_polygons[self.polygon_id])
             goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
@@ -234,7 +228,7 @@ class area_partition:
         x,y = polygon.exterior.coords.xy
         slope = (y[self.reference_points[1]]-y[self.reference_points[0]])/(x[self.reference_points[1]]-x[self.reference_points[0]])
         y_coordinate =[]
-        x_threshold = 100 #take care with this harcoded parameter
+        x_threshold = 200 #take care with this harcoded parameter
  
         if(x[self.reference_points[0]] > x[self.reference_points[1]]):
             x_0 = x[self.reference_points[0]] + x_threshold
@@ -294,7 +288,7 @@ class area_partition:
         for part in parts:
             x, y = part.xy
             plt.plot(x, y, linewidth=3, solid_capstyle='round', zorder=1)
-        plt.show()
+        # plt.show()
     
     def get_initial_section(self, polygon):
         reference_points = self.find_largest_side(self.voronoi_polygons[polygon])

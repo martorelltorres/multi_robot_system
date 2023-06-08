@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /tf1/Frames1
       Splitter Ratio: 0.5382353067398071
-    Tree Height: 845
+    Tree Height: 419
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -20,19 +20,267 @@ Visualization Manager:
   Class: ""
   Displays:
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        robot0/base_link:
+          Value: true
+        robot0/depth:
+          Value: true
+        robot0/dvl:
+          Value: true
+        robot0/dvl_altitude:
+          Value: true
+        robot0/dynamics:
+          Value: true
+        robot0/echosounder:
+          Value: true
+        robot0/gps:
+          Value: true
+        robot0/imu:
+          Value: true
+        robot0/imu_filter:
+          Value: true
+        robot0/modem:
+          Value: true
+        robot0/pressure:
+          Value: true
+        robot0/thruster_0:
+          Value: true
+        robot0/thruster_1:
+          Value: true
+        robot0/thruster_2:
+          Value: true
+        robot1/base_link:
+          Value: true
+        robot1/depth:
+          Value: true
+        robot1/dvl:
+          Value: true
+        robot1/dvl_altitude:
+          Value: true
+        robot1/dynamics:
+          Value: true
+        robot1/echosounder:
+          Value: true
+        robot1/gps:
+          Value: true
+        robot1/imu:
+          Value: true
+        robot1/imu_filter:
+          Value: true
+        robot1/modem:
+          Value: true
+        robot1/pressure:
+          Value: true
+        robot1/thruster_0:
+          Value: true
+        robot1/thruster_1:
+          Value: true
+        robot1/thruster_2:
+          Value: true
+        robot2/base_link:
+          Value: true
+        robot2/depth:
+          Value: true
+        robot2/dvl:
+          Value: true
+        robot2/dvl_altitude:
+          Value: true
+        robot2/dynamics:
+          Value: true
+        robot2/echosounder:
+          Value: true
+        robot2/gps:
+          Value: true
+        robot2/imu:
+          Value: true
+        robot2/imu_filter:
+          Value: true
+        robot2/modem:
+          Value: true
+        robot2/pressure:
+          Value: true
+        robot2/thruster_0:
+          Value: true
+        robot2/thruster_1:
+          Value: true
+        robot2/thruster_2:
+          Value: true
+        robot3/base_link:
+          Value: true
+        robot3/depth:
+          Value: true
+        robot3/dvl:
+          Value: true
+        robot3/dvl_altitude:
+          Value: true
+        robot3/dynamics:
+          Value: true
+        robot3/echosounder:
+          Value: true
+        robot3/gps:
+          Value: true
+        robot3/imu:
+          Value: true
+        robot3/imu_filter:
+          Value: true
+        robot3/modem:
+          Value: true
+        robot3/pressure:
+          Value: true
+        robot3/thruster_0:
+          Value: true
+        robot3/thruster_1:
+          Value: true
+        robot3/thruster_2:
+          Value: true
+        robot6/base_link:
+          Value: true
+        robot6/dynamics:
+          Value: true
+        robot6/gps:
+          Value: true
+        robot6/imu:
+          Value: true
+        robot6/imu_filter:
+          Value: true
+        robot6/odom:
+          Value: true
+        robot6/thruster_1:
+          Value: true
+        robot6/thruster_2:
+          Value: true
+        robot6/usbl:
+          Value: true
+        world_ned:
+          Value: true
       Marker Scale: 2
       Name: tf
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world_ned:
+          robot0/base_link:
+            robot0/dvl:
+              robot0/dvl_altitude:
+                {}
+            robot0/echosounder:
+              {}
+            robot0/gps:
+              {}
+            robot0/imu:
+              {}
+            robot0/imu_filter:
+              {}
+            robot0/modem:
+              {}
+            robot0/pressure:
+              robot0/depth:
+                {}
+            robot0/thruster_0:
+              {}
+            robot0/thruster_1:
+              {}
+            robot0/thruster_2:
+              {}
+          robot0/dynamics:
+            {}
+          robot1/base_link:
+            robot1/dvl:
+              robot1/dvl_altitude:
+                {}
+            robot1/echosounder:
+              {}
+            robot1/gps:
+              {}
+            robot1/imu:
+              {}
+            robot1/imu_filter:
+              {}
+            robot1/modem:
+              {}
+            robot1/pressure:
+              robot1/depth:
+                {}
+            robot1/thruster_0:
+              {}
+            robot1/thruster_1:
+              {}
+            robot1/thruster_2:
+              {}
+          robot1/dynamics:
+            {}
+          robot2/base_link:
+            robot2/dvl:
+              robot2/dvl_altitude:
+                {}
+            robot2/echosounder:
+              {}
+            robot2/gps:
+              {}
+            robot2/imu:
+              {}
+            robot2/imu_filter:
+              {}
+            robot2/modem:
+              {}
+            robot2/pressure:
+              robot2/depth:
+                {}
+            robot2/thruster_0:
+              {}
+            robot2/thruster_1:
+              {}
+            robot2/thruster_2:
+              {}
+          robot2/dynamics:
+            {}
+          robot3/base_link:
+            robot3/dvl:
+              robot3/dvl_altitude:
+                {}
+            robot3/echosounder:
+              {}
+            robot3/gps:
+              {}
+            robot3/imu:
+              {}
+            robot3/imu_filter:
+              {}
+            robot3/modem:
+              {}
+            robot3/pressure:
+              robot3/depth:
+                {}
+            robot3/thruster_0:
+              {}
+            robot3/thruster_1:
+              {}
+            robot3/thruster_2:
+              {}
+          robot3/dynamics:
+            {}
+          robot6/dynamics:
+            {}
+          robot6/odom:
+            robot6/base_link:
+              robot6/gps:
+                {}
+              robot6/imu:
+                {}
+              robot6/imu_filter:
+                {}
+              robot6/thruster_1:
+                {}
+              robot6/thruster_2:
+                {}
+              robot6/usbl:
+                {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Class: rviz/Axes
       Enabled: true
       Length: 1
@@ -163,7 +411,7 @@ Visualization Manager:
       Marker Topic: /robot4/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /robot4/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -171,7 +419,7 @@ Visualization Manager:
       Marker Topic: /robot5/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /robot5/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -179,7 +427,7 @@ Visualization Manager:
       Marker Topic: /robot6/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /robot6/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -917,21 +1165,26 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.4799998998641968
-      Class: rviz/TopDownOrtho
+      Class: rviz/XYOrbit
+      Distance: 139.7808074951172
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Invert Z Axis: false
+      Focal Point:
+        X: -26.07902717590332
+        Y: 28.486238479614258
+        Z: -0.00014542050485033542
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: true
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 4.304912567138672
+      Pitch: 1.4602025747299194
       Target Frame: turbot/base_link
-      Value: TopDownOrtho (rviz)
-      X: 2.2169954776763916
-      Y: 20.83365249633789
+      Value: XYOrbit (rviz)
+      Yaw: 2.9003946781158447
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875
@@ -959,7 +1212,7 @@ Window Geometry:
   Height: 1025
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000020000000000000156000003a7fc0200000003fc0000003d000003a7000000e60100001cfa000000000100000002fb000000100044006900730070006c0061007900730100000000ffffffff0000015600fffffffb0000000a005600690065007700730100000000000001a90000010000fffffffb0000000c00430061006d0065007200610000000041000000160000000000000000fb00000012007300650067006d0065006e00740065006400000002af0000013500000000000000000000000100000244000003ccfc0200000003fb000000120069006d006100670065005f0072006100770000000016000003cc0000000000000000fb000000120069006d006100670065005f0072006100770000000206000001dc0000000000000000fb0000000a0049006d00610067006500000001f90000017f0000000000000000000005e1000003a700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000020000000000000156000003a7fc0200000003fc0000003d000003a7000000e60100001cfa000000010100000002fb000000100044006900730070006c0061007900730100000000ffffffff0000015600fffffffb0000000a005600690065007700730100000000000001a90000010000fffffffb0000000c00430061006d0065007200610000000041000000160000000000000000fb00000012007300650067006d0065006e00740065006400000002af0000013500000000000000000000000100000244000003ccfc0200000003fb000000120069006d006100670065005f0072006100770000000016000003cc0000000000000000fb000000120069006d006100670065005f0072006100770000000206000001dc0000000000000000fb0000000a0049006d00610067006500000001f90000017f0000000000000000000005e1000003a700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1853

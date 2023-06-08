@@ -17,8 +17,8 @@ from multi_robot_system.msg import PartitionedPolygonInfo
 class polygon_division:
 
     def __init__(self, name):
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
-        self.number_of_robots = get_param(self,'number_of_robots',6)
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
+        self.number_of_robots = get_param(self,'number_of_robots',4)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = get_param(self,'ned_origin_lat',39.14803625)
         self.ned_origin_lon = get_param(self,'ned_origin_lon',2.93195323)
@@ -47,6 +47,7 @@ class polygon_division:
 
         with open('/home/uib/area_partition_data.pickle', 'wb') as file:
             pickle.dump(data, file)
+        print("...process finished")
  
 
     def read_file(self):
@@ -85,7 +86,11 @@ class polygon_division:
             self.east_position.append(east) 
             
         self.north_position.append(self.north_position[0])
-        self.east_position.append(self.east_position[0])    
+        self.east_position.append(self.east_position[0]) 
+
+        plt.plot(self.north_position,self.east_position)
+        plt.axis('equal')
+        plt.show()   
         
 
     def clustering(self):
@@ -108,16 +113,16 @@ class polygon_division:
         # Put the result into a color plot
         Z = Z.reshape(xx.shape)
         self.cluster_centroids = kmeans.cluster_centers_
-        # plt.figure(1)
-        # plt.clf()
-        # plt.imshow(
-        #     Z,
-        #     interpolation="nearest",
-        #     extent=(xx.min(), xx.max(), yy.min(), yy.max()),
-        #     cmap=plt.cm.Paired,
-        #     aspect="auto",
-        #     origin="lower",
-        # )
+        plt.figure(1)
+        plt.clf()
+        plt.imshow(
+            Z,
+            interpolation="nearest",
+            extent=(xx.min(), xx.max(), yy.min(), yy.max()),
+            cmap=plt.cm.Paired,
+            aspect="auto",
+            origin="lower",
+        )
 
         # plt.plot(reduced_data[:, 0], reduced_data[:, 1], "k.", markersize=2)
         # # Plot the centroids as a white X
@@ -134,6 +139,8 @@ class polygon_division:
 
         # plt.xlim(x_min, x_max)
         # plt.ylim(y_min, y_max)
+        # plt.xlabel("Eje X")
+        # plt.ylabel("Eje Y")
         # plt.xticks(())
         # plt.yticks(())
         # plt.show()
@@ -154,8 +161,6 @@ class polygon_division:
             self.main_polygon = Polygon(self.local_points)
             self.main_polygon_centroid = self.main_polygon.centroid
             self.polygon_points = self.local_points
-            # Triangulate the polygon
-            poligonized_points =Polygon(self.polygon_points)
             # .........................................................................
             # Generate random points within the polygon
             num_points = 500
@@ -172,8 +177,6 @@ class polygon_division:
             self.points = np.array(self.centroid_points)
 
             self.clustering()
-            # print("*********** CLUSTER CENTROIDS *******************")
-            # print(self.cluster_centroids)
             self.conpute_voronoi_tesselation()
             
     def conpute_voronoi_tesselation(self):
@@ -208,11 +211,11 @@ class polygon_division:
         
         self.voronoy_polygons_settled = True
         
-        # plt.plot(*zip(*self.polygon_points))
+        plt.plot(*zip(*self.polygon_points))
         # plt.axis('equal')
-        # plt.xlim(-100,100)
-        # plt.ylim(-100,100)
-        # plt.show()
+        plt.xlim(-50,120)
+        plt.ylim(-50,120)
+        plt.show()
     
     def define_voronoi_offset_polygons(self,offset):
         # create voronoi_offset_polygons in order to ensure the complete coverage of the areas

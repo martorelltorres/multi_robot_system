@@ -92,7 +92,7 @@
     </node>
 
     <!-- Robot 4 -->
-    <node name="multi_robot_system_$(arg robot_4)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
+    <!-- <node name="multi_robot_system_$(arg robot_4)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
       <param name="robot_ID" value="4"/>
       <param name="robot_name" value= "$(arg robot_4)"/>
       <param name="battery_topic" value="/$(arg robot_4)/batteries/status"/>
@@ -101,10 +101,10 @@
       <param name="robot_bvr_topic" value="/$(arg robot_4)/controller/body_velocity_req"/>
       <param name="navigation_depth" value="5"/>
       <remap from="/task_monitoring" to="$(arg robot_4)/task_monitoring"/>
-    </node>
+    </node> -->
 
     <!-- Robot 5 -->
-    <node name="multi_robot_system_$(arg robot_5)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
+    <!-- <node name="multi_robot_system_$(arg robot_5)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
       <param name="robot_ID" value="5"/>
       <param name="robot_name" value= "$(arg robot_5)"/>
       <param name="battery_topic" value="/$(arg robot_5)/batteries/status"/>
@@ -113,17 +113,17 @@
       <param name="robot_bvr_topic" value="/$(arg robot_5)/controller/body_velocity_req"/>
       <param name="navigation_depth" value="5"/>
       <remap from="/task_monitoring" to="$(arg robot_5)/task_monitoring"/>
-    </node>
+    </node> -->
 
     <!-- ROBOT 7 ASV -->
-    <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
+    <!-- <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
       <param name="robot_ID" value="6"/>
       <param name="section_action" value="/$(arg robot_6)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_6)/pilot/world_section_req/result"/>
       <param name="repulsion_radius" value="6"/>
       <param name="adrift_radius" value="20"/>
       <param name="tracking_radius" value="30"/>
-    </node>
+    </node> -->
 
     <!-- Communications module -->
     <group if="$(arg enableCommunicationModule)">

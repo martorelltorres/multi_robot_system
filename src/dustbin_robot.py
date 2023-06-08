@@ -26,7 +26,7 @@ class DustbinRobot:
   
     def __init__(self, name):
         """ Init the class """
-        rospy.sleep(5)
+        rospy.sleep(7)
         self.name = name
         node_name = rospy.get_name()
 
@@ -397,8 +397,8 @@ class DustbinRobot:
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0,0,0] #make it scalable
-                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0,0,0] #make it scalable
+                self.stimulus_variables[self.removed_robots[element]] = [0,0,0] #make it scalable
+                self.min_max_scaled[self.removed_robots[element]] = [0,0,0] #make it scalable
             self.remove_robot = False
 
         # print(".................. SCALED STIMULUS VARIABLES ..................")

@@ -3,14 +3,18 @@
 # ---------------------------------------------------------
 
 # ------------------ ROBOTS INFO -----------------------
-number_of_robots: 6 
-# be sure that all the simulated architectures has the same NED origin (Bendinat)
+number_of_robots: 4 
+# be sure that all the simulated architectures has the same NED origin 
 ned_origin_lat: 39.14803625
 ned_origin_lon: 2.93195323
 
 # ------------------ AREA PARTITION -----------------------
 # Exploration area
-exploration_area: "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml"
+# exploration_area: "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml"
+# exploration_area: "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606090038_cabrera_nano.xml"
+exploration_area: "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606123946_square.xml"
+
+
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_polygon_distance: 5
 # The offset_coverage_distance set the distance between the coverage lines path
