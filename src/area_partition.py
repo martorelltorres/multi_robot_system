@@ -111,9 +111,9 @@ class area_partition:
 
    
     def get_main_polygon_centroid(self):
-        self.main_polygon = Polygon(self.local_points)
-        polygon_centroid = self.main_polygon.centroid
-        return(polygon_centroid)
+        # self.main_polygon = Polygon(self.local_points)
+        # polygon_centroid = self.main_polygon.centroid
+        return(self.main_polygon_centroid)
 
     def get_polygon_centroids(self):
         return(self.centroid_points)

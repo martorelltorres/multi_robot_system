@@ -42,8 +42,6 @@ class communications:
             self.storage_disk.append(0)
             self.battery_charge.append(0)
             
-
-
         #Publishers
 
         self.robot0_comm_pub = rospy.Publisher(node_name +"/robot0_communication",
@@ -55,6 +53,18 @@ class communications:
                                 queue_size=1)
         
         self.robot2_comm_pub = rospy.Publisher(node_name +"/robot2_communication",
+                                Communication,
+                                queue_size=1)
+        
+        self.robot3_comm_pub = rospy.Publisher(node_name +"/robot3_communication",
+                                Communication,
+                                queue_size=1)
+        
+        self.robot4_comm_pub = rospy.Publisher(node_name +"/robot4_communication",
+                                Communication,
+                                queue_size=1)
+        
+        self.robot5_comm_pub = rospy.Publisher(node_name +"/robot5_communication",
                                 Communication,
                                 queue_size=1)
 
@@ -162,8 +172,15 @@ class communications:
             self.robot0_comm_pub.publish(communication_msg)
         elif(self.auv_id==1):
             self.robot1_comm_pub.publish(communication_msg)
-        else:
+        elif(self.auv_id==2):
             self.robot2_comm_pub.publish(communication_msg)
+        elif(self.auv_id==3):
+            self.robot3_comm_pub.publish(communication_msg)
+        elif(self.auv_id==4):
+            self.robot4_comm_pub.publish(communication_msg)
+        else:
+            self.robot5_comm_pub.publish(communication_msg)
+        
         
         self.rate.sleep()
       

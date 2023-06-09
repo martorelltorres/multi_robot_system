@@ -18,7 +18,8 @@ class polygon_division:
 
     def __init__(self, name):
         self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
-        self.number_of_robots = get_param(self,'number_of_robots',4)
+        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
+        self.number_of_robots = get_param(self,'number_of_robots',6)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = get_param(self,'ned_origin_lat',39.14803625)
         self.ned_origin_lon = get_param(self,'ned_origin_lon',2.93195323)
@@ -88,9 +89,9 @@ class polygon_division:
         self.north_position.append(self.north_position[0])
         self.east_position.append(self.east_position[0]) 
 
-        plt.plot(self.north_position,self.east_position)
-        plt.axis('equal')
-        plt.show()   
+        # plt.plot(self.north_position,self.east_position)
+        # plt.axis('equal')
+        # plt.show()   
         
 
     def clustering(self):
@@ -212,9 +213,9 @@ class polygon_division:
         self.voronoy_polygons_settled = True
         
         plt.plot(*zip(*self.polygon_points))
-        # plt.axis('equal')
-        plt.xlim(-50,120)
-        plt.ylim(-50,120)
+        plt.axis('equal')
+        # plt.xlim(-50,120)
+        # plt.ylim(-50,10)
         plt.show()
     
     def define_voronoi_offset_polygons(self,offset):

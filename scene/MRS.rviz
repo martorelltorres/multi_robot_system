@@ -5,8 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /tf1/Frames1
-      Splitter Ratio: 0.5382353067398071
-    Tree Height: 419
+      Splitter Ratio: 0.520588219165802
+    Tree Height: 845
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -136,6 +136,62 @@ Visualization Manager:
           Value: true
         robot3/thruster_2:
           Value: true
+        robot4/base_link:
+          Value: true
+        robot4/depth:
+          Value: true
+        robot4/dvl:
+          Value: true
+        robot4/dvl_altitude:
+          Value: true
+        robot4/dynamics:
+          Value: true
+        robot4/echosounder:
+          Value: true
+        robot4/gps:
+          Value: true
+        robot4/imu:
+          Value: true
+        robot4/imu_filter:
+          Value: true
+        robot4/modem:
+          Value: true
+        robot4/pressure:
+          Value: true
+        robot4/thruster_0:
+          Value: true
+        robot4/thruster_1:
+          Value: true
+        robot4/thruster_2:
+          Value: true
+        robot5/base_link:
+          Value: true
+        robot5/depth:
+          Value: true
+        robot5/dvl:
+          Value: true
+        robot5/dvl_altitude:
+          Value: true
+        robot5/dynamics:
+          Value: true
+        robot5/echosounder:
+          Value: true
+        robot5/gps:
+          Value: true
+        robot5/imu:
+          Value: true
+        robot5/imu_filter:
+          Value: true
+        robot5/modem:
+          Value: true
+        robot5/pressure:
+          Value: true
+        robot5/thruster_0:
+          Value: true
+        robot5/thruster_1:
+          Value: true
+        robot5/thruster_2:
+          Value: true
         robot6/base_link:
           Value: true
         robot6/dynamics:
@@ -262,6 +318,56 @@ Visualization Manager:
             robot3/thruster_2:
               {}
           robot3/dynamics:
+            {}
+          robot4/base_link:
+            robot4/dvl:
+              robot4/dvl_altitude:
+                {}
+            robot4/echosounder:
+              {}
+            robot4/gps:
+              {}
+            robot4/imu:
+              {}
+            robot4/imu_filter:
+              {}
+            robot4/modem:
+              {}
+            robot4/pressure:
+              robot4/depth:
+                {}
+            robot4/thruster_0:
+              {}
+            robot4/thruster_1:
+              {}
+            robot4/thruster_2:
+              {}
+          robot4/dynamics:
+            {}
+          robot5/base_link:
+            robot5/dvl:
+              robot5/dvl_altitude:
+                {}
+            robot5/echosounder:
+              {}
+            robot5/gps:
+              {}
+            robot5/imu:
+              {}
+            robot5/imu_filter:
+              {}
+            robot5/modem:
+              {}
+            robot5/pressure:
+              robot5/depth:
+                {}
+            robot5/thruster_0:
+              {}
+            robot5/thruster_1:
+              {}
+            robot5/thruster_2:
+              {}
+          robot5/dynamics:
             {}
           robot6/dynamics:
             {}
@@ -411,7 +517,7 @@ Visualization Manager:
       Marker Topic: /robot4/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        {}
+        /robot4/pilot: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -419,7 +525,7 @@ Visualization Manager:
       Marker Topic: /robot5/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        {}
+        /robot5/pilot: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -427,7 +533,7 @@ Visualization Manager:
       Marker Topic: /robot6/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        {}
+        /robot6/pilot: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -1128,29 +1234,29 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Marker
-      Enabled: false
+      Enabled: true
       Marker Topic: /mrs/tracking_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: false
+      Value: true
     - Class: rviz/Marker
-      Enabled: false
+      Enabled: true
       Marker Topic: /mrs/adrift_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: false
+      Value: true
     - Class: rviz/Marker
-      Enabled: false
+      Enabled: true
       Marker Topic: /mrs/repulsion_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 114; 159; 207
@@ -1166,25 +1272,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 139.7808074951172
+      Distance: 107.01598358154297
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -26.07902717590332
-        Y: 28.486238479614258
+        X: 24.813194274902344
+        Y: 25.492107391357422
         Z: -0.00014542050485033542
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: true
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4602025747299194
+      Pitch: 1.5547963380813599
       Target Frame: turbot/base_link
       Value: XYOrbit (rviz)
-      Yaw: 2.9003946781158447
+      Yaw: 2.49039626121521
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875
@@ -1212,7 +1318,7 @@ Window Geometry:
   Height: 1025
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000020000000000000156000003a7fc0200000003fc0000003d000003a7000000e60100001cfa000000010100000002fb000000100044006900730070006c0061007900730100000000ffffffff0000015600fffffffb0000000a005600690065007700730100000000000001a90000010000fffffffb0000000c00430061006d0065007200610000000041000000160000000000000000fb00000012007300650067006d0065006e00740065006400000002af0000013500000000000000000000000100000244000003ccfc0200000003fb000000120069006d006100670065005f0072006100770000000016000003cc0000000000000000fb000000120069006d006100670065005f0072006100770000000206000001dc0000000000000000fb0000000a0049006d00610067006500000001f90000017f0000000000000000000005e1000003a700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000020000000000000156000003a7fc0200000003fc0000003d000003a7000000e60100001cfa000000000100000002fb000000100044006900730070006c0061007900730100000000ffffffff0000015600fffffffb0000000a005600690065007700730100000000000001a90000010000fffffffb0000000c00430061006d0065007200610000000041000000160000000000000000fb00000012007300650067006d0065006e00740065006400000002af0000013500000000000000000000000100000244000003ccfc0200000003fb000000120069006d006100670065005f0072006100770000000016000003cc0000000000000000fb000000120069006d006100670065005f0072006100770000000206000001dc0000000000000000fb0000000a0049006d00610067006500000001f90000017f0000000000000000000005e1000003a700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1853

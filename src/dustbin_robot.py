@@ -389,20 +389,20 @@ class DustbinRobot:
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
         
            
-        # print(".................. STIMULUS VARIABLES ..................")
-        # print(self.stimulus_variables)
+        print(".................. STIMULUS VARIABLES ..................")
+        print(self.stimulus_variables)
         
         self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
 
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0,0,0] #make it scalable
-                self.min_max_scaled[self.removed_robots[element]] = [0,0,0] #make it scalable
+                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0,0,0] #make it scalable
+                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0,0,0] #make it scalable
             self.remove_robot = False
 
-        # print(".................. SCALED STIMULUS VARIABLES ..................")
-        # print(self.min_max_scaled)
+        print(".................. SCALED STIMULUS VARIABLES ..................")
+        print(self.min_max_scaled)
    
         # obtain the stimulus value using a weighted sum
         self.alpha = 3
@@ -579,7 +579,7 @@ class DustbinRobot:
     
     def communicate(self):
         print("_____COMMUNICATE_____")
-        time = self.storage_disk[self.robot_goal_id]/30
+        time = self.storage_disk[self.robot_goal_id]/100
         communication_init = rospy.Time.now().secs
 
         while(rospy.Time.now().secs-communication_init < time):
@@ -587,7 +587,6 @@ class DustbinRobot:
         
         self.get_time_threshold(self.robot_goal_id)
         self.transferred_data = self.transferred_data + self.storage_disk[self.robot_goal_id]
-
         # publish the total transferred data
         msg = Data()
         msg.header.stamp = rospy.Time.now()
@@ -830,4 +829,3 @@ if __name__ == '__main__':
         rospy.spin()
     except rospy.ROSInterruptException:
         pass    
-

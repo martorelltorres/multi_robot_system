@@ -135,7 +135,7 @@ class MultiRobotSystem:
         self.goal_polygons = self.goals[self.robot_ID][1]
         self.goal_points = self.area_handler.define_path_coverage()
         self.robot_sections = self.goal_points[self.robot_ID]
-        print( "The goals for robot"+str(self.robot_ID)+" are: "+str(self.goal_points[self.robot_ID]))
+        # print( "The goals for robot"+str(self.robot_ID)+" are: "+str(self.goal_points[self.robot_ID]))
         self.coverage()
     
     def coverage(self):

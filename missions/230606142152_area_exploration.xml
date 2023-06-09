@@ -2,8 +2,8 @@
   <mission_step>
     <maneuver type="waypoint">
       <position>
-        <latitude>39.14885239474723</latitude>
-        <longitude>2.9318349779758237</longitude>
+        <latitude>39.1483952757124</latitude>
+        <longitude>2.9314442149299254</longitude>
         <z>0.0</z>
         <altitude_mode>False</altitude_mode>
       </position>
@@ -18,8 +18,8 @@
   <mission_step>
     <maneuver type="waypoint">
       <position>
-        <latitude>39.148963192503174</latitude>
-        <longitude>2.932481298218826</longitude>
+        <latitude>39.14850607346835</latitude>
+        <longitude>2.932090535172928</longitude>
         <z>0.0</z>
         <altitude_mode>False</altitude_mode>
       </position>
@@ -34,8 +34,8 @@
   <mission_step>
     <maneuver type="waypoint">
       <position>
-        <latitude>39.1483907374308</latitude>
-        <longitude>2.9327952251939986</longitude>
+        <latitude>39.147933618395975</latitude>
+        <longitude>2.9324044621481002</longitude>
         <z>0.0</z>
         <altitude_mode>False</altitude_mode>
       </position>
@@ -50,8 +50,8 @@
   <mission_step>
     <maneuver type="waypoint">
       <position>
-        <latitude>39.147725950895136</latitude>
-        <longitude>2.932841390925642</longitude>
+        <latitude>39.14726883186031</latitude>
+        <longitude>2.9324506278797435</longitude>
         <z>0.0</z>
         <altitude_mode>False</altitude_mode>
       </position>
@@ -66,8 +66,8 @@
   <mission_step>
     <maneuver type="waypoint">
       <position>
-        <latitude>39.1484553694551</latitude>
-        <longitude>2.9316318487565947</longitude>
+        <latitude>39.14799825042027</latitude>
+        <longitude>2.9312410857106963</longitude>
         <z>0.0</z>
         <altitude_mode>False</altitude_mode>
       </position>
