@@ -45,7 +45,6 @@ class DustbinRobot:
 
         # Initialize some variables
         self.pose = [0,0]
-        self.get_information = False
         self.robot_at_center = False
         self.robots_id = np.array([])
         self.communication_times_delay = [0,0,0,0,0,0]
@@ -223,11 +222,26 @@ class DustbinRobot:
             rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
                          self.name)
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
+        
+        self.read_area_info()
 
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
+    
+    def read_area_info(self):
+        # Open the pickle file in binary mode
+        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+            # Load the data from the file
+            data = pickle.load(file)
+
+        # Access different data from the loaded data
+        self.cluster_centroids = data['array1']
+        self.voronoi_polygons = data['array2']
+        self.main_polygon = data['array3']
+        self.main_polygon_centroid = data['array4']
+        self.voronoi_offset_polygons = data['array5']
 
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -260,8 +274,6 @@ class DustbinRobot:
     def dustbin_trigger(self, event):
         # start the dustbin_strategy if all the has started the coverage
         if (np.all(self.start_dustbin_strategy) and self.first_dustbin_time == True):
-            print("START THE DUSTBIN STRATEGY!!!!!!!!!!!!")
-            self.get_information = True
             self.dustbin_strategy()
             self.first_dustbin_time = False
    
@@ -269,6 +281,10 @@ class DustbinRobot:
         self.asv_north_position = msg.position.north
         self.asv_east_position = msg.position.east      
         self.asv_yaw = msg.orientation.yaw
+        # move the ASV to the central area
+        if (self.robot_at_center == False):
+            self.transit_to(self.main_polygon_centroid)
+            self.robot_at_center = True
 
         if(self.enable_tracking == True):
             self.tracking()
@@ -505,14 +521,8 @@ class DustbinRobot:
     def check_dustbin_robot(self):
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            # self.goto_central_area()
+            self.transit_to(self.main_polygon_centroid)
                   
-    def goto_central_area(self):
-        self.central_point = self.area_handler.get_main_polygon_centroid()
-        self.pose = [self.central_point.x, self.central_point.y]
-        self.transit_to(self.main_polygon_centroid)
-        self.robot_at_center = True
-
     def initialization(self,robot_id):
         # check if all the n robots are publishing their information
         if(self.robots_information[robot_id][0] != 0):
