@@ -40,6 +40,7 @@ class DustbinRobot:
         self.repulsion_radius = self.get_param("repulsion_radius",2)
         self.adrift_radius = self.get_param("adrift_radius",5)
         self.tracking_radius = self.get_param("tracking_radius",20)
+        self.dutsbin_timer = self.get_param("dutsbin_timer",1)
         self.area_handler =  area_partition("area_partition")
 
         # Initialize some variables
@@ -51,7 +52,6 @@ class DustbinRobot:
         self.communication_times_end = [0,0,0,0,0,0]
         self.system_init = False
         self.robot_data = [0,0]
-        self.reset_flag=True
         self.robots_information = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
@@ -77,14 +77,13 @@ class DustbinRobot:
         self.time_threshold=[]
         self.scaled_senses = []
         self.senses = []
+        self.asv_init=False
         self.number_of_stimulus = 3
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
         self.removed_robots= []
         self.communication=True
-        self.asv_init=False
         self.transferred_data = 0
-        self.flag=True
         self.communication_latency = []
         self.first_time = True
         self.travelled_distance = 0
@@ -438,8 +437,8 @@ class DustbinRobot:
         # self.max_min_stimulus()
         # self.round_robin()
 
+        self.set_end_time = True
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
-
         self.enable_tracking = True
 
         # publish the goal_id
@@ -537,7 +536,7 @@ class DustbinRobot:
     
     def communicate(self):
         print("_____COMMUNICATE_____")
-        time = self.storage_disk[self.robot_goal_id]/300
+        time = self.storage_disk[self.robot_goal_id]/100
         communication_init = rospy.Time.now().secs
 
         while(rospy.Time.now().secs-communication_init < time):
