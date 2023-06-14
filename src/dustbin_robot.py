@@ -45,6 +45,7 @@ class DustbinRobot:
 
         # Initialize some variables
         self.pose = [0,0]
+        self.get_information = False
         self.robot_at_center = False
         self.robots_id = np.array([])
         self.communication_times_delay = [0,0,0,0,0,0]
@@ -56,7 +57,7 @@ class DustbinRobot:
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
-        self.set_end_time = True
+        self.set_end_time = False
         self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
         self.first_dustbin_time = True
         self.trigger = False
@@ -77,7 +78,6 @@ class DustbinRobot:
         self.time_threshold=[]
         self.scaled_senses = []
         self.senses = []
-        self.asv_init=False
         self.number_of_stimulus = 3
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
@@ -145,12 +145,11 @@ class DustbinRobot:
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
         
-        if(self.asv_init==True):
-            for robot_id in range(self.number_of_robots):
-                rospy.Subscriber("/mrs/communications_sim/robot"+str(robot_id)+"_communication",
-                            Communication,    
-                            self.update_communication_state,
-                            queue_size=1)
+        for robot_id in range(self.number_of_robots):
+            rospy.Subscriber("/mrs/communications_sim/robot"+str(robot_id)+"_communication",
+                        Communication,    
+                        self.update_communication_state,
+                        queue_size=1)
             
         
         for robot in range(self.number_of_robots):
@@ -224,26 +223,11 @@ class DustbinRobot:
             rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
                          self.name)
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
-        
-        self.read_area_info()
 
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
-    
-    def read_area_info(self):
-        # Open the pickle file in binary mode
-        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
-            # Load the data from the file
-            data = pickle.load(file)
-
-        # Access different data from the loaded data
-        self.cluster_centroids = data['array1']
-        self.voronoi_polygons = data['array2']
-        self.main_polygon = data['array3']
-        self.main_polygon_centroid = data['array4']
-        self.voronoi_offset_polygons = data['array5']
 
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -276,6 +260,8 @@ class DustbinRobot:
     def dustbin_trigger(self, event):
         # start the dustbin_strategy if all the has started the coverage
         if (np.all(self.start_dustbin_strategy) and self.first_dustbin_time == True):
+            print("START THE DUSTBIN STRATEGY!!!!!!!!!!!!")
+            self.get_information = True
             self.dustbin_strategy()
             self.first_dustbin_time = False
    
@@ -283,11 +269,6 @@ class DustbinRobot:
         self.asv_north_position = msg.position.north
         self.asv_east_position = msg.position.east      
         self.asv_yaw = msg.orientation.yaw
-        self.asv_init=True
-        # move the ASV to the central area
-        if (self.robot_at_center == False):
-            self.transit_to(self.main_polygon_centroid)
-            self.robot_at_center = True
 
         if(self.enable_tracking == True):
             self.tracking()
@@ -524,8 +505,14 @@ class DustbinRobot:
     def check_dustbin_robot(self):
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            self.transit_to(self.main_polygon_centroid)
+            # self.goto_central_area()
                   
+    def goto_central_area(self):
+        self.central_point = self.area_handler.get_main_polygon_centroid()
+        self.pose = [self.central_point.x, self.central_point.y]
+        self.transit_to(self.main_polygon_centroid)
+        self.robot_at_center = True
+
     def initialization(self,robot_id):
         # check if all the n robots are publishing their information
         if(self.robots_information[robot_id][0] != 0):
@@ -536,11 +523,7 @@ class DustbinRobot:
     
     def communicate(self):
         print("_____COMMUNICATE_____")
-        time = self.storage_disk[self.robot_goal_id]/100
-        communication_init = rospy.Time.now().secs
 
-        while(rospy.Time.now().secs-communication_init < time):
-            self.communication=False
         
         self.get_time_threshold(self.robot_goal_id)
         self.transferred_data = self.transferred_data + self.storage_disk[self.robot_goal_id]
@@ -587,11 +570,22 @@ class DustbinRobot:
         # Communication area
         if(self.radius > self.adrift_radius):
             self.tracking_strategy()
-
-        if(self.radius < (self.adrift_radius+3) and self.set_end_time == True):
+        # entra aqui quan es setetja un nou goal_id
+        if(self.set_end_time == True):
             self.set_comm_end_time(rospy.Time.now())
+            self.communication=False
             self.set_end_time = False
-            self.communicate()
+            self.set_transmission_init_time=True
+
+        if(self.radius < (self.adrift_radius+3)):
+            if(self.set_transmission_init_time==True):
+                self.time = self.storage_disk[self.robot_goal_id]/300
+                self.transmission_init_time = rospy.Time.now().secs
+                self.set_transmission_init_time=False
+
+            print("Time is: "+str(self.time)+" the elapsed time is: "+str(rospy.Time.now().secs-self.transmission_init_time))
+            if(rospy.Time.now().secs-self.transmission_init_time > self.time):
+                self.communicate()
 
         # Repulsion area
         if(self.radius <= self.repulsion_radius):
