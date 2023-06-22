@@ -138,7 +138,8 @@ class communications:
    
     def get_storage_disk(self,robot_id):
         occupied_memory = random.randint(1,20)
-        new_value = self.storage_disk[robot_id]+abs(occupied_memory*(robot_id+1))
+        # new_value = self.storage_disk[robot_id]+abs(occupied_memory*(robot_id+1))
+        new_value = self.storage_disk[robot_id]+abs(occupied_memory)
         self.storage_disk[robot_id] = new_value
         return(new_value)
     

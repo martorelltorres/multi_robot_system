@@ -51,9 +51,8 @@ class DustbinRobot:
         self.communication_times_delay = [0,0,0,0,0,0]
         self.start_recording_time = [0,0,0,0,0,0]
         self.communication_times_end = [0,0,0,0,0,0]
-        self.index=[0,1,2]
+        self.thirth_stimulus= []
         self.system_init = False
-        self.asv_init = False
         self.robot_data = [0,0]
         self.robots_information = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]
         self.robots = []
@@ -65,6 +64,7 @@ class DustbinRobot:
         self.trigger = False
         self.exploration_tasks_update = np.array([])
         self.battery_charge= []
+        self.s_norm = []
         self.distance = []
         self.time_init = []
         self.storage_disk =[]
@@ -76,7 +76,6 @@ class DustbinRobot:
         tasks = self.area_handler.get_polygon_number()
         self.max_stimulus=[]
         self.min_stimulus = []
-        self.thirth_stimulus= []
         self.time_threshold=[]
         self.scaled_senses = []
         self.senses = []
@@ -89,10 +88,6 @@ class DustbinRobot:
         self.communication_latency = []
         self.first_time = True
         self.travelled_distance = 0
-
-
-        self.read_area_info()
-
         # intialize the variables
         for robot in range(self.number_of_stimulus):
             self.senses.append(0)
@@ -119,6 +114,7 @@ class DustbinRobot:
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
             self.robots_sense = np.append(self.robots_sense,0)
+            self.s_norm.append(0)
             self.time_threshold.append(0)
             self.communication_latency.append(0)
         
@@ -151,12 +147,11 @@ class DustbinRobot:
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
         
-        if(self.asv_init==True):
-            for robot_id in range(self.number_of_robots):
-                rospy.Subscriber("/mrs/communications_sim/robot"+str(robot_id)+"_communication",
-                            Communication,    
-                            self.update_communication_state,
-                            queue_size=1)
+        for robot_id in range(self.number_of_robots):
+            rospy.Subscriber("/mrs/communications_sim/robot"+str(robot_id)+"_communication",
+                        Communication,    
+                        self.update_communication_state,
+                        queue_size=1)
             
         
         for robot in range(self.number_of_robots):
@@ -235,19 +230,6 @@ class DustbinRobot:
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
-    
-    def read_area_info(self):
-        # Open the pickle file in binary mode
-        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
-            # Load the data from the file
-            data = pickle.load(file)
-
-        # Access different data from the loaded data
-        self.cluster_centroids = data['array1']
-        self.voronoi_polygons = data['array2']
-        self.main_polygon = data['array3']
-        self.main_polygon_centroid = data['array4']
-        self.voronoi_offset_polygons = data['array5']
 
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -289,11 +271,6 @@ class DustbinRobot:
         self.asv_north_position = msg.position.north
         self.asv_east_position = msg.position.east      
         self.asv_yaw = msg.orientation.yaw
-        self.asv_init = True
-
-        if (self.robot_at_center == False):
-            self.transit_to(self.main_polygon_centroid)
-            self.robot_at_center = True
 
         if(self.enable_tracking == True):
             self.tracking()
@@ -382,6 +359,7 @@ class DustbinRobot:
         return(self.scaled_senses)
 
     def get_stimulus(self):
+
         for robot in range(self.active_robots):
             # The self.robots_id variable stores the active AUV explorer robots
             # get time delay
@@ -396,21 +374,14 @@ class DustbinRobot:
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
         
            
-        print(".................. STIMULUS VARIABLES ..................")
-        print(self.stimulus_variables)
+        # print(".................. STIMULUS VARIABLES ..................")
+        # print(self.stimulus_variables)
         
         self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
+  
 
-        # set at minimum value the robots that have completed their work 
-        if(self.robot_to_remove!=999 and self.remove_robot==True):
-            for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0,0,0]
-                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0,0,0]
-            self.remove_robot=False
-    
-
-        print(".................. SCALED STIMULUS VARIABLES ..................")
-        print(self.min_max_scaled)
+        # print(".................. SCALED STIMULUS VARIABLES ..................")
+        # print(self.min_max_scaled)
    
         # obtain the stimulus value using a weighted sum
         self.alpha = 3
@@ -440,9 +411,9 @@ class DustbinRobot:
         # self.use_max_prob()
         # self.use_random_prob()
         # self.use_max_stimulus()
-        self.OWA()
         # self.max_min_stimulus()
         # self.round_robin()
+        self.OWA()
 
         self.set_end_time = True
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
@@ -453,50 +424,6 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
-    
-    def OWA(self):
-        values = np.array(self.min_max_scaled)
-        
-        for element in range(len(self.removed_robots)):
-            self.max_stimulus[self.removed_robots[element]]= 0
-            self.min_stimulus[self.removed_robots[element]]= 0
-            self.thirth_stimulus[self.removed_robots[element]]= 0
-        
-        for element in range(self.active_robots):
-            print("min_max_scaled values are : "+str(values[element]))
-            #max value
-            index_max = np.argmax(values[element])
-            print("The max index is: "+str(index_max))
-            # min value
-            index_min = np.argmin(values[element])
-            print("The min index is: "+str(index_min))
-
-            # thirth value
-            if(index_max>index_min):
-                print("Index list : "+str(self.index))
-                self.index.remove(index_max)
-                print("Remove: "+str(self.index))
-                self.index.remove(index_min)
-                print("Remove: "+str(self.index))
-
-            elif(index_max==index_min): 
-                print("Index list : "+str(self.index))
-                index_max = index_max +1
-                self.index.remove(index_min)
-                print("Remove: "+str(self.index))
-                self.index.remove(index_max)
-                print("Remove: "+str(self.index))
-
-            else:
-                print("Index list : "+str(self.index))
-                self.index.remove(index_min)
-                print("Remove: "+str(self.index))
-                self.index.remove(index_max)
-                print("Remove: "+str(self.index))
-
-            self.thirth_stimulus[element] = self.min_max_scaled[element][self.index[0]]
-            print("Max: "+str(self.max_stimulus[element])+" Min: "+str(self.min_stimulus[element])+ "Thirth: "+str(self.thirth_stimulus[element]))
-
 
     
     def max_min_stimulus(self):
@@ -508,6 +435,65 @@ class DustbinRobot:
         max_value = max(minimum_values)
         print("The max min value is: "+str(max_value))
         self.robot_goal_id = minimum_values.index(max_value)
+    
+    def OWA(self):
+        values = np.array(self.min_max_scaled)
+        self.owa=[0,0,0,0,0,0]
+
+        for element in range(len(self.removed_robots)):
+            self.max_stimulus[self.removed_robots[element]]= 0
+            self.min_stimulus[self.removed_robots[element]]= 0
+            self.thirth_stimulus[self.removed_robots[element]]= 0
+        
+        for element in range(self.active_robots):
+            self.index=[0,1,2]
+            # print("min_max_scaled values are : "+str(values[element]))
+            #max value
+            index_max = np.argmax(values[element])
+            # print("The max index is: "+str(index_max))
+            self.max_element = values[element][index_max]
+            # min value
+            index_min = np.argmin(values[element])
+            # print("The min index is: "+str(index_min))
+            self.min_element = values[element][index_min]
+
+            # thirth value
+            if(index_max>index_min):
+                # print("Index list : "+str(self.index))
+                self.index.remove(index_max)
+                # print("Remove: "+str(self.index))
+                self.index.remove(index_min)
+                # print("Remove: "+str(self.index))
+
+            elif(index_max==index_min): 
+                # print("Index list : "+str(self.index))
+                index_max = index_max +1
+                self.index.remove(index_min)
+                # print("Remove: "+str(self.index))
+                self.index.remove(index_max)
+                # print("Remove: "+str(self.index))
+
+            else:
+                # print("Index list : "+str(self.index))
+                self.index.remove(index_min)
+                # print("Remove: "+str(self.index))
+                self.index.remove(index_max)
+                # print("Remove: "+str(self.index))
+
+            self.thirth_stimulus[element] = self.min_max_scaled[element][self.index[0]]
+            print("Max:"+str(self.max_element)+"          Min:"+str(self.min_element)+ "        Thirth:"+str(self.thirth_stimulus[element]))
+
+            # weight values
+            w1=0.333
+            w2=0.333
+            w3=0.333 
+
+            self.owa[element]=self.max_element*w1+self.thirth_stimulus[element]*w2+self.min_element*w3
+        
+        print("The owas are: "+str(self.owa))
+        max_owa = max(self.owa)
+        self.robot_goal_id = self.owa.index(max_owa)
+        # print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
     
 
     def use_max_stimulus(self):
@@ -570,14 +556,24 @@ class DustbinRobot:
         self.remove_robot=True
         self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1
+        print("Robot "+str(robot_id)+" removed from the team")
+        # set at minimum value the robots that have completed their work 
+        if(self.robot_to_remove!=999 and self.remove_robot==True):
+            for element in range(len(self.removed_robots)):
+                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0,0,0]
+                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0,0,0]
+            self.remove_robot=False
+
         self.check_dustbin_robot()
     
     def check_dustbin_robot(self):
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            self.goto_central_area()
+            # self.goto_central_area()
                   
     def goto_central_area(self):
+        self.central_point = self.area_handler.get_main_polygon_centroid()
+        self.pose = [self.central_point.x, self.central_point.y]
         self.transit_to(self.main_polygon_centroid)
         self.robot_at_center = True
 
@@ -638,7 +634,7 @@ class DustbinRobot:
         # Communication area
         if(self.radius > self.adrift_radius):
             self.tracking_strategy()
-
+        # entra aqui quan es setetja un nou goal_id
         if(self.set_end_time == True):
             self.set_comm_end_time(rospy.Time.now())
             self.communication=False
@@ -651,7 +647,7 @@ class DustbinRobot:
                 self.transmission_init_time = rospy.Time.now().secs
                 self.set_transmission_init_time=False
 
-            print("Time is: "+str(self.time)+" the elapsed time is: "+str(rospy.Time.now().secs-self.transmission_init_time))
+            # print("Time is: "+str(self.time)+" the elapsed time is: "+str(rospy.Time.now().secs-self.transmission_init_time))
             if(rospy.Time.now().secs-self.transmission_init_time > self.time):
                 self.communicate()
 

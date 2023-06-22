@@ -5,8 +5,13 @@
 # ------------------ ROBOTS INFO -----------------------
 number_of_robots: 6 
 # be sure that all the simulated architectures has the same NED origin 
-ned_origin_lat: 39.14803625
-ned_origin_lon: 2.93195323
+# Cabrera
+# ned_origin_lat: 39.14803625
+# ned_origin_lon: 2.93195323
+
+# Andratx exterior
+ned_origin_lat: 39.543330
+ned_origin_lon: 2.377940
 
 # ------------------ AREA PARTITION -----------------------
 # Exploration area

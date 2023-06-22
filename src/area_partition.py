@@ -44,8 +44,8 @@ class area_partition:
     def __init__(self, name):
         self.name = name
         # Get config parameters from the parameter server
-        self.ned_origin_lat = get_param(self,'ned_origin_lat',39.14803625)
-        self.ned_origin_lon = get_param(self,'ned_origin_lon',2.93195323)
+        self.ned_origin_lat = get_param(self,'ned_origin_lat',39.543330)
+        self.ned_origin_lon = get_param(self,'ned_origin_lon',2.377940)
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance',5)
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance',10)
         self.surge_velocity = get_param(self,'surge_velocity',0.8)

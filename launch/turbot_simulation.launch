@@ -1,6 +1,6 @@
 <launch>
     <!-- Params -->
-    <arg name="place" default="cabrera.yaml"/>
+    <arg name="place" default="andratx_exterior.yaml"/>
     <arg name="robot0" default="true"/>
     <arg name="robot1" default="true"/>
     <arg name="robot2" default="true"/>
