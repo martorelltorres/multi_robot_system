@@ -115,7 +115,7 @@
       <remap from="/task_monitoring" to="$(arg robot_5)/task_monitoring"/>
     </node>
 
-    <!-- ROBOT 7 ASV -->
+    <!-- ROBOT 6 ASV -->
     <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
       <param name="robot_ID" value="6"/>
       <param name="section_action" value="/$(arg robot_6)/pilot/world_section_req"/>

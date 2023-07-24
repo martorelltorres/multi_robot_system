@@ -100,6 +100,20 @@ class MultiRobotSystem:
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east
 
+        # check if the are any object near the AUV
+        # get the distance AUV-object
+        for element in range(len(self.random_points)):
+            x = self.robot_position_north-self.random_points[element].x
+            y = self.robot_position_east-self.random_points[element].y
+            distance_AUV_object = np.sqrt(x**2+y**2)
+            self.threshold_distance=10
+            if(distance_AUV_object < self.threshold_distance):
+                # stop current section
+                print("AAAAAAAAAAAAAAAAAACT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                # start dense survey on the object location
+
+
+
     def update_section_result(self,msg):
         self.final_status = msg.result.final_status
     
@@ -115,6 +129,7 @@ class MultiRobotSystem:
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
         self.voronoi_offset_polygons = data['array5']
+        self.random_points = data['array6']
 
     def initialization(self): 
         # wait 7 seconds in order to initialize the different robot architectures

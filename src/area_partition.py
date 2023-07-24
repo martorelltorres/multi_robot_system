@@ -11,7 +11,7 @@ import math
 import os
 import pprint
 import re
-from shapely.geometry import Polygon,LineString,Point
+from shapely.geometry import Polygon,LineString,Point, Polygon
 from shapely import affinity
 from random import uniform
 from std_srvs.srv import Empty, EmptyResponse
@@ -66,6 +66,7 @@ class area_partition:
         self.centroid_points = []
         self.cluster_centroids = []
         self.voronoi_polygons = []
+        self.random_points_generated = False
 
         self.read_area_info()
    
@@ -81,7 +82,6 @@ class area_partition:
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
         self.voronoi_offset_polygons = data['array5']
-    
 
     def get_polygon_points(self,polygon):
         polygon_points = self.voronoi_polygons[polygon]
@@ -146,7 +146,7 @@ class area_partition:
             self.coverage_distance = 0
         distances.append(polygon_distances)
         return (distances)
-
+        
     def get_estimated_polygons_coverage_time(self):
         estimated_coverage_time=[]
         sections_distance = self.get_sections_time()

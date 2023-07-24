@@ -11,6 +11,7 @@ import pickle
 import actionlib       
 import matplotlib.pyplot as plt
 from std_msgs.msg import Int16,Header
+from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
@@ -44,23 +45,24 @@ class DustbinRobot:
         self.area_handler =  area_partition("area_partition")
 
         # Initialize some variables
+        self.qlearning_init = False
         self.pose = [0,0]
         self.get_information = False
         self.start_to_publish = False
         self.robot_at_center = False
         self.robots_id = np.array([])
-        self.communication_times_delay = [0,0,0,0]
-        self.start_recording_time = [0,0,0,0]
-        self.communication_times_end = [0,0,0,0]
+        self.communication_times_delay = [0,0,0,0,0,0]
+        self.start_recording_time = [0,0,0,0,0,0]
+        self.communication_times_end = [0,0,0,0,0,0]
         self.thirth_stimulus= []
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[0,0],[0,0],[0,0],[0,0]]
+        self.robots_information = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
         self.set_end_time = False
-        self.start_dustbin_strategy =np.array([False,False,False,False])
+        self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
         self.first_dustbin_time = True
         self.trigger = False
         self.exploration_tasks_update = np.array([])
@@ -120,7 +122,7 @@ class DustbinRobot:
             self.time_threshold.append(0)
             self.communication_latency.append(0)
         
-        self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense))
+        self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense))
 
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -168,6 +170,7 @@ class DustbinRobot:
         self.corrected_bvr = rospy.Publisher('/robot6/controller/body_velocity_req',
                                                 BodyVelocityReq,
                                                 queue_size=1)
+        self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
 
         self.markerPub_repulsion = rospy.Publisher('repulsion_radius',
                                                     Marker,
@@ -178,6 +181,10 @@ class DustbinRobot:
                                                 queue_size=1)
 
         self.markerPub_tracking = rospy.Publisher('tracking_radius',
+                                                Marker,
+                                                queue_size=1)
+        
+        self.markerPub_object = rospy.Publisher('object',
                                                 Marker,
                                                 queue_size=1)
         
@@ -246,6 +253,7 @@ class DustbinRobot:
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
         self.voronoi_offset_polygons = data['array5']
+        self.random_points = data['array6']
 
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -415,6 +423,7 @@ class DustbinRobot:
         # self.max_min_stimulus()
         # self.round_robin()
         # self.OWA()
+        self.Qlearning()
 
         self.set_end_time = True
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
@@ -432,7 +441,25 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
+    
+    def Qlearning(self):
+        if(self.qlearning_init == False):
+            # Q matrix initialization 
+            self.Q = np.zeros.rand(self.number_of_stimulus, self.number_of_robots) 
+            # Setting hyperparameters
+            self.a = 0.1  # Learning rate
+            self.g = 0.9  # Penalization rate
+            self.e = 0.1  # Exploration probability
+            self.qlearning_init = True
 
+        self.select_action
+    
+
+    def select_action(self,state):
+        if np.random.rand() < self.e:
+            return np.random.randint(self.number_of_robots)  
+        else:
+            return np.argmax(self.Q[state])  
     
     def max_min_stimulus(self):
         minimum_values = []
@@ -592,8 +619,19 @@ class DustbinRobot:
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
+            self.print_random_points()
     
-    
+    def print_random_points(self):
+        while not rospy.is_shutdown():
+            for element in range(len(self.random_points)):
+                object = PointStamped()
+                object.header.stamp = rospy.Time.now()
+                object.header.frame_id = "world_ned"
+                object.point.x = self.random_points[element].x
+                object.point.y = self.random_points[element].y
+                object.point.z = 0.0
+                # Publish
+                self.pub_object.publish(object)
 
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
@@ -616,7 +654,7 @@ class DustbinRobot:
 
         if(self.radius < (self.adrift_radius+10)):
             if(self.set_transmission_init_time==True):
-                self.time = self.storage_disk[self.robot_goal_id]/250
+                self.time = self.storage_disk[self.robot_goal_id]/50
                 self.transmission_init_time = rospy.Time.now().secs
                 self.set_transmission_init_time=False
             
@@ -825,6 +863,30 @@ class DustbinRobot:
         self.follow.color.b = 1.0
         self.follow.color.a = 1
         self.markerPub_tracking.publish(self.follow)
+
+    def object_point(self,x,y):
+        self.object = Marker()
+        self.object.header.frame_id = "world_ned"
+        self.object.header.stamp = rospy.Time.now()
+        self.object.ns = "mrs"
+        self.object.id = 0
+        self.object.type = Marker.CYLINDER
+        self.object.action = Marker.ADD
+        self.object.pose.position.x = x
+        self.object.pose.position.y = y
+        self.object.pose.position.z = 1
+        self.object.pose.orientation.x = 0
+        self.object.pose.orientation.y = 0
+        self.object.pose.orientation.z = 0
+        self.object.pose.orientation.w = 1.0
+        self.object.scale.x = 2
+        self.object.scale.y = 2
+        self.object.scale.z = 0.1
+        self.object.color.r = 0.0
+        self.object.color.g = 0.0
+        self.object.color.b = 1.0
+        self.object.color.a = 1
+        self.markerPub_object.publish(self.object)
 
   
     def get_param(self, param_name, default = None):
