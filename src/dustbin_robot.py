@@ -10,7 +10,7 @@ import matplotlib
 import pickle
 import actionlib       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16,Header
+from std_msgs.msg import Int16, Bool
 from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
@@ -188,6 +188,10 @@ class DustbinRobot:
                                                 Marker,
                                                 queue_size=1)
         
+        self.coverage_init_pub = rospy.Publisher('coverage_init',
+                                            Bool,
+                                            queue_size=1)
+        
         self.communication_delay_time = rospy.Publisher("communication_time_delay",
                                         CommunicationDelay,
                                         queue_size=1)
@@ -331,6 +335,15 @@ class DustbinRobot:
         self.time_init[robot_id] = msg.time.secs
         self.start_recording_time[self.time_robot_id] = self.t_start 
 
+        if (np.all(self.start_dustbin_strategy) == True):
+            msg = Bool()
+            msg.data = True 
+            self.coverage_init_pub.publish(msg)
+        else:
+            msg = Bool()
+            msg.data = False 
+            self.coverage_init_pub.publish(msg)
+            
         # reset the storage values
         self.storage_disk[robot_id] = 0
         reset_id = robot_id
@@ -423,7 +436,7 @@ class DustbinRobot:
         # self.max_min_stimulus()
         # self.round_robin()
         # self.OWA()
-        self.Qlearning()
+        # self.Qlearning()
 
         self.set_end_time = True
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
@@ -563,6 +576,7 @@ class DustbinRobot:
         if(self.system_init == False):
             self.initialization(robot_id) 
 
+
     def dustbin_strategy(self):
         if(self.system_init==True and self.communication==True):
             self.time_trigger()
@@ -595,8 +609,8 @@ class DustbinRobot:
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
-                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
+                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0,0,0]
+                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0,0,0]
             self.remove_robot=False
 
         self.check_dustbin_robot()
@@ -629,7 +643,7 @@ class DustbinRobot:
                 object.header.frame_id = "world_ned"
                 object.point.x = self.random_points[element].x
                 object.point.y = self.random_points[element].y
-                object.point.z = 0.0
+                object.point.z = 15
                 # Publish
                 self.pub_object.publish(object)
 
@@ -658,7 +672,7 @@ class DustbinRobot:
                 self.transmission_init_time = rospy.Time.now().secs
                 self.set_transmission_init_time=False
             
-            print("Time is: "+str(self.time)+" the elapsed time is: "+str(rospy.Time.now().secs-self.transmission_init_time))
+            # print("Time is: "+str(self.time)+" the elapsed time is: "+str(rospy.Time.now().secs-self.transmission_init_time))
             if(rospy.Time.now().secs-self.transmission_init_time > self.time):
                 self.communicate()
 

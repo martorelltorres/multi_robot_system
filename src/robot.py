@@ -10,6 +10,7 @@ from std_msgs.msg import Float32
 from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
 from cola2_msgs.msg import  NavSts
 from cola2_msgs.srv import Goto, GotoRequest
+from shapely.geometry import Polygon
 from sensor_msgs.msg import BatteryState
 import numpy as np
 from std_srvs.srv import Empty, EmptyResponse
@@ -78,14 +79,14 @@ class Robot:
                          self.name)
             rospy.signal_shutdown('Error creating client to goto service')
         
-        try:
-            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/disable_all_and_set_idle', 20)
-            self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
-                        '/robot'+str(self.robot_ID)+'/captain/disable_all_and_set_idle', Trigger)
-        except rospy.exceptions.ROSException:
-            rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
-                         self.name)
-            rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
+        # try:
+        #     rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/disable_all_and_set_idle', 20)
+        #     self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
+        #                 '/robot'+str(self.robot_ID)+'/captain/disable_all_and_set_idle', Trigger)
+        # except rospy.exceptions.ROSException:
+        #     rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
+        #                  self.name)
+        #     rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
 
         # Init periodic timers
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
@@ -93,6 +94,92 @@ class Robot:
         #Actionlib section client
         self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
         self.section_strategy.wait_for_server()
+    
+    def disable_all_and_set_idle(self,robot_id):
+        """ This method sets the captain back to idle """
+        rospy.loginfo("Setting captain to idle state")
+        try:
+            rospy.wait_for_service('/robot'+str(robot_id)+'/captain/disable_all_and_set_idle', 20)
+            self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
+                        '/robot'+str(robot_id)+'/captain/disable_all_and_set_idle', Trigger)
+        except rospy.exceptions.ROSException:
+            rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
+                         self.name)
+            rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
+    
+    
+
+        # amplitude = 4
+        # longitude = 7
+        # # set the first point from the origin
+        # point_a1 = [0,0]
+        # point_a1[0] = x - (amplitude/2)
+        # point_a1[1] = y + (longitude/2)
+
+        # point_b1 = [0,0]
+        # point_b1[0] = point_a1[0]
+        # point_b1[1] = point_a1[1]- longitude
+
+        # self.send_slow_section_strategy(point_a1,point_b1,robot_id)
+
+
+        # point_b5 = [0,0]
+        # point_b5[0] = point_b1[0]+ amplitude
+        # point_b5[1] = point_b1[1]
+
+        # self.send_slow_section_strategy(point_b1,point_b5,robot_id)
+
+
+        # point_a5 = [0,0]
+        # point_a5[0] = point_b5[0]
+        # point_a5[1] = point_b5[1] + longitude
+
+        # self.send_slow_section_strategy(point_b5,point_a5,robot_id)
+
+
+        # amplitude = amplitude-1
+
+        # point_a2 = [0,0]
+        # point_a2[0] = point_a5[0]- amplitude
+        # point_a2[1] = point_a5[1]
+
+        # self.send_slow_section_strategy(point_a5,point_a2,robot_id)
+
+        # point_b2 = [0,0]
+        # point_b2[0] = point_a2[0]
+        # point_b2[1] = point_a2[1]- longitude
+
+        # self.send_slow_section_strategy(point_a2,point_b2,robot_id)
+
+        # amplitude = amplitude-1
+
+        # point_b4 = [0,0]
+        # point_b4[0] = point_b2[0] + amplitude
+        # point_b4[1] = point_b2[1] 
+
+        # self.send_slow_section_strategy(point_b2,point_b4,robot_id)
+
+        # point_a4 = [0,0]
+        # point_a4[0] = point_b4[0]
+        # point_a4[1] = point_b4[1] + longitude
+
+        # self.send_slow_section_strategy(point_b4,point_a4,robot_id)
+
+        # amplitude = amplitude-1
+
+        # point_a3 = [0,0]
+        # point_a3[0] = point_a4[0] - amplitude
+        # point_a3[1] = point_a4[1]
+
+        # self.send_slow_section_strategy(point_a4,point_a3,robot_id)
+
+        # point_b3 = [0,0]
+        # point_b3[0] = point_a3[0]
+        # point_b3[1] = point_a3[1]- longitude
+
+        # self.send_slow_section_strategy(point_a3,point_b3,robot_id)
+
+
 
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -180,6 +267,37 @@ class Robot:
         section_req.controller_type = WorldSectionGoal.LOSCTE
         section_req.priority = GoalDescriptor.PRIORITY_NORMAL
         section_req.surge_velocity = 2
+        section_req.timeout = 6000
+
+        # send section goal using actionlib
+        self.success_result = False
+        self.is_section_actionlib_running = True
+        self.section_strategy.send_goal(section_req)
+
+        #  Wait for result or cancel if timed out
+        self.section_strategy.wait_for_result()
+    
+    def send_slow_section_strategy(self,initial_point,final_point,robot_id):
+        initial_position_x = initial_point[0]
+        final_position_x = final_point[0]
+        initial_position_y = initial_point[1]
+        final_position_y = final_point[1]
+
+        section_req = WorldSectionGoal()
+        section_req.initial_position.x = initial_position_x
+        section_req.initial_position.y = initial_position_y
+        section_req.initial_position.z = self.navigation_depth
+        section_req.initial_yaw = self.robots_information[robot_id][2] #yaw
+        section_req.final_position.x = final_position_x
+        section_req.final_position.y = final_position_y
+        section_req.final_position.z = self.navigation_depth
+        section_req.altitude_mode = False
+        section_req.tolerance.x = 1
+        section_req.tolerance.y = 1
+        section_req.tolerance.z = 1
+        section_req.controller_type = WorldSectionGoal.LOSCTE
+        section_req.priority = GoalDescriptor.PRIORITY_NORMAL
+        section_req.surge_velocity = 0.3
         section_req.timeout = 6000
 
         # send section goal using actionlib

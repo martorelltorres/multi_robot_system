@@ -9,14 +9,14 @@ import numpy as np
 import os
 import subprocess
 import pickle
-from shapely.geometry import Polygon,LineString,Point
 import actionlib
+from shapely.geometry import Polygon
 from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
 from multi_robot_system.msg import AvoidCollision, CoverageStartTime, ExplorationUpdate
-from std_msgs.msg import Int16, Float64
+from std_msgs.msg import Int16, Bool
 
 #import classes
 from area_partition import area_partition
@@ -36,7 +36,7 @@ class MultiRobotSystem:
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = Robot("robot")
-
+        self.executing_dense_mission=False
         self.send_folowing_section = False
         self.points = []
         self.simulation_task_times = []
@@ -45,10 +45,12 @@ class MultiRobotSystem:
         self.final_status = 99999
         self.system_init = False
         self.robot_initialization = np.array([])
+        self.explored_objects_index = np.array([])
         self.start = True
         self.first_section_points = []
         self.robots_information =[]
         self.robot_data = [0,0]
+        self.object_exploration = False
 
          # initialize the robots variables
         for i in range(self.number_of_robots):
@@ -68,6 +70,12 @@ class MultiRobotSystem:
             '/robot'+str(self.robot_ID)+'/navigator/navigation',
             NavSts,
             self.update_robot_position) 
+        
+        rospy.Subscriber(
+            '/mrs/coverage_init',
+            Bool,
+            self.object_exploration_flag) 
+        
 
         #Publishers
         self.polygon_pub = rospy.Publisher("voronoi_polygons",
@@ -95,27 +103,84 @@ class MultiRobotSystem:
 
         self.initialization()
     
+    def object_exploration_flag(self,msg):
+        self.object_exploration = msg.data
+    
     def update_robot_position(self, msg):
         # fill the robots_information array with the robots information received from the NavSts 
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east
+        self.distance_AUV_object = 0
 
-        # check if the are any object near the AUV
-        # get the distance AUV-object
-        for element in range(len(self.random_points)):
-            x = self.robot_position_north-self.random_points[element].x
-            y = self.robot_position_east-self.random_points[element].y
-            distance_AUV_object = np.sqrt(x**2+y**2)
-            self.threshold_distance=10
-            if(distance_AUV_object < self.threshold_distance):
-                # stop current section
-                print("AAAAAAAAAAAAAAAAAACT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                # start dense survey on the object location
+        if(self.object_exploration == True):
+            for element in range(len(self.random_points)):
+                x = self.robot_position_north-self.random_points[element].x
+                y = self.robot_position_east-self.random_points[element].y
+                self.distance_AUV_object = np.sqrt(x**2+y**2)
+                self.threshold_distance= 7
 
+                if(self.distance_AUV_object < self.threshold_distance):
+                    # remove object from object array
+                    self.random_points = self.random_points[:element] + self.random_points[element+1:]
+                    self.executing_dense_mission=True
+                    # stop current section
+                    self.robot_handler.disable_all_and_set_idle(self.robot_ID)
+                    # start dense survey on the object location
+                    print("The robot_"+str(self.robot_ID)+" strated a dense survey located at "+str(element)+" point.")
+                    self.execute_dense_mission(self.random_points[element].x,self.random_points[element].y,self.robot_ID)
+                    self.executing_dense_mission=False
 
+    def execute_dense_mission(self,x,y,robot_id):
+        from shapely.geometry import Polygon
+        # Ancho y largo del area a cubrir
+        width = 5
+        length = 5
+
+        # Calcular las coordenadas de los vertices del rectangulo
+        half_width = width / 2
+        half_length = length / 2
+
+        # Coordenadas de los vertices del rectangulo
+        vertices = [(x - half_width, y - half_length),
+                    (x + half_width, y - half_length),
+                    (x + half_width, y + half_length),
+                    (x - half_width, y + half_length)]
+
+        # Crear el poligono del area a cubrir
+        area_polygon = Polygon(vertices)
+
+        # Pasos para las pasadas paralelas (1 m de distancia entre ellas)
+        step_size = 1.0
+
+        # Obtener limites de la coordenada x para las pasadas
+        # x_min, x_max = area_polygon.bounds[0], area_polygon.bounds[2]
+        x_min, x_max = area_polygon.bounds[0], area_polygon.bounds[2]
+
+        # Variable para alternar entre las direcciones de las pasadas
+        self.reverse = False
+
+        # Planificar pasadas horizontales paralelas
+        y_current = area_polygon.bounds[1] if not self.reverse else area_polygon.bounds[3]
+        while area_polygon.bounds[1] <= y_current <= area_polygon.bounds[3]:
+            # Obtener limites de la coordenada y para la pasada actual
+            x_start, x_end = (x_max, x_min) if self.reverse else (x_min, x_max)
+
+            # Planificar pasada horizontal
+            point_a = [x_start,y_current]
+            point_b = [x_end,y_current]
+
+            # Actualizar coordenada y para la proxima pasada
+            y_current += step_size
+
+            # Cambiar la direccion de las pasadas
+            self.reverse = not self.reverse
+            self.robot_handler.send_slow_section_strategy(point_a,point_b,robot_id)
 
     def update_section_result(self,msg):
-        self.final_status = msg.result.final_status
+        if (self.executing_dense_mission==False):
+            self.final_status = msg.result.final_status
+        else:
+            self.final_status = 888888
     
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -137,8 +202,6 @@ class MultiRobotSystem:
         if np.all(self.robot_initialization == False):
             for robot in range(self.number_of_robots):
                 self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
-        
-        
 
         print("             *************************")
         print("                 ROBOT "+str(self.robot_ID)+ " INITIALIZED   ")
@@ -173,6 +236,7 @@ class MultiRobotSystem:
         msg.time = rospy.Time.now()
         msg.robot_id = self.robot_ID
         self.start_coverage_time.publish(msg)
+
 
         for section in range(len(self.robot_sections)):
             # get points from sections

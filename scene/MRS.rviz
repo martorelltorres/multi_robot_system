@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /tf1/Frames1
-        - /PointStamped8
+        - /Marker1
       Splitter Ratio: 0.520588219165802
     Tree Height: 845
   - Class: rviz/Views
@@ -1235,29 +1235,29 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /mrs/tracking_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /mrs/adrift_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /mrs/repulsion_radius
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Alpha: 1
       Class: rviz/PointStamped
       Color: 85; 87; 83
@@ -1267,6 +1267,38 @@ Visualization Manager:
       Radius: 2
       Topic: /mrs/object_point
       Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /robot0/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /robot0/pilot: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /robot1/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /robot1/pilot: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /robot2/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /robot2/pilot: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /robot3/pilot/waypoint_marker
+      Name: Marker
+      Namespaces:
+        /robot3/pilot: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -1282,26 +1314,21 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz/XYOrbit
-      Distance: 231.91177368164062
+      Angle: 0
+      Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Focal Point:
-        X: -102.7414321899414
-        Y: -67.98614501953125
-        Z: -0.00014542050485033542
-      Focal Shape Fixed Size: true
-      Focal Shape Size: 0.05000000074505806
-      Invert Z Axis: true
+      Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5147963762283325
+      Scale: 5.643609046936035
       Target Frame: turbot/base_link
-      Value: XYOrbit (rviz)
-      Yaw: 1.9553954601287842
+      Value: TopDownOrtho (rviz)
+      X: -35.009647369384766
+      Y: -16.51151466369629
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875
