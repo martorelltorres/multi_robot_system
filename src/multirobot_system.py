@@ -16,7 +16,7 @@ from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
 from multi_robot_system.msg import AvoidCollision, CoverageStartTime, ExplorationUpdate
-from std_msgs.msg import Int16, Bool
+from std_msgs.msg import Int16, Bool,Float32MultiArray
 
 #import classes
 from area_partition import area_partition
@@ -36,9 +36,10 @@ class MultiRobotSystem:
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = Robot("robot")
-        self.executing_dense_mission=False
+        self.executing_dense_mission = False
         self.send_folowing_section = False
         self.points = []
+        self.goal_section_point = [0,0]
         self.simulation_task_times = []
         self.task_monitoring = []
         self.section_cancelled = False
@@ -76,6 +77,10 @@ class MultiRobotSystem:
             Bool,
             self.object_exploration_flag) 
         
+        rospy.Subscriber('/mrs/updated_objects',
+                    Float32MultiArray,    
+                    self.update_objects,
+                    queue_size=1)
 
         #Publishers
         self.polygon_pub = rospy.Publisher("voronoi_polygons",
@@ -84,6 +89,10 @@ class MultiRobotSystem:
 
         self.polygon_offset_pub = rospy.Publisher("voronoi_offset_polygons",
                                         PolygonStamped,
+                                        queue_size=1)
+        
+        self.visited_objects_pub = rospy.Publisher("visited_objects_pub",
+                                        Int16,
                                         queue_size=1)
 
         self.exploration_update_pub = rospy.Publisher("exploration_area_update",
@@ -103,13 +112,16 @@ class MultiRobotSystem:
 
         self.initialization()
     
+    def update_objects(self,msg):
+        self.random_points = msg.data
+    
     def object_exploration_flag(self,msg):
         self.object_exploration = msg.data
     
     def update_robot_position(self, msg):
-        # fill the robots_information array with the robots information received from the NavSts 
-        self.robot_position_north = msg.position.north
-        self.robot_position_east = msg.position.east
+        x,y,z,yaw = self.robot_handler.get_robot_position(self.robot_ID)
+        self.robot_position_north = x
+        self.robot_position_east = y
         self.distance_AUV_object = 0
 
         if(self.object_exploration == True):
@@ -117,24 +129,36 @@ class MultiRobotSystem:
                 x = self.robot_position_north-self.random_points[element].x
                 y = self.robot_position_east-self.random_points[element].y
                 self.distance_AUV_object = np.sqrt(x**2+y**2)
-                self.threshold_distance= 7
+                self.threshold_distance = 10
 
                 if(self.distance_AUV_object < self.threshold_distance):
-                    # remove object from object array
-                    self.random_points = self.random_points[:element] + self.random_points[element+1:]
-                    self.executing_dense_mission=True
-                    # stop current section
-                    self.robot_handler.disable_all_and_set_idle(self.robot_ID)
-                    # start dense survey on the object location
-                    print("The robot_"+str(self.robot_ID)+" strated a dense survey located at "+str(element)+" point.")
-                    self.execute_dense_mission(self.random_points[element].x,self.random_points[element].y,self.robot_ID)
-                    self.executing_dense_mission=False
+                    print("Robot "+str(self.robot_ID)+ "has been detecting a PARDAAAL!!!")
+                    # go to the object position
+                    point_a = [self.robot_position_north,self.robot_position_east]
+                    point_b = [self.random_points[element].x,self.random_points[element].y]
+                    self.robot_handler.send_slow_section_strategy(point_a,point_b,self.robot_ID)
+
+                    point_a = [self.robot_position_north,self.robot_position_east]
+                    point_b = self.goal_section_point
+
+                    self.robot_handler.send_section_strategy(point_a,point_b,self.robot_ID)
+
+                    # advise the index of the explored object to the ASV 
+                    # msg = Int16()
+                    # msg.data = element 
+                    # self.visited_objects_pub.publish(msg)
+                    # self.executing_dense_mission=True
+                    # # stop current section
+                    # self.robot_handler.disable_all_and_set_idle(self.robot_ID)
+                    # # start dense survey on the object location
+                    # print(" The robot_"+str(self.robot_ID)+" strated a dense survey located at "+str(element)+" point.")
+                    # self.execute_dense_mission(self.random_points[element].x,self.random_points[element].y,self.robot_ID)
+                    # self.executing_dense_mission=False
 
     def execute_dense_mission(self,x,y,robot_id):
         from shapely.geometry import Polygon
-        # Ancho y largo del area a cubrir
-        width = 5
-        length = 5
+        width = 10
+        length = 10
 
         # Calcular las coordenadas de los vertices del rectangulo
         half_width = width / 2
@@ -149,11 +173,10 @@ class MultiRobotSystem:
         # Crear el poligono del area a cubrir
         area_polygon = Polygon(vertices)
 
-        # Pasos para las pasadas paralelas (1 m de distancia entre ellas)
-        step_size = 1.0
+        # Pasos para las pasadas paralelas (2.5 m de distancia entre ellas)
+        step_size = 2.5
 
         # Obtener limites de la coordenada x para las pasadas
-        # x_min, x_max = area_polygon.bounds[0], area_polygon.bounds[2]
         x_min, x_max = area_polygon.bounds[0], area_polygon.bounds[2]
 
         # Variable para alternar entre las direcciones de las pasadas
@@ -255,6 +278,8 @@ class MultiRobotSystem:
             else: 
                 initial_point = [point_a_0,point_a_1]
                 final_point = [point_b_0,point_b_1]
+            
+            self.goal_section_point = final_point  
            
             # send the robot to start the area exploration
             initial_task_time = rospy.Time.now()

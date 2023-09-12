@@ -10,7 +10,7 @@ import matplotlib
 import pickle
 import actionlib       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16, Bool
+from std_msgs.msg import Int16, Bool, Float32MultiArray
 from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
@@ -146,6 +146,11 @@ class DustbinRobot:
                             self.kill_the_process,
                             queue_size=1)
         
+        rospy.Subscriber('/mrs/visited_objects_pub',
+                            Int16,    
+                            self.update_objects,
+                            queue_size=1)
+        
         rospy.Subscriber('/mrs/exploration_finished',
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
@@ -200,9 +205,15 @@ class DustbinRobot:
                                         Int16,
                                         queue_size=1)
         
+        self.updated_objects_pub = rospy.Publisher('updated_objects',
+                                        Float32MultiArray,
+                                        queue_size=1)
+        
         self.robot_distances_pub = rospy.Publisher("robot_distances",
                                         Distances,
                                         queue_size=1)
+        
+
         # ---------------------------------------------------------------------------
         self.goal_id_pub = rospy.Publisher('goal_id',
                                         Data,
@@ -244,7 +255,15 @@ class DustbinRobot:
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
 
-    
+    def update_objects(self,msg):
+        element = msg.data
+        # remove object from object array
+        self.random_points = self.random_points[:element] + self.random_points[element+1:]
+        # send the updated array to the AUV's
+        # msg = Float32MultiArray()
+        # msg.data = self.random_points
+        # self.updated_objects_pub.publish(msg)
+
     def read_area_info(self):
         # Open the pickle file in binary mode
         with open('/home/uib/area_partition_data.pickle', 'rb') as file:
@@ -290,7 +309,6 @@ class DustbinRobot:
     def dustbin_trigger(self, event):
         # start the dustbin_strategy if all the has started the coverage
         if (np.all(self.start_dustbin_strategy) and self.first_dustbin_time == True):
-            print("START THE DUSTBIN STRATEGY!!!!!!!!!!!!")
             self.get_information = True
             self.dustbin_strategy()
             self.first_dustbin_time = False
@@ -396,10 +414,10 @@ class DustbinRobot:
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
         
            
-        print(".................. STIMULUS VARIABLES ..................")
-        print(self.stimulus_variables)
+        # print(".................. STIMULUS VARIABLES ..................")
+        # print(self.stimulus_variables)
         
-        self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
+        # self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
   
 
         # print(".................. SCALED STIMULUS VARIABLES ..................")

@@ -296,8 +296,8 @@ class Robot:
         section_req.tolerance.y = 1
         section_req.tolerance.z = 1
         section_req.controller_type = WorldSectionGoal.LOSCTE
-        section_req.priority = GoalDescriptor.PRIORITY_NORMAL
-        section_req.surge_velocity = 0.3
+        section_req.priority = GoalDescriptor.PRIORITY_SAFETY
+        section_req.surge_velocity = 0.2
         section_req.timeout = 6000
 
         # send section goal using actionlib

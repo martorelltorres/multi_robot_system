@@ -128,26 +128,26 @@ class polygon_division:
             origin="lower",
         )
 
-        # plt.plot(reduced_data[:, 0], reduced_data[:, 1], "k.", markersize=2)
-        # # Plot the centroids as a white X
+        plt.plot(reduced_data[:, 0], reduced_data[:, 1], "k.", markersize=2)
+        # Plot the centroids as a white X
         
-        # plt.scatter(
-        #     self.cluster_centroids[:, 0],
-        #     self.cluster_centroids[:, 1],
-        #     marker="x",
-        #     s=169,
-        #     linewidths=3,
-        #     color="w",
-        #     zorder=10,
-        # )
+        plt.scatter(
+            self.cluster_centroids[:, 0],
+            self.cluster_centroids[:, 1],
+            marker="x",
+            s=169,
+            linewidths=3,
+            color="w",
+            zorder=10,
+        )
 
-        # plt.xlim(x_min, x_max)
-        # plt.ylim(y_min, y_max)
-        # plt.xlabel("Eje X")
-        # plt.ylabel("Eje Y")
-        # plt.xticks(())
-        # plt.yticks(())
-        # plt.show()
+        plt.xlim(x_min, x_max)
+        plt.ylim(y_min, y_max)
+        plt.xlabel("Eje X")
+        plt.ylabel("Eje Y")
+        plt.xticks(())
+        plt.yticks(())
+        plt.show()
 
     def divide_polygon(self):
             #obtain the global_points (lat,long) of the polygon
