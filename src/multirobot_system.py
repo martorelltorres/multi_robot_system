@@ -10,7 +10,7 @@ import os
 import subprocess
 import pickle
 import actionlib
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon,Point
 from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
@@ -130,18 +130,21 @@ class MultiRobotSystem:
                 y = self.robot_position_east-self.random_points[element].y
                 self.distance_AUV_object = np.sqrt(x**2+y**2)
                 self.threshold_distance = 10
-
-                if(self.distance_AUV_object < self.threshold_distance):
+                point = Point(self.random_points[element].x,self.random_points[element].y)
+                
+                # check if the object is in the AUV assigned sub-area
+                if self.voronoi_polygons[self.robot_ID].contains(point) and self.distance_AUV_object < self.threshold_distance:
                     print("Robot "+str(self.robot_ID)+ "has been detecting a PARDAAAL!!!")
                     # go to the object position
                     point_a = [self.robot_position_north,self.robot_position_east]
                     point_b = [self.random_points[element].x,self.random_points[element].y]
+                    # self.robot_handler.disable_all_and_set_idle(self.robot_ID)
                     self.robot_handler.send_slow_section_strategy(point_a,point_b,self.robot_ID)
 
                     point_a = [self.robot_position_north,self.robot_position_east]
                     point_b = self.goal_section_point
-
                     self.robot_handler.send_section_strategy(point_a,point_b,self.robot_ID)
+                    self.wait_until_section_reached()
 
                     # advise the index of the explored object to the ASV 
                     # msg = Int16()
@@ -200,10 +203,10 @@ class MultiRobotSystem:
             self.robot_handler.send_slow_section_strategy(point_a,point_b,robot_id)
 
     def update_section_result(self,msg):
-        if (self.executing_dense_mission==False):
-            self.final_status = msg.result.final_status
-        else:
-            self.final_status = 888888
+        # if (self.executing_dense_mission==False):
+        self.final_status = msg.result.final_status
+        # else:
+        #     self.final_status = 888888
     
     def read_area_info(self):
         # Open the pickle file in binary mode

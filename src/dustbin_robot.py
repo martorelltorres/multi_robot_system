@@ -417,7 +417,7 @@ class DustbinRobot:
         # print(".................. STIMULUS VARIABLES ..................")
         # print(self.stimulus_variables)
         
-        # self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
+        self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
   
 
         # print(".................. SCALED STIMULUS VARIABLES ..................")
@@ -577,7 +577,7 @@ class DustbinRobot:
         self.robot_goal_id = self.max_stimulus.index(maximum_value)
         
     def use_max_prob(self):
-        print("Probability function: "+str(self.stimulus))
+        # print("Probability function: "+str(self.stimulus))
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmax()  
 
@@ -661,7 +661,7 @@ class DustbinRobot:
                 object.header.frame_id = "world_ned"
                 object.point.x = self.random_points[element].x
                 object.point.y = self.random_points[element].y
-                object.point.z = 15
+                object.point.z = 0
                 # Publish
                 self.pub_object.publish(object)
 
