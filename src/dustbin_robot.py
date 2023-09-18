@@ -10,7 +10,7 @@ import matplotlib
 import pickle
 import actionlib       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16, Bool, Float32MultiArray
+from std_msgs.msg import Int16, Bool, Int16MultiArray,Float32MultiArray,Float32
 from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
@@ -146,10 +146,10 @@ class DustbinRobot:
                             self.kill_the_process,
                             queue_size=1)
         
-        rospy.Subscriber('/mrs/visited_objects_pub',
-                            Int16,    
-                            self.update_objects,
-                            queue_size=1)
+        # rospy.Subscriber('/mrs/visited_objects_pub',
+        #                     Int16,    
+        #                     self.update_objects,
+        #                     queue_size=1)
         
         rospy.Subscriber('/mrs/exploration_finished',
                             Int16,    
@@ -256,13 +256,14 @@ class DustbinRobot:
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
 
     def update_objects(self,msg):
+        print("Removing object"+str(msg.data)+" from object_points")
         element = msg.data
         # remove object from object array
         self.random_points = self.random_points[:element] + self.random_points[element+1:]
         # send the updated array to the AUV's
-        # msg = Float32MultiArray()
-        # msg.data = self.random_points
-        # self.updated_objects_pub.publish(msg)
+        msg = Float32MultiArray()
+        msg.data = self.random_points
+        self.updated_objects_pub.publish(msg)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
