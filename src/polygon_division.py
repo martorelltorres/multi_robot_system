@@ -165,7 +165,7 @@ class polygon_division:
             self.main_polygon = Polygon(self.local_points)
             self.main_polygon_centroid = self.main_polygon.centroid
             self.polygon_points = self.local_points
-            self.generate_random_points_within_polygon(self.main_polygon,20)
+            self.generate_random_points_within_polygon(self.main_polygon,40)
             # .........................................................................
             # Generate random points within the polygon
             num_points = 500

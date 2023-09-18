@@ -107,80 +107,6 @@ class Robot:
                          self.name)
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
     
-    
-
-        # amplitude = 4
-        # longitude = 7
-        # # set the first point from the origin
-        # point_a1 = [0,0]
-        # point_a1[0] = x - (amplitude/2)
-        # point_a1[1] = y + (longitude/2)
-
-        # point_b1 = [0,0]
-        # point_b1[0] = point_a1[0]
-        # point_b1[1] = point_a1[1]- longitude
-
-        # self.send_slow_section_strategy(point_a1,point_b1,robot_id)
-
-
-        # point_b5 = [0,0]
-        # point_b5[0] = point_b1[0]+ amplitude
-        # point_b5[1] = point_b1[1]
-
-        # self.send_slow_section_strategy(point_b1,point_b5,robot_id)
-
-
-        # point_a5 = [0,0]
-        # point_a5[0] = point_b5[0]
-        # point_a5[1] = point_b5[1] + longitude
-
-        # self.send_slow_section_strategy(point_b5,point_a5,robot_id)
-
-
-        # amplitude = amplitude-1
-
-        # point_a2 = [0,0]
-        # point_a2[0] = point_a5[0]- amplitude
-        # point_a2[1] = point_a5[1]
-
-        # self.send_slow_section_strategy(point_a5,point_a2,robot_id)
-
-        # point_b2 = [0,0]
-        # point_b2[0] = point_a2[0]
-        # point_b2[1] = point_a2[1]- longitude
-
-        # self.send_slow_section_strategy(point_a2,point_b2,robot_id)
-
-        # amplitude = amplitude-1
-
-        # point_b4 = [0,0]
-        # point_b4[0] = point_b2[0] + amplitude
-        # point_b4[1] = point_b2[1] 
-
-        # self.send_slow_section_strategy(point_b2,point_b4,robot_id)
-
-        # point_a4 = [0,0]
-        # point_a4[0] = point_b4[0]
-        # point_a4[1] = point_b4[1] + longitude
-
-        # self.send_slow_section_strategy(point_b4,point_a4,robot_id)
-
-        # amplitude = amplitude-1
-
-        # point_a3 = [0,0]
-        # point_a3[0] = point_a4[0] - amplitude
-        # point_a3[1] = point_a4[1]
-
-        # self.send_slow_section_strategy(point_a4,point_a3,robot_id)
-
-        # point_b3 = [0,0]
-        # point_b3[0] = point_a3[0]
-        # point_b3[1] = point_a3[1]- longitude
-
-        # self.send_slow_section_strategy(point_a3,point_b3,robot_id)
-
-
-
     def update_travelled_distance(self,event):
         if (self.first_time == True):
             self.x_old_position = 0
@@ -279,8 +205,8 @@ class Robot:
     
     def send_slow_section_strategy(self,initial_point,final_point,robot_id):
         initial_position_x = initial_point[0]
-        final_position_x = final_point[0]
         initial_position_y = initial_point[1]
+        final_position_x = final_point[0]
         final_position_y = final_point[1]
 
         section_req = WorldSectionGoal()
@@ -292,12 +218,12 @@ class Robot:
         section_req.final_position.y = final_position_y
         section_req.final_position.z = self.navigation_depth
         section_req.altitude_mode = False
-        section_req.tolerance.x = 1
-        section_req.tolerance.y = 1
+        section_req.tolerance.x = 3
+        section_req.tolerance.y = 3
         section_req.tolerance.z = 1
         section_req.controller_type = WorldSectionGoal.LOSCTE
         section_req.priority = GoalDescriptor.PRIORITY_SAFETY
-        section_req.surge_velocity = 0.2
+        section_req.surge_velocity = 0.6
         section_req.timeout = 6000
 
         # send section goal using actionlib
