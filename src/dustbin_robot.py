@@ -146,7 +146,7 @@ class DustbinRobot:
                             self.kill_the_process,
                             queue_size=1)
         
-        # rospy.Subscriber('/mrs/visited_objects_pub',
+        # rospy.Subscriber('/mrs/visited_object',
         #                     Int16,    
         #                     self.update_objects,
         #                     queue_size=1)
@@ -205,9 +205,9 @@ class DustbinRobot:
                                         Int16,
                                         queue_size=1)
         
-        self.updated_objects_pub = rospy.Publisher('updated_objects',
-                                        Float32MultiArray,
-                                        queue_size=1)
+        # self.updated_objects_pub = rospy.Publisher('updated_objects',
+        #                                 Int16MultiArray,
+        #                                 queue_size=1)
         
         self.robot_distances_pub = rospy.Publisher("robot_distances",
                                         Distances,
@@ -255,15 +255,15 @@ class DustbinRobot:
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
 
-    def update_objects(self,msg):
-        print("Removing object"+str(msg.data)+" from object_points")
-        element = msg.data
-        # remove object from object array
-        self.random_points = self.random_points[:element] + self.random_points[element+1:]
-        # send the updated array to the AUV's
-        msg = Float32MultiArray()
-        msg.data = self.random_points
-        self.updated_objects_pub.publish(msg)
+    # def update_objects(self,msg):
+    #     print("Removing object"+str(msg.data)+" from object_points")
+    #     element = msg.data
+    #     # remove object from object array
+    #     self.random_points = self.random_points[:element] + self.random_points[element+1:]
+    #     # send the updated array to the AUV's
+    #     msg = Int16MultiArray()
+    #     msg.data = self.random_points
+    #     self.updated_objects_pub.publish(msg)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -656,7 +656,7 @@ class DustbinRobot:
     
     def print_random_points(self):
         while not rospy.is_shutdown():
-            for element in range(len(self.random_points)):
+            for element in range(40):
                 object = PointStamped()
                 object.header.stamp = rospy.Time.now()
                 object.header.frame_id = "world_ned"

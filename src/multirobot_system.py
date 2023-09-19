@@ -16,7 +16,7 @@ from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
 from multi_robot_system.msg import AvoidCollision, CoverageStartTime, ExplorationUpdate
-from std_msgs.msg import Int16, Bool,Float32MultiArray,Float32
+from std_msgs.msg import Int16, Bool,Float32MultiArray,Float32,Int16MultiArray
 
 #import classes
 from area_partition import area_partition
@@ -77,11 +77,6 @@ class MultiRobotSystem:
             Bool,
             self.object_exploration_flag) 
         
-        rospy.Subscriber('/mrs/updated_objects',
-                    Float32MultiArray,    
-                    self.update_objects,
-                    queue_size=1)
-
         #Publishers
         self.polygon_pub = rospy.Publisher("voronoi_polygons",
                                         PolygonStamped,
@@ -89,10 +84,6 @@ class MultiRobotSystem:
 
         self.polygon_offset_pub = rospy.Publisher("voronoi_offset_polygons",
                                         PolygonStamped,
-                                        queue_size=1)
-        
-        self.visited_object_pub = rospy.Publisher("visited_object_pub",
-                                        Int16,
                                         queue_size=1)
 
         self.exploration_update_pub = rospy.Publisher("exploration_area_update",
@@ -129,22 +120,19 @@ class MultiRobotSystem:
             obect_point = Point(self.random_points[element].x,self.random_points[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(obect_point) and self.distance_AUV_object < self.threshold_distance):
+            if(self.voronoi_polygons[self.robot_ID].contains(obect_point) and self.distance_AUV_object < self.threshold_distance and np.all(self.explored_objects_index != element)):
                 print("Robot "+str(self.robot_ID)+ " has been detecting a PARDAAAL ID:" + str(element)+" !!!")
-
-                # remove object from objects array
-                msg = Int16()
-                msg.data = element
-                self.visited_object_pub.publish(msg)
-
                 # go to the object position in order to explore the region
                 point_a = [self.robot_position_north,self.robot_position_east]
                 point_b = [self.random_points[element].x,self.random_points[element].y]
                 self.executing_dense_mission = True
+                
+                # add the object to the list of explored objects in order to avoid a reexploration
+                self.explored_objects_index = np.append(self.explored_objects_index,element)
+
                 self.robot_handler.send_slow_section_strategy(point_a,point_b,self.robot_ID)
                 self.wait_until_section_reached()
                     
-    
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east
@@ -204,7 +192,6 @@ class MultiRobotSystem:
         point_a1 = [self.robot_position_north,self.robot_position_east]
         point_b1 = self.goal_section_point
         self.robot_handler.send_slow_section_strategy(point_a1,point_b1,self.robot_ID)
-        # self.wait_until_section_reached()
     
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -306,7 +293,7 @@ class MultiRobotSystem:
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
             self.actual_section = self.actual_sections[self.robot_ID][1]
             self.send_folowing_section = True
-            
+
         elif(self.final_status!=0 and self.executing_dense_mission==True): 
             self.send_folowing_section = False
             self.return_to_exploration_path()
