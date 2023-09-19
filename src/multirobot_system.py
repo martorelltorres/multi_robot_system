@@ -143,15 +143,6 @@ class MultiRobotSystem:
                 self.executing_dense_mission = True
                 self.robot_handler.send_slow_section_strategy(point_a,point_b,self.robot_ID)
                 self.wait_until_section_reached()
-
-                
-                # return to the exploration path
-                # print("Return to coverage path")
-                # end_point = [self.restart_exploration_point[0],self.restart_exploration_point[1]]
-                # self.robot_handler.send_slow_section_strategy(point_b,end_point,self.robot_ID)
-
-                # if (self.final_status==7):
-                # return from the current position to the last exploration point
                     
     
     def update_robot_position(self, msg):
@@ -213,7 +204,7 @@ class MultiRobotSystem:
         point_a1 = [self.robot_position_north,self.robot_position_east]
         point_b1 = self.goal_section_point
         self.robot_handler.send_slow_section_strategy(point_a1,point_b1,self.robot_ID)
-        self.wait_until_section_reached()
+        # self.wait_until_section_reached()
     
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -310,11 +301,13 @@ class MultiRobotSystem:
         self.robot_handler.send_goto_strategy(self.robot_position_north,self.robot_position_east,True)
   
     def wait_until_section_reached(self):
+
         if(self.final_status==0 and self.executing_dense_mission==False):
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
             self.actual_section = self.actual_sections[self.robot_ID][1]
             self.send_folowing_section = True
-        else: 
+            
+        elif(self.final_status!=0 and self.executing_dense_mission==True): 
             self.send_folowing_section = False
             self.return_to_exploration_path()
             self.executing_dense_mission = False
