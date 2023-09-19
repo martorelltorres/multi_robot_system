@@ -130,7 +130,7 @@ class MultiRobotSystem:
 
             # check if the object is in the AUV assigned sub-area
             if(self.voronoi_polygons[self.robot_ID].contains(obect_point) and self.distance_AUV_object < self.threshold_distance):
-                print("Robot "+str(self.robot_ID)+ "has been detecting a PARDAAAL ID:" + str(element)+" !!!")
+                print("Robot "+str(self.robot_ID)+ " has been detecting a PARDAAAL ID:" + str(element)+" !!!")
 
                 # remove object from objects array
                 msg = Int16()
@@ -142,12 +142,17 @@ class MultiRobotSystem:
                 point_b = [self.random_points[element].x,self.random_points[element].y]
                 self.executing_dense_mission = True
                 self.robot_handler.send_slow_section_strategy(point_a,point_b,self.robot_ID)
+                self.wait_until_section_reached()
+
                 
                 # return to the exploration path
-                print("Return to coverage path")
-                end_point = [self.restart_exploration_point[0],self.restart_exploration_point[1]]
-                self.robot_handler.send_slow_section_strategy(point_b,end_point,self.robot_ID)
-                self.executing_dense_mission = False
+                # print("Return to coverage path")
+                # end_point = [self.restart_exploration_point[0],self.restart_exploration_point[1]]
+                # self.robot_handler.send_slow_section_strategy(point_b,end_point,self.robot_ID)
+
+                # if (self.final_status==7):
+                # return from the current position to the last exploration point
+                    
     
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
@@ -198,10 +203,17 @@ class MultiRobotSystem:
             self.robot_handler.send_slow_section_strategy(point_a,point_b,robot_id)
 
     def update_section_result(self,msg):
-        if (self.executing_dense_mission==False):
+        if (self.executing_dense_mission == False):
             self.final_status = msg.result.final_status
         else:
-            self.final_status = 888888
+            self.final_status = 8888
+    
+    def return_to_exploration_path(self):
+        print(str(self.robot_ID)+ ": is returning to exploration path!!!!!")
+        point_a1 = [self.robot_position_north,self.robot_position_east]
+        point_b1 = self.goal_section_point
+        self.robot_handler.send_slow_section_strategy(point_a1,point_b1,self.robot_ID)
+        self.wait_until_section_reached()
     
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -248,7 +260,7 @@ class MultiRobotSystem:
         else: 
             final_point = point1
 
-        self.restart_exploration_point = final_point
+        self.goal_section_point = final_point
         self.robot_handler.send_section_strategy((self.robot_position_north,self.robot_position_east),final_point,self.robot_ID)
         self.wait_until_section_reached()
         # start the area exploration coverage
@@ -298,12 +310,14 @@ class MultiRobotSystem:
         self.robot_handler.send_goto_strategy(self.robot_position_north,self.robot_position_east,True)
   
     def wait_until_section_reached(self):
-        if(self.final_status==0):
+        if(self.final_status==0 and self.executing_dense_mission==False):
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
             self.actual_section = self.actual_sections[self.robot_ID][1]
             self.send_folowing_section = True
         else: 
             self.send_folowing_section = False
+            self.return_to_exploration_path()
+            self.executing_dense_mission = False
   
     def print_polygon(self,event):
         points = []
