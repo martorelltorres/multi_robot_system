@@ -172,7 +172,7 @@ class DustbinRobot:
             queue_size=1)      
 
         #Publishers
-        self.corrected_bvr = rospy.Publisher('/robot6/controller/body_velocity_req',
+        self.corrected_bvr = rospy.Publisher('/robot4/controller/body_velocity_req',
                                                 BodyVelocityReq,
                                                 queue_size=1)
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
@@ -267,7 +267,7 @@ class DustbinRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+        with open('/home/tintin/area_partition_data.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -800,7 +800,7 @@ class DustbinRobot:
         self.corrected_bvr.publish(bvr)
     
     def transit_to(self,pose):    
-        self.disable_all_and_set_idle_srv()
+        # self.disable_all_and_set_idle_srv()
         """Goto to position x, y, z, at velocity vel."""
         # // Define waypoint attributes
         goto_req = GotoRequest()

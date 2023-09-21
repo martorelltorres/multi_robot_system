@@ -72,7 +72,7 @@ class area_partition:
    
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+        with open('/home/tintin/area_partition_data.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
