@@ -177,7 +177,6 @@ class DustbinRobot:
 
         #Publishers
         self.corrected_bvr = rospy.Publisher('/robot'+str(robot_id)+'/controller/body_velocity_req',
-
                                                 BodyVelocityReq,
                                                 queue_size=1)
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
