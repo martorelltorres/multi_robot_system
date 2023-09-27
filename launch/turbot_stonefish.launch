@@ -1,11 +1,23 @@
 <launch>
-<!-- README: IF YOU WANT TO USE THIS LAUNCH FILE YOU SHOULD DO:
+    <!-- README: IF YOU WANT TO USE THIS LAUNCH FILE YOU SHOULD DO:
         git checkout simulador 
         INTO THE COLA2_TURBOT PACKAGE -->
     <!-- Params -->
-    <arg name="place" default="bendinat.yaml"/>
-    <arg name="robot1_name" default="turbot"/>
-    <arg name="robot2_name" default="turbot2"/>
+    <!-- Params -->
+    <arg name="place" default="andratx_exterior.yaml"/>
+    <arg name="robot0" default="true"/>
+    <arg name="robot1" default="true"/>
+    <arg name="robot2" default="true"/>
+    <arg name="robot3" default="true"/>
+    <arg name="robot4" default="false"/>
+    <arg name="robot5" default="false"/>
+
+    <arg name="robot0_name" default="robot0"/>
+    <arg name="robot1_name" default="robot1"/>
+    <arg name="robot2_name" default="robot2"/>
+    <arg name="robot3_name" default="robot3"/>
+    <arg name="robot4_name" default="robot4"/>
+    <arg name="robot5_name" default="robot5"/>
     
     <!-- Flags -->
     <arg name="cola2_nav" default="false"/>
@@ -14,24 +26,17 @@
     
     <!-- Interfaces -->
     <arg name="enableIqua" default="false"/>
-    <arg name="enableIqua2" default="false"/>
-
     <arg name="enableMultimaster" default="false"/>
 
     <arg name="simulation_rate" default="50"/>
     <arg name="graphics_quality" default="low"/>
 
-    <!-- robot -->
-    <arg name="robot1" default="true"/>
-    <arg name="robot2" default="true"/>
-
-
-    <!-- ROBOT 1 -->
-    <group if="$(arg robot1)">
+    <!-- ROBOT 0 -->
+    <group if="$(arg robot0)">
         
         <include file="$(find cola2_turbot)/launch/robot.launch">
             <arg name="place" value="$(arg place)"/>
-            <arg name="robot_name" value="$(arg robot1_name)"/>
+            <arg name="robot_name" value="$(arg robot0_name)"/>
             <arg name="sim" value="true"/>
             <arg name="simGPS" value="true"/>
             <arg name="enableComputerLogger" default="true"/>
@@ -51,12 +56,46 @@
         </include>
 
         <!-- Internal Sensors -->
-        <group ns="$(arg robot1_name)">
+        <group ns="$(arg robot0_name)">
             <rosparam command="load" file="$(find cola2_turbot)/config/sim_internal_sensors.yaml"/>
             <node name="sim_internal_sensors" pkg="cola2_sim" type="sim_internal_sensors.py" output="screen"/>
             <!-- <node name="sim_pressure_sensor" pkg="cola2_turbot" type="depth_sensor_publisher.py" output="screen"/> -->
+            <rosparam command="load" file="$(find cola2_turbot)/config/frames/frames_robot0.yaml"/>
+            <rosparam command="load" file="$(find cola2_turbot)/config/frames/robot_localization_robot0.yaml" ns="navigator"/>
         </group>
+    </group>
 
+    <!-- ROBOT 1 -->
+    <group if="$(arg robot1)">
+        <include file="$(find cola2_turbot)/launch/robot.launch">
+            <arg name="place" value="$(arg place)"/>
+            <arg name="robot_name" value="$(arg robot1_name)"/>
+            <arg name="sim" value="true"/>
+            <arg name="simGPS" value="true"/>
+            <arg name="enableComputerLogger" default="true"/>
+            <arg name="cola2_nav" value="$(arg cola2_nav)"/>
+            <arg name="enableSafety" value="false"/>
+            <arg name="enableThrusters" value="false"/>
+            <arg name="openLoopTeleoperation" value="false"/>
+            <arg name="enableUSBLloc" value="$(arg enableUSBLloc)"/>
+            <arg name="enableCamera" value="false"/>
+            <arg name="enableModem" value="false"/>
+            <arg name="enableRelayBoard" value="false"/>
+            <arg name="enableIqua" value="$(arg enableIqua)"/>
+            <arg name="enableMultimaster" value="$(arg enableMultimaster)"/>
+            <arg name="enableEchosounder" value="false"/>
+            <arg name="world2ned" value="false"/>
+        </include>
+
+        <!-- SIMULATE SENSORS and ACTUATORS -->
+        <group ns="$(arg robot1_name)">
+            <!-- Internal Sensors -->
+            <rosparam command="load" file="$(find cola2_turbot)/config/sim_internal_sensors.yaml"/>
+            <node name="sim_internal_sensors" pkg="cola2_sim" type="sim_internal_sensors.py" output="screen"/>
+            <!-- <node name="sim_pressure_sensor" pkg="cola2_turbot" type="depth_sensor_publisher.py" output="screen"/> -->
+            <rosparam command="load" file="$(find cola2_turbot)/config/frames/frames_robot1.yaml"/>
+            <rosparam command="load" file="$(find cola2_turbot)/config/frames/robot_localization_robot1.yaml" ns="navigator"/>
+        </group>
     </group>
 
     <!-- ROBOT 2 -->
@@ -75,7 +114,7 @@
             <arg name="enableCamera" value="false"/>
             <arg name="enableModem" value="false"/>
             <arg name="enableRelayBoard" value="false"/>
-            <arg name="enableIqua" value="$(arg enableIqua2)"/>
+            <arg name="enableIqua" value="$(arg enableIqua)"/>
             <arg name="enableMultimaster" value="$(arg enableMultimaster)"/>
             <arg name="enableEchosounder" value="false"/>
             <arg name="world2ned" value="false"/>
@@ -87,11 +126,41 @@
             <rosparam command="load" file="$(find cola2_turbot)/config/sim_internal_sensors.yaml"/>
             <node name="sim_internal_sensors" pkg="cola2_sim" type="sim_internal_sensors.py" output="screen"/>
             <!-- <node name="sim_pressure_sensor" pkg="cola2_turbot" type="depth_sensor_publisher.py" output="screen"/> -->
+            <rosparam command="load" file="$(find cola2_turbot)/config/frames/frames_robot2.yaml"/>
+            <rosparam command="load" file="$(find cola2_turbot)/config/frames/robot_localization_robot2.yaml" ns="navigator"/>
         </group>
+    </group>
 
-        <group ns="$(arg robot2_name)">
-            <rosparam command="load" file="$(find cola2_turbot)/config/simulation/config/frames2.yaml"/>
-            <rosparam command="load" file="$(find cola2_turbot)/config/simulation/config/robot_localization2.yaml" ns="navigator"/>
+    <!-- ROBOT 3 -->
+    <group if="$(arg robot3)">
+        <include file="$(find cola2_turbot)/launch/robot.launch">
+            <arg name="place" value="$(arg place)"/>
+            <arg name="robot_name" value="$(arg robot3_name)"/>
+            <arg name="sim" value="true"/>
+            <arg name="simGPS" value="true"/>
+            <arg name="enableComputerLogger" default="true"/>
+            <arg name="cola2_nav" value="$(arg cola2_nav)"/>
+            <arg name="enableSafety" value="false"/>
+            <arg name="enableThrusters" value="false"/>
+            <arg name="openLoopTeleoperation" value="false"/>
+            <arg name="enableUSBLloc" value="$(arg enableUSBLloc)"/>
+            <arg name="enableCamera" value="false"/>
+            <arg name="enableModem" value="false"/>
+            <arg name="enableRelayBoard" value="false"/>
+            <arg name="enableIqua" value="$(arg enableIqua)"/>
+            <arg name="enableMultimaster" value="$(arg enableMultimaster)"/>
+            <arg name="enableEchosounder" value="false"/>
+            <arg name="world2ned" value="false"/>
+        </include>
+
+        <!-- SIMULATE SENSORS and ACTUATORS -->
+        <group ns="$(arg robot3_name)">
+            <!-- Internal Sensors -->
+            <rosparam command="load" file="$(find cola2_turbot)/config/sim_internal_sensors.yaml"/>
+            <node name="sim_internal_sensors" pkg="cola2_sim" type="sim_internal_sensors.py" output="screen"/>
+            <!-- <node name="sim_pressure_sensor" pkg="cola2_turbot" type="depth_sensor_publisher.py" output="screen"/> -->
+            <rosparam command="load" file="$(find cola2_turbot)/config/frames/frames_robot3.yaml"/>
+            <rosparam command="load" file="$(find cola2_turbot)/config/frames/robot_localization_robot3.yaml" ns="navigator"/>
         </group>
     </group>
 

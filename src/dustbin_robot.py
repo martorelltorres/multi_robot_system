@@ -257,7 +257,7 @@ class DustbinRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+        with open('//mnt/storage_disk/area_partition_data.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 

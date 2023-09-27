@@ -17,9 +17,9 @@ from multi_robot_system.msg import PartitionedPolygonInfo
 class polygon_division:
 
     def __init__(self, name):
-        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
-        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230622123222_andratx_middle.xml") 
+        # self.exploration_area = get_param(self,'exploration_area',"//mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
+        # self.exploration_area = get_param(self,'exploration_area',"//mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
+        self.exploration_area = get_param(self,'exploration_area',"//mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/missions/230622123222_andratx_middle.xml") 
         self.number_of_robots = get_param(self,'number_of_robots',4)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = 39.543330
@@ -49,7 +49,7 @@ class polygon_division:
             'array6': self.random_points
         }
 
-        with open('/home/uib/area_partition_data.pickle', 'wb') as file:
+        with open('/mnt/storage_disk/area_partition_data.pickle', 'wb') as file:
             pickle.dump(data, file)
         print("...process finished")
  

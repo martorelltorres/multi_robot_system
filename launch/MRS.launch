@@ -15,7 +15,15 @@
   <arg name="robot_4" default="robot4"/>  <!--ASV-->
 
   <!-- Launch the AUV Simulation -->
-  <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
+  <!-- <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
+    <arg name="place" value="$(arg place)"/>
+    <arg name="robot0_name" value="$(arg robot_0)"/>
+    <arg name="robot1_name" value="$(arg robot_1)"/>
+    <arg name="robot2_name" value="$(arg robot_2)"/>
+    <arg name="robot3_name" value="$(arg robot_3)"/>
+  </include> -->
+
+  <include  file="$(find multi_robot_system)/launch/turbot_stonefish.launch">
     <arg name="place" value="$(arg place)"/>
     <arg name="robot0_name" value="$(arg robot_0)"/>
     <arg name="robot1_name" value="$(arg robot_1)"/>
