@@ -15,13 +15,13 @@
   <arg name="robot_4" default="robot4"/>  <!--ASV-->
 
   <!-- Launch the AUV Simulation -->
-  <include  file="$(find multi_robot_system)/launch/turbot_stonefish.launch">
+  <!-- <include  file="$(find multi_robot_system)/launch/turbot_stonefish.launch">
     <arg name="place" value="$(arg place)"/>
     <arg name="robot0_name" value="$(arg robot_0)"/>
     <arg name="robot1_name" value="$(arg robot_1)"/>
     <arg name="robot2_name" value="$(arg robot_2)"/>
     <arg name="robot3_name" value="$(arg robot_3)"/>
-  </include>
+  </include> -->
 
 
   <!-- Launch the AUV architecture -->
@@ -34,11 +34,11 @@
   </include> -->
 
   <!-- Launch the ASV architecture -->
-  <include  file="$(find cola2_xiroi)/launch/simulation.launch">
+  <!-- <include  file="$(find cola2_xiroi)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaASV)"/>
     <arg name="place" value="$(arg place)"/>
     <arg name="robot_name" value="$(arg robot_4)"/>
-  </include>
+  </include> -->
 
   <group ns="/mrs">
 
@@ -97,10 +97,6 @@
       <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
     </node>
 
-<<<<<<< HEAD
-    
-=======
->>>>>>> 18271f849c9475c9ee2d9307d7f8d99c24c7d859
     <!-- ROBOT 4 ASV -->
     <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
       <param name="robot_ID" value="4"/>

@@ -48,12 +48,7 @@ class polygon_division:
             'array5': self.voronoi_offset_polygons,
             'array6': self.random_points
         }
-
-<<<<<<< HEAD
-        with open('/mnt/storage_disk/area_partition_data.pickle', 'wb') as file:
-=======
         with open('/home/tintin/area_partition_data.pickle', 'wb') as file:
->>>>>>> 18271f849c9475c9ee2d9307d7f8d99c24c7d859
             pickle.dump(data, file)
         print("...process finished")
  
