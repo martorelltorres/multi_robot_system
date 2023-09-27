@@ -12,9 +12,7 @@
   <arg name="robot_1" default="robot1"/>  <!--AUV1-->
   <arg name="robot_2" default="robot2"/>  <!--AUV2-->
   <arg name="robot_3" default="robot3"/>  <!--AUV3-->
-  <arg name="robot_4" default="robot4"/>  <!--AUV4-->
-  <arg name="robot_5" default="robot5"/>  <!--AUV5-->
-  <arg name="robot_6" default="robot6"/>  <!--ASV-->
+  <arg name="robot_4" default="robot4"/>  <!--ASV-->
 
   <!-- Launch the AUV Simulation -->
   <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
@@ -23,15 +21,13 @@
     <arg name="robot1_name" value="$(arg robot_1)"/>
     <arg name="robot2_name" value="$(arg robot_2)"/>
     <arg name="robot3_name" value="$(arg robot_3)"/>
-    <arg name="robot4_name" value="$(arg robot_4)"/>
-    <arg name="robot5_name" value="$(arg robot_5)"/>
   </include>
 
   <!-- Launch the ASV Simulation -->
   <include  file="$(find cola2_xiroi)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaASV)"/>
     <arg name="place" value="$(arg place)"/>
-    <arg name="robot_name" value="$(arg robot_6)"/>
+    <arg name="robot_name" value="$(arg robot_4)"/>
   </include>
 
   <group ns="/mrs">
@@ -91,35 +87,12 @@
       <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
     </node>
 
-    <!-- Robot 4 -->
-    <node name="multi_robot_system_$(arg robot_4)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
+    
+    <!-- ROBOT 4 ASV -->
+    <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
       <param name="robot_ID" value="4"/>
-      <param name="robot_name" value= "$(arg robot_4)"/>
-      <param name="battery_topic" value="/$(arg robot_4)/batteries/status"/>
       <param name="section_action" value="/$(arg robot_4)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_4)/pilot/world_section_req/result"/>
-      <param name="robot_bvr_topic" value="/$(arg robot_4)/controller/body_velocity_req"/>
-      <param name="navigation_depth" value="0"/>
-      <remap from="/task_monitoring" to="$(arg robot_4)/task_monitoring"/>
-    </node>
-
-    <!-- Robot 5 -->
-    <node name="multi_robot_system_$(arg robot_5)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
-      <param name="robot_ID" value="5"/>
-      <param name="robot_name" value= "$(arg robot_5)"/>
-      <param name="battery_topic" value="/$(arg robot_5)/batteries/status"/>
-      <param name="section_action" value="/$(arg robot_5)/pilot/world_section_req"/>
-      <param name="section_result" value="/$(arg robot_5)/pilot/world_section_req/result"/>
-      <param name="robot_bvr_topic" value="/$(arg robot_5)/controller/body_velocity_req"/>
-      <param name="navigation_depth" value="0"/>
-      <remap from="/task_monitoring" to="$(arg robot_5)/task_monitoring"/>
-    </node>
-
-    <!-- ROBOT 6 ASV -->
-    <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
-      <param name="robot_ID" value="6"/>
-      <param name="section_action" value="/$(arg robot_6)/pilot/world_section_req"/>
-      <param name="section_result" value="/$(arg robot_6)/pilot/world_section_req/result"/>
       <param name="repulsion_radius" value="2"/>
       <param name="adrift_radius" value="6"/>
       <param name="tracking_radius" value="8"/>

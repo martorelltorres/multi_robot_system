@@ -10,6 +10,7 @@ import matplotlib
 import pickle
 import actionlib       
 import matplotlib.pyplot as plt
+from std_srvs.srv import Empty
 from std_msgs.msg import Int16, Bool, Int16MultiArray,Float32MultiArray,Float32
 from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
@@ -51,18 +52,18 @@ class DustbinRobot:
         self.start_to_publish = False
         self.robot_at_center = False
         self.robots_id = np.array([])
-        self.communication_times_delay = [0,0,0,0,0,0]
-        self.start_recording_time = [0,0,0,0,0,0]
-        self.communication_times_end = [0,0,0,0,0,0]
+        self.communication_times_delay = [0,0,0,0]
+        self.start_recording_time = [0,0,0,0]
+        self.communication_times_end = [0,0,0,0]
         self.thirth_stimulus= []
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]
+        self.robots_information = [[0,0],[0,0],[0,0],[0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
         self.set_end_time = False
-        self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
+        self.start_dustbin_strategy =np.array([False,False,False,False])
         self.first_dustbin_time = True
         self.trigger = False
         self.exploration_tasks_update = np.array([])
@@ -127,6 +128,14 @@ class DustbinRobot:
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
+        # enable thrusters service
+        rospy.wait_for_service('/robot'+str(self.robot_ID)+'/controller/enable_thrusters', 10)
+        try:
+            self.enable_thrusters_srv = rospy.ServiceProxy(
+                        '/robot'+str(self.robot_ID)+'/controller/enable_thrusters', Empty)
+        except rospy.ServiceException, e:
+            rospy.logwarn("%s: Service call failed: %s", self.name, e)
+
         #Subscribers
         for robot_id in range(self.number_of_robots):
             rospy.Subscriber(
@@ -145,12 +154,7 @@ class DustbinRobot:
                             ExplorationUpdate,    
                             self.kill_the_process,
                             queue_size=1)
-        
-        # rospy.Subscriber('/mrs/visited_object',
-        #                     Int16,    
-        #                     self.update_objects,
-        #                     queue_size=1)
-        
+               
         rospy.Subscriber('/mrs/exploration_finished',
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
@@ -172,7 +176,7 @@ class DustbinRobot:
             queue_size=1)      
 
         #Publishers
-        self.corrected_bvr = rospy.Publisher('/robot6/controller/body_velocity_req',
+        self.corrected_bvr = rospy.Publisher('/robot'+str(robot_id)+'/controller/body_velocity_req',
                                                 BodyVelocityReq,
                                                 queue_size=1)
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
@@ -204,11 +208,7 @@ class DustbinRobot:
         self.reset_storage_pub = rospy.Publisher('reset_storage_disk',
                                         Int16,
                                         queue_size=1)
-        
-        # self.updated_objects_pub = rospy.Publisher('updated_objects',
-        #                                 Int16MultiArray,
-        #                                 queue_size=1)
-        
+               
         self.robot_distances_pub = rospy.Publisher("robot_distances",
                                         Distances,
                                         queue_size=1)
@@ -254,16 +254,6 @@ class DustbinRobot:
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
-
-    # def update_objects(self,msg):
-    #     print("Removing object"+str(msg.data)+" from object_points")
-    #     element = msg.data
-    #     # remove object from object array
-    #     self.random_points = self.random_points[:element] + self.random_points[element+1:]
-    #     # send the updated array to the AUV's
-    #     msg = Int16MultiArray()
-    #     msg.data = self.random_points
-    #     self.updated_objects_pub.publish(msg)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -319,6 +309,7 @@ class DustbinRobot:
         self.asv_east_position = msg.position.east      
         self.asv_yaw = msg.orientation.yaw
         self.asv_init = True
+        self.enable_thrusters_srv()
 
         if (self.robot_at_center == False):
             self.transit_to(self.main_polygon_centroid)
@@ -628,8 +619,8 @@ class DustbinRobot:
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
-                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0,0,0]
-                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0,0,0]
+                self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
+                self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
             self.remove_robot=False
 
         self.check_dustbin_robot()

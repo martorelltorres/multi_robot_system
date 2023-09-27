@@ -20,7 +20,7 @@ class polygon_division:
         # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
         # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
         self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230622123222_andratx_middle.xml") 
-        self.number_of_robots = get_param(self,'number_of_robots',6)
+        self.number_of_robots = get_param(self,'number_of_robots',4)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = 39.543330
         self.ned_origin_lon = 2.377940
