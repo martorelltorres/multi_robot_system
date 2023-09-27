@@ -163,14 +163,14 @@
     <!-- ROBOT 4 -->
     <group if="$(arg robot4)">
         <!-- Launch the ASV architecture -->
-        <include  file="$(find cola2_xiroi)/launch/simulation.launch">
+        <include  file="$(find multi_robot_system)/launch/xiroi_simulation.launch">
             <arg name="enableIqua" value="$(arg enableIqua)"/>
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot4_name)"/>
         </include>
     </group>
 
-    <!-- Run Simulator -->
+    <!-- Run STONEFISH Simulator -->
     <arg name="simulation_data" default="$(find stonefish_ros)/simulation"/>
     <arg name="scenario_description" default="$(find stonefish_ros)/simulation/scenarios/andratx_multirobot.scn"/>
     <arg name="simulation_rate" default="50"/>
