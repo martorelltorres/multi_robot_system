@@ -3,7 +3,7 @@
   <arg name="place" default="andratx_exterior.yaml"/>
   <arg name="enableIquaASV" default="true"/>
   <arg name="enableIquaAUV" default="false"/>
-  <arg name="enableRviz" default="true"/>
+  <arg name="enableRviz" default="false"/>
   <arg name="enableCollisonAvoidance" default="false"/>
   <arg name="enableCommunicationModule" default="true"/>
 
@@ -14,40 +14,10 @@
   <arg name="robot_3" default="robot3"/>  <!--AUV3-->
   <arg name="robot_4" default="robot4"/>  <!--ASV-->
 
-  <!-- Launch the AUV Simulation -->
-  <!-- <include  file="$(find multi_robot_system)/launch/turbot_stonefish.launch">
-    <arg name="place" value="$(arg place)"/>
-    <arg name="robot0_name" value="$(arg robot_0)"/>
-    <arg name="robot1_name" value="$(arg robot_1)"/>
-    <arg name="robot2_name" value="$(arg robot_2)"/>
-    <arg name="robot3_name" value="$(arg robot_3)"/>
-  </include> -->
-
-
-  <!-- Launch the AUV architecture -->
-  <!-- <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
-    <arg name="place" value="$(arg place)"/>
-    <arg name="robot0_name" value="$(arg robot_0)"/>
-    <arg name="robot1_name" value="$(arg robot_1)"/>
-    <arg name="robot2_name" value="$(arg robot_2)"/>
-    <arg name="robot3_name" value="$(arg robot_3)"/>
-  </include> -->
-
-  <!-- Launch the ASV architecture -->
-  <!-- <include  file="$(find cola2_xiroi)/launch/simulation.launch">
-    <arg name="enableIqua" value="$(arg enableIquaASV)"/>
-    <arg name="place" value="$(arg place)"/>
-    <arg name="robot_name" value="$(arg robot_4)"/>
-  </include> -->
-
   <group ns="/mrs">
 
     <!-- load the multi_robot_system.yaml parameters file -->
     <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
-
-    <!-- divide the exploration area, this script should be executed at the begining. Then the area information will be stored in a file -->
-    <!-- <node name="polygon_division" pkg="multi_robot_system" type="polygon_division.py" respawn="true"/> -->
-
   
     <!-- Robot 0-->
     <node name="multi_robot_system_$(arg robot_0)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
@@ -61,6 +31,7 @@
       <remap from="/task_monitoring" to="$(arg robot_0)/task_monitoring"/>
     </node>
 
+
     <!-- Robot 1 -->
     <node name="multi_robot_system_$(arg robot_1)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
       <param name="robot_ID" value="1"/>
@@ -72,6 +43,7 @@
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
     </node>
+
 
     <!-- Robot 2 -->
     <node name="multi_robot_system_$(arg robot_2)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
@@ -85,6 +57,7 @@
       <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/>
     </node>
 
+
     <!-- Robot 3 -->
     <node name="multi_robot_system_$(arg robot_3)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
       <param name="robot_ID" value="3"/>
@@ -96,6 +69,7 @@
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
     </node>
+
 
     <!-- ROBOT 4 ASV -->
     <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">

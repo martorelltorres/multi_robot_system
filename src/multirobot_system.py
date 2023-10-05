@@ -10,6 +10,7 @@ import os
 import subprocess
 import pickle
 import actionlib
+from cola2_lib.utils.ned import NED
 from shapely.geometry import Polygon,Point
 from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
@@ -17,6 +18,7 @@ from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
 from multi_robot_system.msg import AvoidCollision, CoverageStartTime, ExplorationUpdate
 from std_msgs.msg import Int16, Bool,Float32MultiArray,Float32,Int16MultiArray
+from sea_cucumber_detection.msg import holo_detections
 
 #import classes
 from area_partition import area_partition
@@ -28,11 +30,17 @@ class MultiRobotSystem:
         """ Init the class """
         self.name = name
          # Get config parameters from the parameter server
+        
         self.robot_ID = self.get_param('~robot_ID')   
         self.section_result = self.get_param('~section_result') 
         self.number_of_robots = self.get_param('number_of_robots')
+        self.ned_origin_lat = self.get_param('ned_origin_lat')
+        self.ned_origin_lon = self.get_param('ned_origin_lon')
+        self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)
         self.actual_sections = []
         self.actual_section = 0
+        self.coverage_started=False
+        self.avoid = False
         self.area_handler =  area_partition("area_partition")
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = Robot("robot")
@@ -42,6 +50,7 @@ class MultiRobotSystem:
         self.goal_section_point = [0,0]
         self.simulation_task_times = []
         self.task_monitoring = []
+        self.first_detection=True
         self.section_cancelled = False
         self.final_status = 99999
         self.system_init = False
@@ -71,6 +80,11 @@ class MultiRobotSystem:
             '/robot'+str(self.robot_ID)+'/navigator/navigation',
             NavSts,
             self.update_robot_position) 
+
+        rospy.Subscriber(
+            '/robot'+str(self.robot_ID)+'/holo_detections',
+            holo_detections,
+            self.holo_detected) 
         
         rospy.Subscriber(
             '/mrs/coverage_init',
@@ -99,9 +113,16 @@ class MultiRobotSystem:
         self.read_area_info()        
         rospy.Timer(rospy.Duration(1), self.print_polygon)
 
-        rospy.Timer(rospy.Duration(1.0), self.object_detection)
-
         self.initialization()
+    
+    def holo_detected(self, msg):
+        self.image = msg.image_rect_color
+        self.holo_lat = msg.lat
+        self.holo_lon = msg.lon
+        self.num_detections = msg.num_detections
+        self.holo_north, self.holo_east, depth = self.ned.geodetic2ned([self.holo_lat, self.holo_lon, 0.0])
+        if(self.coverage_started==True):
+            self.object_detection()
     
     def update_objects(self,msg):
         print("Updating object_points array")
@@ -110,29 +131,26 @@ class MultiRobotSystem:
     def object_exploration_flag(self,msg):
         self.object_exploration = msg.data
     
-    def object_detection(self,event):
-        for element in range(len(self.random_points)):
-            x_distance = self.robot_position_north-self.random_points[element].x
-            y_distance = self.robot_position_east-self.random_points[element].y
-            self.distance_AUV_object = 0
-            self.distance_AUV_object = np.sqrt(x_distance**2+y_distance**2)
-            self.threshold_distance = 10
-            obect_point = Point(self.random_points[element].x,self.random_points[element].y)
+    def object_detection(self):
+        self.holo_point = Point(self.holo_north,self.holo_east)
 
-            # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(obect_point) and self.distance_AUV_object < self.threshold_distance and np.all(self.explored_objects_index != element)):
-                print("Robot "+str(self.robot_ID)+ " has been detecting a PARDAAAL ID:" + str(element)+" !!!")
-                # go to the object position in order to explore the region
-                point_a = [self.robot_position_north,self.robot_position_east]
-                point_b = [self.random_points[element].x,self.random_points[element].y]
-                self.executing_dense_mission = True
-                
-                # add the object to the list of explored objects in order to avoid a reexploration
-                self.explored_objects_index = np.append(self.explored_objects_index,element)
+        if(self.first_detection==False):
+            self.avoid_double_detections(self.holo_point, self.old_holo_point)
 
-                self.robot_handler.send_slow_section_strategy(point_a,point_b,self.robot_ID)
-                self.wait_until_section_reached()
-                    
+        # check if the object is in the AUV assigned sub-area
+        if(self.voronoi_polygons[self.robot_ID].contains(self.holo_point) and self.avoid==False):
+            print("Robot "+str(self.robot_ID)+ " has been detecting an holoturia at: "+str(self.holo_point))
+            self.old_holo_point = self.holo_point
+            self.first_detection=False
+    
+    def avoid_double_detections(self,point_a,point_b):
+        distance = point_a.distance(point_b)
+        if(distance<=1.2):
+            self.avoid=True
+            print("removed!")
+        else:
+            self.avoid=False
+
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east
@@ -209,7 +227,7 @@ class MultiRobotSystem:
 
     def initialization(self): 
         # wait 7 seconds in order to initialize the different robot architectures
-        rospy.sleep(7)
+        rospy.sleep(5)
         if np.all(self.robot_initialization == False):
             for robot in range(self.number_of_robots):
                 self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
@@ -244,6 +262,7 @@ class MultiRobotSystem:
         # start the area exploration coverage
         print( "The robot"+str(self.robot_ID)+" started the exploration of area"+str(self.goals[self.robot_ID][1]))
         # advise the time when the robot starts the coverage
+        self.coverage_started=True
         msg = CoverageStartTime()
         msg.time = rospy.Time.now()
         msg.robot_id = self.robot_ID
