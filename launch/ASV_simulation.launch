@@ -37,7 +37,7 @@
         <rosparam command="load" file="$(find cola2_xiroi)/config/sim_sensors.yaml"/>
         <node name="sim_internal_sensors" pkg="cola2_xiroi" type="sim_internal_sensors.py" output="screen"/>
         <!-- GPS -->
-        <!-- <node name="sim_gps" pkg="stonefish_ros" type="sim_gps_xiroi.py" output="screen"/> -->
+        <node name="sim_gps" pkg="stonefish_ros" type="sim_gps_xiroi.py" output="screen"/>
         <!-- Thrusters -->
         <node name="sim_actuators" pkg="cola2_xiroi" type="sim_actuators.py" output="screen">
             <remap from="/control/thrusters_data" to="controller/thruster_setpoints"/>

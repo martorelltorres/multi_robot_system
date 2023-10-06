@@ -3,7 +3,7 @@
   <arg name="place" default="andratx_exterior.yaml"/>
   <arg name="enableIquaASV" default="true"/>
   <arg name="enableIquaAUV" default="false"/>
-  <arg name="enableRviz" default="false"/>
+  <arg name="enableRviz" default="true"/>
   <arg name="enableCollisonAvoidance" default="false"/>
   <arg name="enableCommunicationModule" default="true"/>
 
