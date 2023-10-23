@@ -439,13 +439,13 @@ class DustbinRobot:
 
         self.get_stimulus()
 
-        # Choose the optimization strategy
-        self.use_max_prob()
+        # Choose the communication optimization strategy
+        # self.use_max_prob()
         # self.use_random_prob()
         # self.use_max_stimulus()
         # self.max_min_stimulus()
         # self.round_robin()
-        # self.OWA()
+        self.OWA()
         # self.Qlearning()
 
         self.set_end_time = True
@@ -496,7 +496,7 @@ class DustbinRobot:
     
     def OWA(self):
         values = np.array(self.min_max_scaled)
-        self.owa=[0,0,0,0,0,0]
+        self.owa=[0,0,0,0]
 
         for element in range(len(self.removed_robots)):
             self.max_stimulus[self.removed_robots[element]]= 0
@@ -551,7 +551,7 @@ class DustbinRobot:
         print("The owas are: "+str(self.owa))
         max_owa = max(self.owa)
         self.robot_goal_id = self.owa.index(max_owa)
-        # print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
+        print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
     
 
     def use_max_stimulus(self):
@@ -643,20 +643,7 @@ class DustbinRobot:
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
-            self.print_random_points()
     
-    def print_random_points(self):
-        while not rospy.is_shutdown():
-            for element in range(40):
-                object = PointStamped()
-                object.header.stamp = rospy.Time.now()
-                object.header.frame_id = "world_ned"
-                object.point.x = self.random_points[element].x
-                object.point.y = self.random_points[element].y
-                object.point.z = 0
-                # Publish
-                self.pub_object.publish(object)
-
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
         self.asv_position_north = self.asv_north_position
@@ -888,31 +875,6 @@ class DustbinRobot:
         self.follow.color.a = 1
         self.markerPub_tracking.publish(self.follow)
 
-    def object_point(self,x,y):
-        self.object = Marker()
-        self.object.header.frame_id = "world_ned"
-        self.object.header.stamp = rospy.Time.now()
-        self.object.ns = "mrs"
-        self.object.id = 0
-        self.object.type = Marker.CYLINDER
-        self.object.action = Marker.ADD
-        self.object.pose.position.x = x
-        self.object.pose.position.y = y
-        self.object.pose.position.z = 1
-        self.object.pose.orientation.x = 0
-        self.object.pose.orientation.y = 0
-        self.object.pose.orientation.z = 0
-        self.object.pose.orientation.w = 1.0
-        self.object.scale.x = 2
-        self.object.scale.y = 2
-        self.object.scale.z = 0.1
-        self.object.color.r = 0.0
-        self.object.color.g = 0.0
-        self.object.color.b = 1.0
-        self.object.color.a = 1
-        self.markerPub_object.publish(self.object)
-
-  
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
             param_value = rospy.get_param(param_name)
