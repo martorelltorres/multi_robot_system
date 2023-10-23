@@ -12,15 +12,7 @@ ned_origin_lon: 2.377940
 
 # ------------------ AREA PARTITION -----------------------
 # Exploration area
-<<<<<<< HEAD
-exploration_area: "//mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml"
-# exploration_area: "//mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606090038_cabrera_nano.xml"
-# exploration_area: "//mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606123946_square.xml"
-=======
-exploration_area: "/home/tintin/multirobot_ws/src/multi_robot_system/missions/230210085906_cabrera_small.xml"
-# exploration_area: "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606090038_cabrera_nano.xml"
-# exploration_area: "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606123946_square.xml"
->>>>>>> 18271f849c9475c9ee2d9307d7f8d99c24c7d859
+
 
 
 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons

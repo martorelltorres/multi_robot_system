@@ -97,10 +97,6 @@
       <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
     </node>
 
-<<<<<<< HEAD
-    
-=======
->>>>>>> 18271f849c9475c9ee2d9307d7f8d99c24c7d859
     <!-- ROBOT 4 ASV -->
     <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
       <param name="robot_ID" value="4"/>
