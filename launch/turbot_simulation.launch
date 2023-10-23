@@ -15,7 +15,7 @@
     <arg name="robot4_name" default="robot4"/>
     <arg name="robot5_name" default="robot5"/>
 
-    <arg name="robot0_consumption" default="0.01"/>
+    <!-- <arg name="robot0_consumption" default="0.01"/>
     <arg name="robot1_consumption" default="0.02"/>
     <arg name="robot2_consumption" default="0.03"/>
     <arg name="robot3_consumption" default="0.03"/>
@@ -27,7 +27,7 @@
     <arg name="robot2_initial_charge" default="91"/>
     <arg name="robot3_initial_charge" default="96"/>
     <arg name="robot4_initial_charge" default="87"/>
-    <arg name="robot5_initial_charge" default="91"/>
+    <arg name="robot5_initial_charge" default="91"/> -->
 
     <!-- Common Flags -->
     <arg name="cola2_nav" default="true"/>
@@ -43,8 +43,8 @@
             <!-- Params -->
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot0_name)"/>
-            <arg name="battery_consumption" value="$(arg robot0_consumption)"/>
-            <arg name="initial_battery_charge" value="$(arg robot0_initial_charge)"/>
+            <!-- <arg name="battery_consumption" value="$(arg robot0_consumption)"/>
+            <arg name="initial_battery_charge" value="$(arg robot0_initial_charge)"/> -->
             <!-- Flags -->
             <arg name="cola2_nav" value="$(arg cola2_nav)"/>
             <arg name="enableSafety" value="$(arg enableSafety)"/>
@@ -64,8 +64,8 @@
             <!-- Params -->
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot1_name)"/>
-            <arg name="battery_consumption" value="$(arg robot1_consumption)"/>
-            <arg name="initial_battery_charge" value="$(arg robot1_initial_charge)"/>
+            <!-- <arg name="battery_consumption" value="$(arg robot1_consumption)"/>
+            <arg name="initial_battery_charge" value="$(arg robot1_initial_charge)"/> -->
             <!-- Flags -->
             <arg name="cola2_nav" value="$(arg cola2_nav)"/>
             <arg name="enableSafety" value="$(arg enableSafety)"/>
@@ -85,8 +85,8 @@
             <!-- Params -->
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot2_name)"/>
-            <arg name="battery_consumption" value="$(arg robot2_consumption)"/>
-            <arg name="initial_battery_charge" value="$(arg robot2_initial_charge)"/>
+            <!-- <arg name="battery_consumption" value="$(arg robot2_consumption)"/>
+            <arg name="initial_battery_charge" value="$(arg robot2_initial_charge)"/> -->
             <!-- Flags -->
             <arg name="cola2_nav" value="$(arg cola2_nav)"/>
             <arg name="enableSafety" value="$(arg enableSafety)"/>
@@ -105,8 +105,8 @@
             <!-- Params -->
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot3_name)"/>
-            <arg name="battery_consumption" value="$(arg robot3_consumption)"/>
-            <arg name="initial_battery_charge" value="$(arg robot3_initial_charge)"/>
+            <!-- <arg name="battery_consumption" value="$(arg robot3_consumption)"/>
+            <arg name="initial_battery_charge" value="$(arg robot3_initial_charge)"/> -->
             <!-- Flags -->
             <arg name="cola2_nav" value="$(arg cola2_nav)"/>
             <arg name="enableSafety" value="$(arg enableSafety)"/>
@@ -125,8 +125,8 @@
             <!-- Params -->
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot4_name)"/>
-            <arg name="battery_consumption" value="$(arg robot4_consumption)"/>
-            <arg name="initial_battery_charge" value="$(arg robot4_initial_charge)"/>
+            <!-- <arg name="battery_consumption" value="$(arg robot4_consumption)"/>
+            <arg name="initial_battery_charge" value="$(arg robot4_initial_charge)"/> -->
             <!-- Flags -->
             <arg name="cola2_nav" value="$(arg cola2_nav)"/>
             <arg name="enableSafety" value="$(arg enableSafety)"/>
@@ -146,8 +146,8 @@
             <!-- Params -->
             <arg name="place" value="$(arg place)"/>
             <arg name="robot_name" value="$(arg robot5_name)"/>
-            <arg name="battery_consumption" value="$(arg robot5_consumption)"/>
-            <arg name="initial_battery_charge" value="$(arg robot5_initial_charge)"/>
+            <!-- <arg name="battery_consumption" value="$(arg robot5_consumption)"/>
+            <arg name="initial_battery_charge" value="$(arg robot5_initial_charge)"/> -->
             <!-- Flags -->
             <arg name="cola2_nav" value="$(arg cola2_nav)"/>
             <arg name="enableSafety" value="$(arg enableSafety)"/>

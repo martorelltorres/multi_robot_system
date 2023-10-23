@@ -38,6 +38,7 @@
 
     <!-- load the multi_robot_system.yaml parameters file -->
     <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
+    <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/>
 
     <!-- divide the exploration area, this script should be executed at the begining. Then the area information will be stored in a file -->
     <!-- <node name="polygon_division" pkg="multi_robot_system" type="polygon_division.py" respawn="true"/> -->

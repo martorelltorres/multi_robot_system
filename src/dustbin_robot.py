@@ -42,6 +42,19 @@ class DustbinRobot:
         self.adrift_radius = self.get_param("adrift_radius",55)
         self.tracking_radius = self.get_param("tracking_radius",80)
         self.dutsbin_timer = self.get_param("dutsbin_timer",1)
+
+        self.alpha = self.get_param("alpha",1)
+        self.beta = self.get_param("beta",1)
+        self.gamma = self.get_param("gamma",1)
+        self.n = self.get_param("n",1)
+
+        self.w1 = self.get_param("w1",1)
+        self.w2 = self.get_param("w2",1)
+        self.w3 = self.get_param("w3",1)
+
+        self.optimization_strategy = self.get_param("optimization_strategy",1)
+
+
         self.area_handler =  area_partition("area_partition")
 
         # Initialize some variables
@@ -63,6 +76,7 @@ class DustbinRobot:
         self.enable_tracking = False
         self.set_end_time = False
         self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
+        self.ended_robots =np.array([False,False,False,False,False,False])
         self.first_dustbin_time = True
         self.trigger = False
         self.exploration_tasks_update = np.array([])
@@ -141,10 +155,10 @@ class DustbinRobot:
                             self.update_robot_position,
                             queue_size=1)
 
-        rospy.Subscriber('/mrs/exploration_area_update',
-                            ExplorationUpdate,    
-                            self.kill_the_process,
-                            queue_size=1)
+        # rospy.Subscriber('/mrs/exploration_area_update',
+        #                     ExplorationUpdate,    
+        #                     self.kill_the_process,
+        #                     queue_size=1)
         
         # rospy.Subscriber('/mrs/visited_object',
         #                     Int16,    
@@ -441,12 +455,16 @@ class DustbinRobot:
         return(self.stimulus)
 
     def time_trigger(self):
-        # this function set the robot goal id for the dustbin_strategy
-        # # The trigger flag becomes True only when there are no zeros in the self.communication_times_delay array 
-        # if (self.trigger==True):
-            
-
         self.get_stimulus()
+
+        # if(self.optimization_strategy==1):
+        #     self.use_max_prob()
+        # elif(self.optimization_strategy==2):
+        #     self.use_max_stimulus()
+        # elif(self.optimization_strategy==3):
+        #     self.round_robin()
+        # elif(self.optimization_strategy==4):
+        #     self.OWA()
 
         # Choose the optimization strategy
         self.use_max_prob()
@@ -551,11 +569,11 @@ class DustbinRobot:
             print("Max:"+str(self.max_element)+"          Min:"+str(self.min_element)+ "        Thirth:"+str(self.thirth_stimulus[element]))
 
             # weight values
-            w1=0.333
-            w2=0.333
-            w3=0.333 
+            # w1=0.333
+            # w2=0.333
+            # w3=0.333 
 
-            self.owa[element]=self.max_element*w1+self.thirth_stimulus[element]*w2+self.min_element*w3
+            self.owa[element]=self.max_element*self.w1+self.thirth_stimulus[element]*self.w2+self.min_element*self.w3
         
         print("The owas are: "+str(self.owa))
         max_owa = max(self.owa)
@@ -601,20 +619,22 @@ class DustbinRobot:
             self.time_trigger()
     
     def kill_the_process(self,msg):
-        # update area explored
-        self.exploration_tasks_update[msg.explored_sub_area] = True
-        print("__________TASK UPDATE__________")
-        print(self.exploration_tasks_update)
+        # # update area explored
+        self.ended_robots[msg]= True
+        # self.exploration_tasks_update[msg.explored_sub_area] = True
+        # print("__________TASK UPDATE__________")
+        # print(self.exploration_tasks_update)
         # check if the area is fully explored 
-        if all(self.exploration_tasks_update):
+        if all(self.ended_robots):
             print("____________________The target area is totally explored____________________")
-            list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
-            list_output = list_cmd.stdout.read()
-            retcode = list_cmd.wait()
-            assert retcode == 0, "List command returned %d" % retcode
-            for str in list_output.split("\n"):
-                if (str.startswith('/record_')):
-                    os.system("rosnode kill " + str)
+            os.system('pkill ros')
+            # list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+            # list_output = list_cmd.stdout.read()
+            # retcode = list_cmd.wait()
+            # assert retcode == 0, "List command returned %d" % retcode
+            # for str in list_output.split("\n"):
+            #     if (str.startswith('/record_')):
+            #         os.system("rosnode kill " + str)
 
     def remove_robot_from_dustbin_goals(self,msg):
         # remove the robot from the dustbin goals
@@ -625,6 +645,7 @@ class DustbinRobot:
         self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1
         print("Robot "+str(robot_id)+" removed from the team")
+        self.kill_the_process(robot_id)
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):

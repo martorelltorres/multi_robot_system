@@ -203,7 +203,7 @@ class Robot:
         #  Wait for result or cancel if timed out
         self.section_strategy.wait_for_result()
     
-    def send_slow_section_strategy(self,initial_point,final_point,robot_id):
+    def send_exploration_strategy(self,initial_point,final_point,robot_id):
         initial_position_x = initial_point[0]
         initial_position_y = initial_point[1]
         final_position_x = final_point[0]
@@ -216,7 +216,7 @@ class Robot:
         section_req.initial_yaw = self.robots_information[robot_id][2] #yaw
         section_req.final_position.x = final_position_x
         section_req.final_position.y = final_position_y
-        section_req.final_position.z = self.navigation_depth
+        section_req.final_position.z = 2
         section_req.altitude_mode = False
         section_req.tolerance.x = 3
         section_req.tolerance.y = 3

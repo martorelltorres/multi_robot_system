@@ -130,7 +130,7 @@ class MultiRobotSystem:
                 # add the object to the list of explored objects in order to avoid a reexploration
                 self.explored_objects_index = np.append(self.explored_objects_index,element)
 
-                self.robot_handler.send_slow_section_strategy(point_a,point_b,self.robot_ID)
+                self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
                 self.wait_until_section_reached()
                     
     def update_robot_position(self, msg):
@@ -191,7 +191,7 @@ class MultiRobotSystem:
         print(str(self.robot_ID)+ ": is returning to exploration path!!!!!")
         point_a1 = [self.robot_position_north,self.robot_position_east]
         point_b1 = self.goal_section_point
-        self.robot_handler.send_slow_section_strategy(point_a1,point_b1,self.robot_ID)
+        self.robot_handler.send_section_strategy(point_a1,point_b1,self.robot_ID)
     
     def read_area_info(self):
         # Open the pickle file in binary mode
