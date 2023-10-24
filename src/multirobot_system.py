@@ -15,7 +15,7 @@ from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
-from multi_robot_system.msg import AvoidCollision, CoverageStartTime, ExplorationUpdate
+from multi_robot_system.msg import AvoidCollision, CoverageStartTime, ExplorationUpdate, ObjectInformation
 from std_msgs.msg import Int16, Bool,Float32MultiArray,Float32,Int16MultiArray
 
 #import classes
@@ -45,6 +45,7 @@ class MultiRobotSystem:
         self.section_cancelled = False
         self.final_status = 99999
         self.system_init = False
+        self.object_detections = 0
         self.robot_initialization = np.array([])
         self.explored_objects_index = np.array([])
         self.start = True
@@ -89,6 +90,7 @@ class MultiRobotSystem:
         self.exploration_update_pub = rospy.Publisher("exploration_area_update",
                                         ExplorationUpdate,
                                         queue_size=1)
+        
         self.start_coverage_time = rospy.Publisher("robot"+str(self.robot_ID)+"_start_coverage_time",
                                         CoverageStartTime,
                                         queue_size=1)
@@ -96,6 +98,12 @@ class MultiRobotSystem:
         self.exploration_end_pub = rospy.Publisher("exploration_finished",
                                 Int16,
                                 queue_size=1)
+        
+        self.object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_object_info_pub",
+                        ObjectInformation,
+                        queue_size=1)
+        
+        
         self.read_area_info()        
         rospy.Timer(rospy.Duration(1), self.print_polygon)
 
@@ -116,12 +124,22 @@ class MultiRobotSystem:
             y_distance = self.robot_position_east-self.random_points[element].y
             self.distance_AUV_object = 0
             self.distance_AUV_object = np.sqrt(x_distance**2+y_distance**2)
-            self.threshold_distance = 10
-            obect_point = Point(self.random_points[element].x,self.random_points[element].y)
+            self.threshold_distance = 5
+            object_point = Point(self.random_points[element].x,self.random_points[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(obect_point) and self.distance_AUV_object < self.threshold_distance and np.all(self.explored_objects_index != element)):
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and self.distance_AUV_object < self.threshold_distance and np.all(self.explored_objects_index != element)):
                 print("Robot "+str(self.robot_ID)+ " has been detecting a PARDAAAL ID:" + str(element)+" !!!")
+                self.object_detections = self.object_detections+1
+
+                # advise the object information
+                msg = ObjectInformation()
+                msg.header.stamp = rospy.Time.now()
+                msg.north = object_point.x
+                msg.east = object_point.y
+                msg.detections = self.object_detections
+                self.object_info_pub.publish(msg)
+
                 # go to the object position in order to explore the region
                 point_a = [self.robot_position_north,self.robot_position_east]
                 point_b = [self.random_points[element].x,self.random_points[element].y]

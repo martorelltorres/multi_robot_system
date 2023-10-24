@@ -16,7 +16,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,TravelledDistance,CommunicationDelay,ExplorationUpdate,Communication,Distances, Data
+from multi_robot_system.msg import CoverageStartTime,TravelledDistance,CommunicationDelay,ObjectInformation,Communication,Distances, Data
 import os
 import sys
 import subprocess
@@ -96,13 +96,14 @@ class DustbinRobot:
         self.time_threshold=[]
         self.scaled_senses = []
         self.explorer_robots = []
+        self.image_transmission_time = []
         self.senses = []
         self.number_of_stimulus = 3
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
         self.removed_robots= []
         self.communication=True
-        self.transferred_data = 0
+        self.transmission_time = 0
         self.communication_latency = []
         self.first_time = True
         self.travelled_distance = 0
@@ -126,6 +127,7 @@ class DustbinRobot:
             self.robots_id = np.append(self.robots_id,robot_)
             self.robots_id = self.robots_id.astype(int) #convert float to int type
             self.comm_signal.append(0)
+            self.image_transmission_time.append(0)
             self.storage_disk.append(0)
             self.time_init.append(0)
             self.distance.append(0)
@@ -154,6 +156,14 @@ class DustbinRobot:
                             NavSts,    
                             self.update_robot_position,
                             queue_size=1)
+        
+        for robot_id in range(self.number_of_robots):
+            rospy.Subscriber(
+                "robot"+str(self.robot_ID)+"_object_info_pub",
+                ObjectInformation,
+                self.update_image_transmission_time,
+                robot_id,
+                queue_size=1) 
 
         # rospy.Subscriber('/mrs/exploration_area_update',
         #                     ExplorationUpdate,    
@@ -233,7 +243,7 @@ class DustbinRobot:
                                         Data,
                                         queue_size=1)
         
-        self.transferred_data_pub = rospy.Publisher('transferred_data',
+        self.transmission_time_pub = rospy.Publisher('transmission_time',
                                 Data,
                                 queue_size=1)
                
@@ -292,6 +302,11 @@ class DustbinRobot:
         self.main_polygon_centroid = data['array4']
         self.voronoi_offset_polygons = data['array5']
         self.random_points = data['array6']
+    
+    def update_image_transmission_time(self, msg, robot_id):
+        self.image_transmission_time[robot_id] =  self.image_transmission_time[robot_id] + 113.59
+        # 113.59 seconds is the mean transmission image time at 30 m. 
+        # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
 
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -723,14 +738,13 @@ class DustbinRobot:
 
     
     def communicate(self):
-        # self.get_time_threshold(self.robot_goal_id)
-        self.transferred_data = self.transferred_data + self.storage_disk[self.robot_goal_id]
+        self.transmission_time = self.transmission_time + self.storage_disk[self.robot_goal_id]
 
-        # publish the total transferred data
+        # publish the total transmission_time
         msg = Data()
         msg.header.stamp = rospy.Time.now()
-        msg.data = self.transferred_data
-        self.transferred_data_pub.publish(msg)
+        msg.data = self.transmission_time
+        self.transmission_time_pub.publish(msg)
 
         # reset the storage values
         self.storage_disk[self.robot_goal_id] = 0

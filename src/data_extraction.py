@@ -29,20 +29,20 @@ w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
 w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
 w3 = [0/10,2/10,4/10,6/10,8/10,10/10]
 
-simulation_count = 0
 combinations = []
 
 
 def main():
-    simulation_count = 0
     response_threshold_combinations()
     # owas_combinations()
     launch_file_path = '/mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/launch/MRS.launch'
-
+    simulation_count = -1
+    
     while True:
         # Modify parameters.yaml
         # If all parameter values have been simulated then stop simulating
-        if modify_parameters():
+        simulation_count = simulation_count + 1
+        if modify_parameters(simulation_count):
             break
 
         # Start simulation in a separate process
@@ -64,7 +64,7 @@ def main():
         while not os.path.exists(bag_file_path):
             time.sleep(1)
         
-        simulation_count = simulation_count + 1
+        
 
         # # Run rostopic to extract data
         # rostopic_process = subprocess.Popen(['rostopic', 'echo', '-b', bag_file_path, '-p', '/results'], stdout=subprocess.PIPE)
@@ -91,27 +91,22 @@ def response_threshold_combinations():
             for g in gamma:
                 if a + b + g == 10:
                     combinations.append([a, b, g])
+    # print (combinations)
+    # print(combinations [0][0])
+    # print(combinations [0][1])
+    # print(combinations [0][2])
 
 def check_ros_processes():
     process = subprocess.Popen('rosnode list', shell=True, stdout=subprocess.PIPE)
     output = process.stdout.read().decode()
     return output
 
-def modify_parameters():
-    global alpha
-    global beta
-    global gamma
-    global n
-    global combinations
-    global simulation_count
-   
+def modify_parameters(simulation_count):  
     yaml_file_path = "/mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
-
     with open(yaml_file_path, 'r') as yaml_file:
             data = yaml.load(yaml_file, Loader=yaml.Loader)
 
             if 'config' in data and isinstance(data['config'], list):
-
                 for param in data['config']:
                     if param['name'] == 'alpha':
                         param['alpha'] = combinations[simulation_count][0]

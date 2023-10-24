@@ -60,6 +60,7 @@ add_message_files(
   TravelledDistance.msg
   ExplorationUpdate.msg
   PartitionedPolygonInfo.msg
+  ObjectInformation.msg
 )
 
 ## Generate services in the 'srv' folder
