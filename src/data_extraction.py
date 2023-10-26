@@ -1,123 +1,109 @@
-#!/usr/bin/env python
-
-import os
-import subprocess
+import math
+import numpy as np
+import random 
+import csv
 import time
+from math import *
+import time
+import signal
+import psutil
 import yaml
-import rospy
+import matplotlib
+import pickle
+import actionlib       
+import matplotlib.pyplot as plt
+from std_msgs.msg import Int16, Bool, Int16MultiArray,Float32MultiArray,Float32
+from geometry_msgs.msg  import PointStamped
+from cola2_msgs.msg import  NavSts,BodyVelocityReq
+from std_srvs.srv import Trigger
+from visualization_msgs.msg import Marker
+from cola2_msgs.srv import Goto, GotoRequest
+from multi_robot_system.msg import CoverageStartTime,TravelledDistance,ExplorationUpdate,CommunicationDelay,ObjectInformation,Communication,Distances, Data
+import os
+import sys
+import subprocess
 
-global alpha
-global beta
-global gamma
-global n
+ 
+class DataExtraction:
 
-global w1
-global w2
-global w3
+    def __init__(self):
 
-global combinations
-global simulation_count
-
-
-alpha = [0,2,4,6,8,10]
-beta = [0,2,4,6,8,10]
-gamma = [0,2,4,6,8,10]
-n = [0,2,4,6,8,10]
-
-w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
-w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
-w3 = [0/10,2/10,4/10,6/10,8/10,10/10]
-
-combinations = []
-
-def main():
-    response_threshold_combinations()
-    # owas_combinations()
-    launch_file_path = '/mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/launch/MRS.launch'
-    simulation_count = -1
+        self.alpha = [0,2,4,6,8,10]
+        self.beta = [0,2,4,6,8,10]
+        self.gamma = [0,2,4,6,8,10]
+        self.n = [0,2,4,6,8,10]
+        self.w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
+        self.w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
+        self.w3 = [0/10,2/10,4/10,6/10,8/10,10/10]
+        self.simulation_count = -1
+        self.combinations = []
+        self.robot_id = 0
+        self.exploration_tasks_update = np.array([False, False, False, False, False, False])
+        self.launchfile = 'roslaunch multi_robot_system MRS.launch'
+        self.bagfile = "rosbag record -a"
+        self.yaml_file_path = "/mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
     
-    while True:
-        # Modify parameters.yaml
-        # If all parameter values have been simulated then stop simulating
-        simulation_count = simulation_count + 1
-        if modify_parameters(simulation_count):
-            break
-
-        # Start simulation in a separate process
-        launch_process = subprocess.Popen(['roslaunch', launch_file_path])
-
-        while True:
-            if check_ros_processes():
-                # Record results topic, make sure that the folder has the correct w/r rights
-                os.chdir('/mnt/storage_disk/extracted_results')
-                bag_process = subprocess.Popen(['rosbag', 'record', '-a', '-O', 'results_'+ str(simulation_count)+'.bag'])
-                break
-            time.sleep(5)
-
-        # Wait for the launch process to finish before continuing
+        # Define the different parameter combinations
+        self. response_threshold_combinations()
+        # self.owas_combinations()
+        self.process()
+    
+    def process(self):
+        self.simulation_count = self.simulation_count+1
+        # Set the simulation parameters
+        self.set_parameters()
+        # Launch the simulation
+        subprocess.Popen(self.launchfile, shell=True)
+        # Start recording the data in a bagfile
+        os.chdir('/mnt/storage_disk/extracted_results')
+        launch_process = subprocess.Popen(['rosbag', 'record', '-a', '-O', 'results_'+ str(self.simulation_count)+'.bag'])
         launch_process.wait()
+        self.check_if_proces_end()
 
-        # Wait for the bag file to be created before running rostopic
-        bag_file_path = '/mnt/storage_disk/extracted_results/results_'+str(simulation_count)+'.bag'
-        while not os.path.exists(bag_file_path):
-            time.sleep(1)
-        
-        
+    def check_if_proces_end(self):
+        list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+        list_output = list_cmd.stdout.read()
+        retcode = list_cmd.wait()
+        assert retcode == 0, "List command returned %d" % retcode
+        for str in list_output.split("\n"):
+            if (str.startswith('/record_')==False):
+                # os.system('pkill ros')
+                os.system('killall -9 rosmaster')
+                self.process()
 
-        # # Run rostopic to extract data
-        # rostopic_process = subprocess.Popen(['rostopic', 'echo', '-b', bag_file_path, '-p', '/results'], stdout=subprocess.PIPE)
-        # csv_data, _ = rostopic_process.communicate()
 
-        # # Append the extracted data to the CSV file
-        # with open('testing_results.csv', 'a') as csv_file:
-        #     csv_file.write(csv_data.decode())  # Write the data to the CSV file
+    def set_parameters(self):  
+        data = self.read_yaml()
+        if all(key in data for key in ['alpha', 'beta', 'gamma']):
+            data['alpha'] = self.combinations[self.simulation_count][0]  
+            data['beta'] = self.combinations[self.simulation_count][1]  
+            data['gamma'] = self.combinations[self.simulation_count][2]  
 
-        # # Remove the bag file if it still exists
-        # if os.path.exists(bag_file_path):
-        #     os.remove(bag_file_path)
+        self.write_yaml(data)
 
-def owas_combinations():
-    for element_w1 in w1:
-        for element_w2 in w2:
-            for element_w3 in w3:
-                if element_w1 + element_w2 + element_w3 == 1:
-                    combinations.append((element_w1, element_w2, element_w3))
+    def owas_combinations(self):
+        for element_w1 in self.w1:
+            for element_w2 in self.w2:
+                for element_w3 in self.w3:
+                    if element_w1 + element_w2 + element_w3 == 1:
+                        self.combinations.append((element_w1, element_w2, element_w3))
 
-def response_threshold_combinations():
-    for a in alpha:
-        for b in beta:
-            for g in gamma:
-                if a + b + g == 10:
-                    combinations.append([a, b, g])
+    def response_threshold_combinations(self):
+        for a in self.alpha:
+            for b in self.beta:
+                for g in self.gamma:
+                    if a + b + g == 10:
+                        self.combinations.append([a, b, g])
+    def read_yaml(self):
+        with open(self.yaml_file_path, 'r') as yaml_file:
+            data = yaml.safe_load(yaml_file)
+            return data
 
-def check_ros_processes():
-    process = subprocess.Popen('rosnode list', shell=True, stdout=subprocess.PIPE)
-    output = process.stdout.read().decode()
-    return output
-
-def modify_parameters(simulation_count):  
-    yaml_file_path = "/mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
-    with open(yaml_file_path, 'r') as yaml_file:
-            data = yaml.load(yaml_file, Loader=yaml.Loader)
-
-            if 'config' in data and isinstance(data['config'], list):
-                for param in data['config']:
-                    if param['name'] == 'alpha':
-                        param['alpha'] = combinations[simulation_count][0]
-                    
-                    elif param['name'] == 'beta':
-                        param['beta'] = combinations[simulation_count][1]
-
-                    elif param['name'] == 'gamma':
-                        param['gamma'] = combinations[simulation_count][2]
-
-    with open(yaml_file_path, 'w') as yaml_file:
-        yaml.dump(data, yaml_file, default_flow_style=False)
-
-    if (simulation_count > len(combinations)):
-        return True
-    else:
-        return False
+    def write_yaml(self, data):
+        with open(self.yaml_file_path, 'w') as yaml_file:
+            yaml.dump(data, yaml_file)
 
 if __name__ == "__main__":
-    main()
+    my_object = DataExtraction()
+
+

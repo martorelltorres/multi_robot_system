@@ -1,4 +1,3 @@
--alpha: 0
--beta: 0
--gamma: 10
-parameter_values: null
+alpha: 0
+beta: 0
+gamma: 10

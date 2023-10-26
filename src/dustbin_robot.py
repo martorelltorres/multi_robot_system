@@ -596,14 +596,13 @@ class DustbinRobot:
         # check if the area is fully explored 
         if all(self.exploration_tasks_update):
             print("____________________The target area is totally explored____________________")
-            os.system('pkill ros')
-            # list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
-            # list_output = list_cmd.stdout.read()
-            # retcode = list_cmd.wait()
-            # assert retcode == 0, "List command returned %d" % retcode
-            # for str in list_output.split("\n"):
-            #     if (str.startswith('/record_')):
-            #         os.system("rosnode kill " + str)
+            list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+            list_output = list_cmd.stdout.read()
+            retcode = list_cmd.wait()
+            assert retcode == 0, "List command returned %d" % retcode
+            for str in list_output.split("\n"):
+                if (str.startswith('/record_')):
+                    os.system("rosnode kill " + str)
 
     def remove_robot_from_dustbin_goals(self,msg):
         # remove the robot from the dustbin goals
