@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-
-# Simulation with several parameter values for different CA algorithms and strategies
+#!/usr/bin/env python
 
 import os
 import subprocess
 import time
 import yaml
+import rospy
 
 global alpha
 global beta
@@ -30,7 +29,6 @@ w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
 w3 = [0/10,2/10,4/10,6/10,8/10,10/10]
 
 combinations = []
-
 
 def main():
     response_threshold_combinations()
@@ -91,10 +89,6 @@ def response_threshold_combinations():
             for g in gamma:
                 if a + b + g == 10:
                     combinations.append([a, b, g])
-    # print (combinations)
-    # print(combinations [0][0])
-    # print(combinations [0][1])
-    # print(combinations [0][2])
 
 def check_ros_processes():
     process = subprocess.Popen('rosnode list', shell=True, stdout=subprocess.PIPE)

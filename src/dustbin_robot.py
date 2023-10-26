@@ -16,7 +16,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,TravelledDistance,CommunicationDelay,ObjectInformation,Communication,Distances, Data
+from multi_robot_system.msg import CoverageStartTime,TravelledDistance,ExplorationUpdate,CommunicationDelay,ObjectInformation,Communication,Distances, Data
 import os
 import sys
 import subprocess
@@ -53,8 +53,6 @@ class DustbinRobot:
         self.w3 = self.get_param("w3",1)
 
         self.optimization_strategy = self.get_param("optimization_strategy",1)
-
-
         self.area_handler =  area_partition("area_partition")
 
         # Initialize some variables
@@ -76,7 +74,6 @@ class DustbinRobot:
         self.enable_tracking = False
         self.set_end_time = False
         self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
-        self.ended_robots =np.array([False,False,False,False,False,False])
         self.first_dustbin_time = True
         self.trigger = False
         self.exploration_tasks_update = np.array([])
@@ -90,13 +87,11 @@ class DustbinRobot:
         self.comm_signal = []
         self.stimulus = np.array([])
         self.robots_sense = np.array([])
-        # tasks = self.area_handler.get_polygon_number()
         self.max_stimulus=[]
         self.min_stimulus = []
         self.time_threshold=[]
         self.scaled_senses = []
         self.explorer_robots = []
-        self.image_transmission_time = []
         self.senses = []
         self.number_of_stimulus = 3
         self.active_robots = self.number_of_robots
@@ -127,7 +122,6 @@ class DustbinRobot:
             self.robots_id = np.append(self.robots_id,robot_)
             self.robots_id = self.robots_id.astype(int) #convert float to int type
             self.comm_signal.append(0)
-            self.image_transmission_time.append(0)
             self.storage_disk.append(0)
             self.time_init.append(0)
             self.distance.append(0)
@@ -157,24 +151,11 @@ class DustbinRobot:
                             self.update_robot_position,
                             queue_size=1)
         
-        for robot_id in range(self.number_of_robots):
-            rospy.Subscriber(
-                "robot"+str(self.robot_ID)+"_object_info_pub",
-                ObjectInformation,
-                self.update_image_transmission_time,
-                robot_id,
-                queue_size=1) 
-
-        # rospy.Subscriber('/mrs/exploration_area_update',
-        #                     ExplorationUpdate,    
-        #                     self.kill_the_process,
-        #                     queue_size=1)
-        
-        # rospy.Subscriber('/mrs/visited_object',
-        #                     Int16,    
-        #                     self.update_objects,
-        #                     queue_size=1)
-        
+        rospy.Subscriber('/mrs/exploration_area_update',
+                            ExplorationUpdate,    
+                            self.kill_the_process,
+                            queue_size=1)
+               
         rospy.Subscriber('/mrs/exploration_finished',
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
@@ -186,7 +167,6 @@ class DustbinRobot:
                         self.update_communication_state,
                         queue_size=1)
             
-        
         for robot in range(self.number_of_robots):
             rospy.Subscriber(
             '/mrs/robot'+str(robot)+'_start_coverage_time',
@@ -199,6 +179,7 @@ class DustbinRobot:
         self.corrected_bvr = rospy.Publisher('/robot6/controller/body_velocity_req',
                                                 BodyVelocityReq,
                                                 queue_size=1)
+        
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
 
         self.markerPub_repulsion = rospy.Publisher('repulsion_radius',
@@ -229,15 +210,10 @@ class DustbinRobot:
                                         Int16,
                                         queue_size=1)
         
-        # self.updated_objects_pub = rospy.Publisher('updated_objects',
-        #                                 Int16MultiArray,
-        #                                 queue_size=1)
-        
         self.robot_distances_pub = rospy.Publisher("robot_distances",
                                         Distances,
                                         queue_size=1)
         
-
         # ---------------------------------------------------------------------------
         self.goal_id_pub = rospy.Publisher('goal_id',
                                         Data,
@@ -273,21 +249,10 @@ class DustbinRobot:
             rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
                          self.name)
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
-
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
-
-    # def update_objects(self,msg):
-    #     print("Removing object"+str(msg.data)+" from object_points")
-    #     element = msg.data
-    #     # remove object from object array
-    #     self.random_points = self.random_points[:element] + self.random_points[element+1:]
-    #     # send the updated array to the AUV's
-    #     msg = Int16MultiArray()
-    #     msg.data = self.random_points
-    #     self.updated_objects_pub.publish(msg)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -303,11 +268,6 @@ class DustbinRobot:
         self.voronoi_offset_polygons = data['array5']
         self.random_points = data['array6']
     
-    def update_image_transmission_time(self, msg, robot_id):
-        self.image_transmission_time[robot_id] =  self.image_transmission_time[robot_id] + 113.59
-        # 113.59 seconds is the mean transmission image time at 30 m. 
-        # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-
     def update_travelled_distance(self,event):
         if (self.first_time == True):
             self.x_old_position = 0
@@ -316,7 +276,6 @@ class DustbinRobot:
             self.y_current_position = self.asv_east_position
             self.update_distance()
             self.first_time = False
-
         else:
             self.x_old_position = self.x_current_position
             self.y_old_position = self.y_current_position
@@ -516,10 +475,8 @@ class DustbinRobot:
             self.g = 0.9  # Penalization rate
             self.e = 0.1  # Exploration probability
             self.qlearning_init = True
-
         self.select_action
     
-
     def select_action(self,state):
         if np.random.rand() < self.e:
             return np.random.randint(self.number_of_robots)  
@@ -611,7 +568,6 @@ class DustbinRobot:
         self.robot_goal_id = self.max_stimulus.index(maximum_value)
         
     def use_max_prob(self):
-        # print("Probability function: "+str(self.stimulus))
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmax()  
 
@@ -628,19 +584,17 @@ class DustbinRobot:
         if(self.system_init == False):
             self.initialization(robot_id) 
 
-
     def dustbin_strategy(self):
         if(self.system_init==True and self.communication==True):
             self.time_trigger()
-    
+      
     def kill_the_process(self,msg):
-        # # update area explored
-        self.ended_robots[msg]= True
-        # self.exploration_tasks_update[msg.explored_sub_area] = True
-        # print("__________TASK UPDATE__________")
-        # print(self.exploration_tasks_update)
+        # update area explored
+        self.exploration_tasks_update[msg.explored_sub_area] = True
+        print("__________TASK UPDATE__________")
+        print(self.exploration_tasks_update)
         # check if the area is fully explored 
-        if all(self.ended_robots):
+        if all(self.exploration_tasks_update):
             print("____________________The target area is totally explored____________________")
             os.system('pkill ros')
             # list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
@@ -660,7 +614,6 @@ class DustbinRobot:
         self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1
         print("Robot "+str(robot_id)+" removed from the team")
-        self.kill_the_process(robot_id)
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
@@ -676,13 +629,10 @@ class DustbinRobot:
             self.goto_central_area()
                   
     def goto_central_area(self):
-        # self.central_point = self.area_handler.get_main_polygon_centroid()
-        # self.pose = [self.central_point.x, self.central_point.y]
         self.transit_to(self.main_polygon_centroid)
         self.robot_at_center = True
 
     def initialization(self,robot_id):
-        # check if all the n robots are publishing their information
         if(self.robots_information[robot_id][0] != 0):
             self.robot_initialization[robot_id] = True
         
@@ -723,7 +673,8 @@ class DustbinRobot:
 
         if(self.radius < (self.adrift_radius+10)):
             if(self.set_transmission_init_time==True):
-                self.time = self.storage_disk[self.robot_goal_id]/50
+                # self.time = self.storage_disk[self.robot_goal_id]/50
+                self.time = self.storage_disk[self.robot_goal_id]
                 self.transmission_init_time = rospy.Time.now().secs
                 self.set_transmission_init_time=False
             
@@ -736,7 +687,6 @@ class DustbinRobot:
             self.extract_safety_position()
             self.repulsion_strategy(self.x, self.y)
 
-    
     def communicate(self):
         self.transmission_time = self.transmission_time + self.storage_disk[self.robot_goal_id]
 

@@ -4,7 +4,7 @@ import rospy
 from cola2_msgs.msg import  NavSts
 import numpy as np
 from std_msgs.msg import Empty
-from multi_robot_system.msg import Communication,Distances
+from multi_robot_system.msg import Communication,Distances,ObjectInformation
 from std_msgs.msg import Int16
 from sensor_msgs.msg import BatteryState
 import random
@@ -30,6 +30,7 @@ class communications:
         self.distances = []
         self.battery_charge = []
         self.communication_freq = 1
+        self.image_transmission_time = []
 
 
        # initialize the robots variables
@@ -41,6 +42,7 @@ class communications:
         for robot_ in range(self.number_of_robots):
             self.storage_disk.append(0)
             self.battery_charge.append(0)
+            self.image_transmission_time.append(0)
             
         #Publishers
 
@@ -84,6 +86,14 @@ class communications:
                 self.update_robot_position,
                 robot,
                 queue_size=1) 
+        
+        for robot_id in range(self.number_of_robots): 
+            rospy.Subscriber(
+                "robot"+str(self.robot_ID)+"_object_info_pub",
+                ObjectInformation,
+                self.update_image_transmission_time,
+                robot_id,
+                queue_size=1) 
                  
         rospy.Subscriber("reset_storage_disk",
                          Int16,    
@@ -100,6 +110,12 @@ class communications:
         for robot in range(self.number_of_robots):
             self.round_robots = np.append(self.round_robots,robot)
             self.distances.append(0)
+
+    def update_image_transmission_time(self, msg, robot_id):
+        self.image_transmission_time[robot_id] =  self.image_transmission_time[robot_id] + 113.59
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.image_transmission_time[robot_id]
+        # 113.59 seconds is the mean transmission image time at 30 m. 
+        # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
     
     def update_distance(self,msg):
         self.distances[msg.auv_id] = msg.distance      
@@ -166,8 +182,8 @@ class communications:
         communication_msg.asv_id = self.asv_id
         communication_msg.auv_id = self.auv_id
         communication_msg.communication_freq = self.communication_freq
-        storage = self.get_storage_disk(self.auv_id)
-        communication_msg.storage_disk = storage
+        # storage = self.get_storage_disk(self.auv_id)
+        communication_msg.storage_disk = self.image_transmission_time[self.auv_id]
 
         if(self.auv_id==0):
             self.robot0_comm_pub.publish(communication_msg)
@@ -181,8 +197,7 @@ class communications:
             self.robot4_comm_pub.publish(communication_msg)
         else:
             self.robot5_comm_pub.publish(communication_msg)
-        
-        
+                
         self.rate.sleep()
       
     def reset_values(self,msg):

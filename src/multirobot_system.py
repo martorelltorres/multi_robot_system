@@ -297,6 +297,14 @@ class MultiRobotSystem:
         final_task_time = rospy.Time.now()
         self.task_time = self.robot_handler.simulation_task_time(initial_task_time,final_task_time)
 
+        # advise the robot_id of the robot that finishes the task
+        msg = ExplorationUpdate()
+        msg.header.frame_id = "exploration_area"
+        msg.header.stamp = rospy.Time.now()
+        msg.robot_id = self.robot_ID 
+        msg.explored_sub_area = self.goals[self.robot_ID][1]
+        self.exploration_update_pub.publish(msg)
+
         # advise the robot_id of the robot that finishes ALL the tasks
         msg = Int16()
         msg.data = self.robot_ID 
