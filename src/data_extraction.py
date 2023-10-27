@@ -71,14 +71,12 @@ class DataExtraction:
                 os.system('killall -9 rosmaster')
                 self.process()
 
-
     def set_parameters(self):  
         data = self.read_yaml()
         if all(key in data for key in ['alpha', 'beta', 'gamma']):
             data['alpha'] = self.combinations[self.simulation_count][0]  
             data['beta'] = self.combinations[self.simulation_count][1]  
             data['gamma'] = self.combinations[self.simulation_count][2]  
-
         self.write_yaml(data)
 
     def owas_combinations(self):
@@ -94,6 +92,7 @@ class DataExtraction:
                 for g in self.gamma:
                     if a + b + g == 10:
                         self.combinations.append([a, b, g])
+
     def read_yaml(self):
         with open(self.yaml_file_path, 'r') as yaml_file:
             data = yaml.safe_load(yaml_file)
