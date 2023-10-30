@@ -1,4 +1,4 @@
-# optimization_model:
-alpha: 10
+alpha: 0
 beta: 0
-gamma: 0
+gamma: 10
+optimization_model: 1

@@ -47,6 +47,7 @@ class DustbinRobot:
         self.beta = self.get_param("beta",1)
         self.gamma = self.get_param("gamma",1)
         self.n = self.get_param("n",1)
+        self.optimization_model = self.get_param("optimization_model",1)
 
         self.w1 = self.get_param("w1",1)
         self.w2 = self.get_param("w2",1)
@@ -68,7 +69,7 @@ class DustbinRobot:
         self.thirth_stimulus= []
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]
+        self.robots_information = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
@@ -431,23 +432,17 @@ class DustbinRobot:
     def time_trigger(self):
         self.get_stimulus()
 
-        # if(self.optimization_strategy==1):
-        #     self.use_max_prob()
-        # elif(self.optimization_strategy==2):
-        #     self.use_max_stimulus()
-        # elif(self.optimization_strategy==3):
-        #     self.round_robin()
-        # elif(self.optimization_strategy==4):
-        #     self.OWA()
+        if(self.optimization_model==1):
+            self.response_threshold()
 
-        # Choose the optimization strategy
-        self.use_max_prob()
-        # self.use_random_prob()
-        # self.use_max_stimulus()
-        # self.max_min_stimulus()
-        # self.round_robin()
-        # self.OWA()
-        # self.Qlearning()
+        elif(self.optimization_model==2):
+            self.OWA()
+            
+        elif(self.optimization_model==3):
+            self.use_max_stimulus()
+            
+        elif(self.optimization_model==4):
+            self.round_robin()
 
         self.set_end_time = True
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
@@ -567,7 +562,7 @@ class DustbinRobot:
         print("The maximum value is: "+str(maximum_value))
         self.robot_goal_id = self.max_stimulus.index(maximum_value)
         
-    def use_max_prob(self):
+    def response_threshold(self):
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmax()  
 
@@ -579,6 +574,7 @@ class DustbinRobot:
         # fill the robots_information array with the robots information received from the NavSts 
         self.robots_information[robot_id][0] = msg.position.north
         self.robots_information[robot_id][1] = msg.position.east
+        self.robots_information[robot_id][2] = msg.orientation.yaw
 
         # check the system initialization
         if(self.system_init == False):
@@ -651,18 +647,50 @@ class DustbinRobot:
                 # Publish
                 self.pub_object.publish(object)
 
+    def get_lateral_position(self):
+        yaw_rad = math.radians(self.auv_yaw)
+
+        # Obtain lateral positiona at predefined distance
+        lateral_pos_1_x = self.auv_position_north + self.adrift_radius * math.cos(yaw_rad + math.pi / 2)
+        lateral_pos_1_y = self.auv_position_east + self.adrift_radius * math.sin(yaw_rad + math.pi / 2)
+        lateral_pos_2_x = self.auv_position_north + self.adrift_radius * math.cos(yaw_rad - math.pi / 2)
+        lateral_pos_2_y = self.auv_position_east + self.adrift_radius * math.sin(yaw_rad - math.pi / 2)
+
+        # find the closest position
+        dist_1 = self.get_euclidean_distance(self.asv_position_north,self.asv_position_east,lateral_pos_1_x,lateral_pos_1_y)
+        dist_2 = self.get_euclidean_distance(self.asv_position_north,self.asv_position_east,lateral_pos_2_x,lateral_pos_2_y)
+        
+        if dist_1 < dist_2:
+            return lateral_pos_1_x, lateral_pos_1_y
+        else:
+            return lateral_pos_2_x, lateral_pos_2_y
+
+    def get_euclidean_distance(self,p1_x,p1_y,p2_x,p2_y):
+        x_distance = p1_x - p2_x
+        y_distance = p1_y - p2_y
+        distance = np.sqrt(x_distance**2 + y_distance**2)
+        return(distance)
+
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
         self.asv_position_north = self.asv_north_position
         self.auv_position_east = self.robots_information[self.robot_goal_id][1]
         self.asv_position_east = self.asv_east_position
+        self.auv_yaw = self.robots_information[self.robot_goal_id][2]
 
         self.tracking_marker()
         self.adrift_marker()
         self.repulsion_marker()
 
+        # distance ASV-AUV
         self.x_distance = self.auv_position_north-self.asv_position_north
         self.y_distance = self.auv_position_east-self.asv_position_east
+
+        # distance ASV - 90 lateral AUV distance
+        position_x, position_y = self.get_lateral_position()
+        self.x_lateral_distance = position_x-self.asv_position_north
+        self.y_lateral_distance = position_y-self.asv_position_east
+
         self.radius = sqrt((self.x_distance)**2 + (self.y_distance)**2)
         self.initialized = True
 
@@ -684,7 +712,7 @@ class DustbinRobot:
         # Repulsion area
         if(self.radius <= self.repulsion_radius):
             self.extract_safety_position()
-            self.repulsion_strategy(self.x, self.y)
+            self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
 
     def communicate(self):
         self.transmission_time = self.transmission_time + self.storage_disk[self.robot_goal_id]
@@ -702,9 +730,7 @@ class DustbinRobot:
         msg.data = reset_id 
         self.reset_storage_pub.publish(msg)
 
-        # self.time_init[self.robot_goal_id] = rospy.Time.now().secs
         self.communication=True
-
         self.communication_latency[self.robot_goal_id] = (rospy.Time.now().secs - self.start_recording_time[self.robot_goal_id])
         msg = CommunicationDelay()
         msg.header.stamp = rospy.Time.now()
@@ -744,8 +770,9 @@ class DustbinRobot:
             self.velocity_adjustment = (self.radius-(self.adrift_radius))/(self.tracking_radius-(self.adrift_radius))
         else:
             self.velocity_adjustment = 1  
+
         linear_velocity = self.velocity_adjustment * constant_linear_velocity
-        alpha_ref = atan2(self.y_distance,self.x_distance)
+        alpha_ref = atan2(self.y_lateral_distance,self.x_lateral_distance)
         angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
         self.angular_velocity = constant_angular_velocity * angle_error
         self.xr = linear_velocity*cos(angle_error)
@@ -755,15 +782,6 @@ class DustbinRobot:
         self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
     
     def corrected_bvr_pusblisher(self,corrected_velocity_x,corrected_velocity_y,corrected_angular_z):
-        # NEW PRIORITY DEFINITIONS
-        # PRIORITY_TELEOPERATION_LOW = 0
-        # PRIORITY_SAFETY_LOW = 5
-        # PRIORITY_NORMAL = 10
-        # PRIORITY_NORMAL_HIGH = 20
-        # PRIORITY_TELEOPERATION = 40
-        # PRIORITY_SAFETY = 45
-        # PRIORITY_SAFETY_HIGH  = 50
-        # PRIORITY_TELEOPERATION_HIGH = 60 
         bvr = BodyVelocityReq()
         bvr.header.frame_id    = '/robot'+str(self.robot_ID)+'/base_link'
         bvr.header.stamp       = rospy.Time.now()
@@ -785,8 +803,6 @@ class DustbinRobot:
     
     def transit_to(self,pose):    
         self.disable_all_and_set_idle_srv()
-        """Goto to position x, y, z, at velocity vel."""
-        # // Define waypoint attributes
         goto_req = GotoRequest()
         goto_req.altitude = 0
         goto_req.altitude_mode = False
@@ -806,7 +822,7 @@ class DustbinRobot:
         goto_req.disable_axis.yaw = False
         goto_req.disable_axis.pitch = True
         goto_req.priority = 20
-        goto_req.reference = 0 #REFERENCE_NED=0  REFERENCE_GLOBAL=1 REFERENCE_VEHICLE=2
+        goto_req.reference = 0 
         self.goto_srv(goto_req)
 
     def adrift_marker(self):
@@ -905,7 +921,6 @@ class DustbinRobot:
         self.object.color.a = 1
         self.markerPub_object.publish(self.object)
 
-  
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
             param_value = rospy.get_param(param_name)

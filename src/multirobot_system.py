@@ -124,11 +124,11 @@ class MultiRobotSystem:
             y_distance = self.robot_position_east-self.random_points[element].y
             self.distance_AUV_object = 0
             self.distance_AUV_object = np.sqrt(x_distance**2+y_distance**2)
-            self.threshold_distance = 5
+            self.threshold_detection_distance = 7
             object_point = Point(self.random_points[element].x,self.random_points[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and self.distance_AUV_object < self.threshold_distance and np.all(self.explored_objects_index != element)):
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and self.distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_objects_index != element)):
                 print("Robot "+str(self.robot_ID)+ " has been detecting a PARDAAAL ID:" + str(element)+" !!!")
                 self.object_detections = self.object_detections+1
 
