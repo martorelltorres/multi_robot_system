@@ -22,6 +22,7 @@ from std_msgs.msg import Int16, Bool,Float32MultiArray,Float32,Int16MultiArray
 from area_partition import area_partition
 from task_allocator import task_allocation
 from robot import Robot
+
 class MultiRobotSystem:
     
     def __init__(self, name):
@@ -40,6 +41,7 @@ class MultiRobotSystem:
         self.send_folowing_section = False
         self.points = []
         self.goal_section_point = [0,0]
+        self.first_time = True
         self.simulation_task_times = []
         self.task_monitoring = []
         self.section_cancelled = False
@@ -47,7 +49,9 @@ class MultiRobotSystem:
         self.system_init = False
         self.object_detections = 0
         self.robot_initialization = np.array([])
-        self.explored_objects_index = np.array([])
+        # self.explored_objects_index = np.array([])
+        self.explored_objects_index = []
+        self.empty_array=np.array([])
         self.start = True
         self.first_section_points = []
         self.robots_information =[]
@@ -59,6 +63,8 @@ class MultiRobotSystem:
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.actual_sections.append([i,0])
             self.robots_information.append (self.robot_data)
+            self.explored_objects_index.append(np.array([]))
+            
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -128,28 +134,30 @@ class MultiRobotSystem:
             object_point = Point(self.random_points[element].x,self.random_points[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and self.distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_objects_index != element)):
-                print("Robot "+str(self.robot_ID)+ " has been detecting a PARDAAAL ID:" + str(element)+" !!!")
-                self.object_detections = self.object_detections+1
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and self.distance_AUV_object < self.threshold_detection_distance ):
+                if (self.first_time==True or (self.first_time==False and np.all(self.explored_objects_index[self.robot_ID] != element))):
+                    self.first_time = False
+                    print("Robot "+str(self.robot_ID)+ " has been detecting a PARDAAAL ID:" + str(element)+" !!!")
+                    self.object_detections = self.object_detections+1
 
-                # advise the object information
-                msg = ObjectInformation()
-                msg.header.stamp = rospy.Time.now()
-                msg.north = object_point.x
-                msg.east = object_point.y
-                msg.detections = self.object_detections
-                self.object_info_pub.publish(msg)
+                    # advise the object information
+                    msg = ObjectInformation()
+                    msg.header.stamp = rospy.Time.now()
+                    msg.north = object_point.x
+                    msg.east = object_point.y
+                    msg.detections = self.object_detections
+                    self.object_info_pub.publish(msg)
 
-                # go to the object position in order to explore the region
-                point_a = [self.robot_position_north,self.robot_position_east]
-                point_b = [self.random_points[element].x,self.random_points[element].y]
-                self.executing_dense_mission = True
-                
-                # add the object to the list of explored objects in order to avoid a reexploration
-                self.explored_objects_index = np.append(self.explored_objects_index,element)
+                    # go to the object position in order to explore the region
+                    point_a = [self.robot_position_north,self.robot_position_east]
+                    point_b = [self.random_points[element].x,self.random_points[element].y]
+                    self.executing_dense_mission = True
+                    
+                    # add the object to the list of explored objects in order to avoid a reexploration
+                    self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
 
-                self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
-                self.wait_until_section_reached()
+                    self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
+                    self.wait_until_section_reached()
                     
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
