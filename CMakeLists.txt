@@ -55,12 +55,14 @@ add_message_files(
   Communication.msg
   Data.msg
   AvoidCollision.msg
-  CommunicationDelay.msg
+  CommunicationLatency.msg
   CoverageStartTime.msg
   TravelledDistance.msg
   ExplorationUpdate.msg
   PartitionedPolygonInfo.msg
   ObjectInformation.msg
+  BufferedData.msg
+  TransmittedData.msg
 )
 
 ## Generate services in the 'srv' folder

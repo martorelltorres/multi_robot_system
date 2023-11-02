@@ -86,15 +86,7 @@ class communications:
                 self.update_robot_position,
                 robot,
                 queue_size=1) 
-        
-        for robot_id in range(self.number_of_robots): 
-            rospy.Subscriber(
-                "robot"+str(self.robot_ID)+"_object_info_pub",
-                ObjectInformation,
-                self.update_image_transmission_time,
-                robot_id,
-                queue_size=1) 
-                 
+                       
         rospy.Subscriber("reset_storage_disk",
                          Int16,    
                          self.reset_values,
@@ -110,12 +102,6 @@ class communications:
         for robot in range(self.number_of_robots):
             self.round_robots = np.append(self.round_robots,robot)
             self.distances.append(0)
-
-    def update_image_transmission_time(self, msg, robot_id):
-        self.image_transmission_time[robot_id] =  self.image_transmission_time[robot_id] + 113.59
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.image_transmission_time[robot_id]
-        # 113.59 seconds is the mean transmission image time at 30 m. 
-        # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
     
     def update_distance(self,msg):
         self.distances[msg.auv_id] = msg.distance      

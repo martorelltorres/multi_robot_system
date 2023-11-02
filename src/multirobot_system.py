@@ -15,8 +15,8 @@ from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
-from multi_robot_system.msg import AvoidCollision, CoverageStartTime, ExplorationUpdate, ObjectInformation
-from std_msgs.msg import Int16, Bool,Float32MultiArray,Float32,Int16MultiArray
+from multi_robot_system.msg import CoverageStartTime, ExplorationUpdate, ObjectInformation
+from std_msgs.msg import Int16, Bool
 
 #import classes
 from area_partition import area_partition
@@ -45,6 +45,7 @@ class MultiRobotSystem:
         self.simulation_task_times = []
         self.task_monitoring = []
         self.section_cancelled = False
+        self.coverage_start = []
         self.final_status = 99999
         self.system_init = False
         self.object_detections = 0
@@ -64,7 +65,8 @@ class MultiRobotSystem:
             self.actual_sections.append([i,0])
             self.robots_information.append (self.robot_data)
             self.explored_objects_index.append(np.array([]))
-            
+            self.coverage_start.append(False)
+
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -105,15 +107,15 @@ class MultiRobotSystem:
                                 Int16,
                                 queue_size=1)
         
-        self.object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_object_info_pub",
+        self.object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_object_info",
                         ObjectInformation,
                         queue_size=1)
         
         
         self.read_area_info()        
         rospy.Timer(rospy.Duration(1), self.print_polygon)
-
         rospy.Timer(rospy.Duration(1.0), self.object_detection)
+
 
         self.initialization()
     
@@ -161,7 +163,7 @@ class MultiRobotSystem:
                     
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
-        self.robot_position_east = msg.position.east
+        self.robot_position_east = msg.position.east           
 
     def execute_dense_mission(self,x,y,robot_id):
         from shapely.geometry import Polygon
@@ -214,7 +216,6 @@ class MultiRobotSystem:
             self.final_status = 8888
     
     def return_to_exploration_path(self):
-        print(str(self.robot_ID)+ ": is returning to exploration path!!!!!")
         point_a1 = [self.robot_position_north,self.robot_position_east]
         point_b1 = self.goal_section_point
         self.robot_handler.send_section_strategy(point_a1,point_b1,self.robot_ID)
@@ -269,6 +270,8 @@ class MultiRobotSystem:
         self.wait_until_section_reached()
         # start the area exploration coverage
         print( "The robot"+str(self.robot_ID)+" started the exploration of area"+str(self.goals[self.robot_ID][1]))
+        # flag used to start the object_detection, only starts when robots are in its assigned areas.
+        self.coverage_start[self.robot_ID] = True
         # advise the time when the robot starts the coverage
         msg = CoverageStartTime()
         msg.time = rospy.Time.now()
