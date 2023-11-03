@@ -65,7 +65,6 @@ class DustbinRobot:
         self.robot_at_center = False
         self.robots_id = np.array([])
         self.communication_times_delay = [0,0,0,0,0,0]
-        self.start_recording_time = [0,0,0,0,0,0]
         self.communication_times_end = [0,0,0,0,0,0]
         self.elapsed_time = []
         self.thirth_stimulus= []
@@ -106,6 +105,8 @@ class DustbinRobot:
         self.first_time = True
         self.travelled_distance = 0
         self.image_transmission_time = []
+        self.data_gather_time = []
+        self.start_recording_time = []
 
         self.read_area_info()
         # intialize the variables
@@ -132,6 +133,8 @@ class DustbinRobot:
             self.data_transmited.append(0)
             self.time_init.append(0)
             self.distance.append(0)
+            self.start_recording_time.append(0)
+            self.data_gather_time.append(0)
             self.elapsed_time.append(0)
             self.transmission_init_time.append(0)    
             self.battery_charge.append(0)
@@ -287,9 +290,11 @@ class DustbinRobot:
         self.image_transmission_time[robot_id] =  self.image_transmission_time[robot_id] + 113.59
         # 113.59 seconds is the mean transmission image time at 30 m. 
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + 20
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + 10
         print("The robot "+str(robot_id)+ " storage disk is: "+str(self.storage_disk[robot_id]))
-
+        
+        # set the time when the AUV detects an object
+        self.data_gather_time[robot_id]= rospy.Time.now().secs
         # Publish the stored data
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
@@ -370,7 +375,8 @@ class DustbinRobot:
             msg = Bool()
             msg.data = True 
             self.coverage_init_pub.publish(msg)
-            self.dustbin_strategy()
+            # self.dustbin_strategy()
+            self.get_goal_id()
         else:
             msg = Bool()
             msg.data = False 
@@ -454,8 +460,8 @@ class DustbinRobot:
         elif(self.optimization_model==4):
             self.round_robin()
 
-        self.set_end_time = True
         print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
+        # this flag launches the tracking strategy
         self.enable_tracking = True
 
         # publish the goal_id
@@ -463,6 +469,8 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
+        # set the flag to 
+        self.set_transmission_init_time=True
     
     def Qlearning(self):
         if(self.qlearning_init == False):
@@ -583,9 +591,9 @@ class DustbinRobot:
         if(self.system_init == False):
             self.initialization(robot_id) 
 
-    def dustbin_strategy(self):
-        if(self.system_init==True):
-            self.get_goal_id()
+    # def dustbin_strategy(self):
+    #     if(self.system_init==True):
+    #         self.get_goal_id()
       
     def kill_the_process(self,msg):
         # update area explored
@@ -703,8 +711,13 @@ class DustbinRobot:
 
         # Communication area
         if(self.radius < (self.adrift_radius+10)):
-            self.transmission_init_time[self.robot_goal_id] = rospy.Time.now().secs
 
+            if(self.set_transmission_init_time==True):
+                self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
+                self.set_transmission_init_time=False
+                
+
+            print("Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
             if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
                 # publish the amount of transmited data
                 msg = TransmittedData()
@@ -720,8 +733,6 @@ class DustbinRobot:
             self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
 
     def communicate(self):
-        # print("The robot"+str(self.robot_goal_id)+ "END the data transmission")
-
         # reset the storage values
         self.storage_disk[self.robot_goal_id] = 0
         reset_id = self.robot_goal_id
@@ -731,14 +742,17 @@ class DustbinRobot:
 
         # publish the communication latency
         self.communication=True
-        self.communication_latency[self.robot_goal_id] = (rospy.Time.now().secs - self.start_recording_time[self.robot_goal_id])
+        self.communication_latency[self.robot_goal_id] = (rospy.Time.now().secs - self.data_gather_time[self.robot_goal_id])
         msg = CommunicationLatency()
         msg.header.stamp = rospy.Time.now()
         msg.comm_delay = self.communication_latency 
         self.communication_latency_pub.publish(msg)
-        # When the data transmission ends set the start_recording_time
+
+        # When the data transmission ends reset the elapsed_time
         self.set_elapsed_time(rospy.Time.now(),self.robot_goal_id)
-        self.dustbin_strategy()
+        self.get_goal_id()
+        
+        # self.dustbin_strategy()
     
     def extract_safety_position(self):
         self.m =-(1/ (self.auv_position_east-self.asv_position_east)/(self.auv_position_north-self.asv_position_north))
@@ -907,7 +921,7 @@ class DustbinRobot:
         self.object.action = Marker.ADD
         self.object.pose.position.x = x
         self.object.pose.position.y = y
-        self.object.pose.position.z = 1
+        self.object.pose.position.z = -20
         self.object.pose.orientation.x = 0
         self.object.pose.orientation.y = 0
         self.object.pose.orientation.z = 0
