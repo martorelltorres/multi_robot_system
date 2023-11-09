@@ -28,9 +28,9 @@ class DataExtraction:
 
     def __init__(self):
 
-        self.alpha = [0,2,4,6,8,10]
-        self.beta = [0,2,4,6,8,10]
-        self.gamma = [0,2,4,6,8,10]
+        self.alpha = [1,2,3,4,5,6]
+        self.beta = [1,2,3,4,5,6]
+        self.gamma = [2,3,4,5,6]
         self.n = [0,2,4,6,8,10]
         self.w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
         self.w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
@@ -62,7 +62,6 @@ class DataExtraction:
         self.rr_csv = '/mnt/storage_disk/extracted_results/round_robin/csv'
 
         self.launchfile = 'roslaunch multi_robot_system MRS.launch'
-        self.bagfile = "rosbag record -a"
         self.yaml_file_path = "/mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
         self.process()
     
@@ -155,6 +154,17 @@ class DataExtraction:
                     self.process()
     
     def extract_csv(self):
+        while not os.path.exists(bag_file_path):
+            time.sleep(1)
+
+        # Run rostopic to extract data
+        rostopic_process = subprocess.Popen(['rostopic', 'echo', '-b', bag_file_path, '-p', '/results'], stdout=subprocess.PIPE)
+        csv_data, _ = rostopic_process.communicate()
+
+        # Append the extracted data to the CSV file
+        with open('testing_results.csv', 'a') as csv_file:
+            csv_file.write(csv_data.decode())  # Write the data to the CSV file
+
         # Wait for the bag file to be created before running rostopic
         bag_file_path = self.csv_folder +'/results_'+ str(self.simulation_count)+'.bag'
         while not os.path.exists(bag_file_path):
