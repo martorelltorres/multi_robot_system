@@ -4,18 +4,25 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import numpy as np
+import argparse
 
 # Parameters to set
-bagfile_name ="results_0.bag"
+# bagfile_name ="results_0.bag"
 bagfile_path = "/mnt/storage_disk/extracted_results/response_threshold/bagfiles/"
 extracted_data_path = "/mnt/storage_disk/extracted_results/response_threshold/bagfiles/extracted_data/"
 topics_of_interest = [  "/mrs/communication_latency",
                         "/mrs/asv_travelled_distance",
                         "/mrs/data_transmited",
                         "/mrs/data_buffered"]
+# Create the parser
+parser = argparse.ArgumentParser(description='Description of your program.')
+# Add an argument
+parser.add_argument('bagfile_name', type=str, help='name of the bagfile')
+# Parse the arguments
+args = parser.parse_args()
 
 # Open the bag file
-bag = rosbag.Bag(bagfile_path+ str(bagfile_name))
+bag = rosbag.Bag(bagfile_path+ str(args.bagfile_name))
 # Get the start time of the bag file
 start_time = bag.get_start_time()
 
@@ -96,7 +103,7 @@ bag.close()
 
 # SAVE THE DATA INTO A CSV
 # Create the directory
-data_folder = extracted_data_path+str(bagfile_name)
+data_folder = extracted_data_path+str(args.bagfile_name)
 os.mkdir(data_folder)
 
 # Crear un marco de datos con los datos
@@ -136,6 +143,21 @@ output_csv_path = data_folder+str("/transmitted_data.csv")
 df = pd.DataFrame(data)
 df.to_csv(output_csv_path, mode='w', index=False, header=True)
 
+# Calculate the mean latency
+mean_latency = (np.array(latency_R1_values) + np.array(latency_R2_values) + np.array(latency_R3_values)+np.array(latency_R4_values)+np.array(latency_R5_values)+np.array(latency_R6_values)) / 6
+
+# Calculate the standard deviation
+std_latency = np.std([latency_R1_values, latency_R2_values, latency_R3_values,latency_R4_values, latency_R5_values, latency_R6_values], axis=0)
+
+# # Crear un marco de datos con los datos
+# data = {'mean': np.mean(mean_latency),
+#         'std': np.mean(std_latency)
+# }
+# # Path to the output CSV file
+# output_csv_path = data_folder+str("/std_deviation.csv")
+# df = pd.DataFrame(data)
+# df.to_csv(output_csv_path, mode='w', index=False, header=True)
+
 
 # ------------------------------- PLOT THE DATA --------------------------------
 # Create a plot for other data (distance over time)
@@ -161,11 +183,6 @@ plt.legend()
 plt.savefig(data_folder+str("/latency_plot.png"))
 plt.show()
 
-# Calculate the mean latency
-mean_latency = (np.array(latency_R1_values) + np.array(latency_R2_values) + np.array(latency_R3_values)+np.array(latency_R4_values)+np.array(latency_R5_values)+np.array(latency_R6_values)) / 6
-
-# Calculate the standard deviation
-std_latency = np.std([latency_R1_values, latency_R2_values, latency_R3_values,latency_R4_values, latency_R5_values, latency_R6_values], axis=0)
 
 # Plot the mean latency with standard deviation
 plt.plot(time_latency, mean_latency, label='Mean Latency')
@@ -176,6 +193,8 @@ plt.ylabel('Latency')
 plt.legend()
 plt.savefig(data_folder + str("/mean_latency_with_std.png"))
 plt.show()
+
+
 
 # DATA TRANSMITTED
 plt.plot(transmitted_data_time_values, transmitted_data_R1_values, label='transmitted_data_R1')

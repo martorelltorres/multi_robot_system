@@ -4,6 +4,7 @@ import random
 import csv
 import time
 from math import *
+from itertools import product
 import time
 import signal
 import psutil
@@ -22,21 +23,24 @@ from multi_robot_system.msg import CoverageStartTime,TravelledDistance,Explorati
 import os
 import sys
 import subprocess
-
  
 class DataExtraction:
 
     def __init__(self):
 
-        self.alpha = [1,2,3,4,5,6]
-        self.beta = [1,2,3,4,5,6]
-        self.gamma = [2,3,4,5,6]
+        self.valid_combinations = []
+
+        self.alpha = [1,2,3,4,5,6,7]
+        self.beta = [1,2,3,4,5,6,7]
+        self.gamma = [1,2,3,4,5,6,7]
         self.n = [0,2,4,6,8,10]
-        self.w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
-        self.w1 = [0/10,2/10,4/10,6/10,8/10,10/10]
-        self.w3 = [0/10,2/10,4/10,6/10,8/10,10/10]
+
+        self.w1 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]
+        self.w2 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]
+        self.w3 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]
+        self.w4 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]
         self.simulation_count = -1
-        self.optimization_model = 1
+        self.optimization_model = 2
         self.combinations = []
         self.robot_id = 0
         self.exploration_tasks_update = np.array([False, False, False, False, False, False])
@@ -80,7 +84,8 @@ class DataExtraction:
             self.params_folder = self.owa_params
             self.csv_folder = self.owa_csv
             self.owas_combinations()
-
+        
+        
         # Set the simulation parameters
         self.set_parameters()
         # Launch the simulation
@@ -179,19 +184,29 @@ class DataExtraction:
 
     def set_parameters(self):  
         data = self.read_yaml()
-        if all(key in data for key in ['optimization_model','alpha', 'beta', 'gamma']):
-            data['optimization_model'] = self.optimization_model
-            data['alpha'] = self.combinations[self.simulation_count][0]  
-            data['beta'] = self.combinations[self.simulation_count][1]  
-            data['gamma'] = self.combinations[self.simulation_count][2]  
+        if(self.optimization_model==1):
+            if all(key in data for key in ['optimization_model','alpha', 'beta', 'gamma']):
+                data['optimization_model'] = self.optimization_model
+                data['alpha'] = self.combinations[self.simulation_count][0]  
+                data['beta'] = self.combinations[self.simulation_count][1]  
+                data['gamma'] = self.combinations[self.simulation_count][2]  
+
+        if(self.optimization_model==2):
+            if all(key in data for key in ['optimization_model','w1','w2','w3','w4']):
+                # for combination in self.combinations:
+                data['optimization_model'] = self.optimization_model
+                data['w1'] = self.combinations[self.simulation_count][0]  
+                data['w2'] = self.combinations[self.simulation_count][1] 
+                data['w3'] = self.combinations[self.simulation_count][2]
+                data['w4'] = self.combinations[self.simulation_count][3]   
+
         self.write_yaml(data)
 
     def owas_combinations(self):
-        for element_w1 in self.w1:
-            for element_w2 in self.w2:
-                for element_w3 in self.w3:
-                    if element_w1 + element_w2 + element_w3 == 1:
-                        self.combinations.append((element_w1, element_w2, element_w3))
+        # Generate all possible combinations
+        values = product(self.w1, self.w2, self.w3, self.w4)
+        # Filter combinations where W1 + W2 + W3 + W4 equals 1
+        self.combinations = [combo for combo in values if sum(combo) == 1]
 
     def response_threshold_combinations(self):
         for a in self.alpha:

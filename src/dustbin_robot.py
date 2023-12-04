@@ -52,6 +52,7 @@ class DustbinRobot:
         self.w1 = self.get_param("w1",1)
         self.w2 = self.get_param("w2",1)
         self.w3 = self.get_param("w3",1)
+        self.w4 = self.get_param("w4",1)
 
         self.optimization_strategy = self.get_param("optimization_strategy",1)
         self.area_handler =  area_partition("area_partition")
@@ -64,10 +65,12 @@ class DustbinRobot:
         self.start_to_publish = False
         self.robot_at_center = False
         self.robots_id = np.array([])
+        self.OWA_inputs= np.array([])
         self.communication_times_delay = [0,0,0,0,0,0]
         self.communication_times_end = [0,0,0,0,0,0]
         self.elapsed_time = []
         self.thirth_stimulus= []
+        self.fourth_stimulus = []
         self.system_init = False
         self.robot_data = [0,0]
         self.robots_information = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
@@ -104,7 +107,6 @@ class DustbinRobot:
         self.communication_latency = []
         self.first_time = True
         self.travelled_distance = 0
-        self.image_transmission_time = []
         self.data_gather_time = []
         self.start_recording_time = []
 
@@ -118,8 +120,8 @@ class DustbinRobot:
             self.max_stimulus.append(0)
             self.min_stimulus.append(0)
             self.thirth_stimulus.append(0)
+            self.fourth_stimulus.append(0)
             self.transmission_time.append(0)
-                  
 
         # initialize the robots variables
         for robot_ in range(self.number_of_robots):
@@ -142,7 +144,6 @@ class DustbinRobot:
             self.robots_sense = np.append(self.robots_sense,0)
             self.s_norm.append(0)
             self.communication_latency.append(0)
-            self.image_transmission_time.append(0)
         
         self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense))
 
@@ -287,10 +288,8 @@ class DustbinRobot:
         self.random_points = data['array6']
     
     def update_object_information(self,msg,robot_id):
-        self.image_transmission_time[robot_id] =  self.image_transmission_time[robot_id] + 113.59
-        # 113.59 seconds is the mean transmission image time at 30 m. 
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + 10
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
         print("The robot "+str(robot_id)+ " storage disk is: "+str(self.storage_disk[robot_id]))
         
         # set the time when the AUV detects an object
@@ -300,7 +299,6 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
         self.buffered_data_pub.publish(msg)
-
     
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -370,17 +368,17 @@ class DustbinRobot:
         self.time_init[robot_id] = msg.time.secs
         self.start_recording_time[self.time_robot_id] = self.t_start 
         print("Start dustbin strategy status : "+ str(self.start_dustbin_strategy))
+        self.get_goal_id()
 
-        if (np.all(self.start_dustbin_strategy) == True):
-            msg = Bool()
-            msg.data = True 
-            self.coverage_init_pub.publish(msg)
-            # self.dustbin_strategy()
-            self.get_goal_id()
-        else:
-            msg = Bool()
-            msg.data = False 
-            self.coverage_init_pub.publish(msg)
+        # if (np.all(self.start_dustbin_strategy) == True):
+        #     msg = Bool()
+        #     msg.data = True 
+        #     self.coverage_init_pub.publish(msg)
+        #     self.get_goal_id()
+        # else:
+        #     msg = Bool()
+        #     msg.data = False 
+        #     self.coverage_init_pub.publish(msg)
                       
     def set_elapsed_time(self,time,robot_id):
         self.t_start = time.secs
@@ -400,7 +398,7 @@ class DustbinRobot:
     def scale_value(self, value):
         scaled_value =(value- self.min_value)/(self.max_value-self.min_value)
         return(scaled_value)
-       
+    
     def min_max_scale(self,values):
         for robot in range(self.active_robots):
             scaled_values = np.array([])
@@ -409,23 +407,20 @@ class DustbinRobot:
                 scaled_values = np.append(scaled_values,calc)
             self.scaled_senses[robot] = scaled_values
         return(self.scaled_senses)
-
+       
     def get_stimulus(self):
-
         for robot in range(self.active_robots):
             # get the time elapsed between AUV visits
             self.robots_sense[0] = self.get_elapsed_time(self.robots_id[robot])
-
             # get the distance between ASV-AUV's
             distance = self.distance[self.robots_id[robot]]
             self.robots_sense[1] = distance
-
             # obtain the amount of data to be transferred
             self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
+            #get the communication signal based on RSSI
+            self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
 
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
-        
-           
         # print(".................. STIMULUS VARIABLES ..................")
         # print(self.stimulus_variables)
         
@@ -496,69 +491,53 @@ class DustbinRobot:
             minimum_values.append(min(self.min_max_scaled[element])) 
         print("The minimum values are: "+str(minimum_values))
         max_value = max(minimum_values)
-        print("The max min value is: "+str(max_value))
+        print("The maximum value of the minimum values is: "+str(max_value))
         self.robot_goal_id = minimum_values.index(max_value)
     
     def OWA(self):
-        values = np.array(self.min_max_scaled)
+        self.number_of_stimulus = 4 #Set to 4 in order to take into account the comm signal RSSI 
+        OWA_inputs = self.min_max_scale(self.stimulus_variables)
         self.owa=[0,0,0,0,0,0]
+        print("________________________________")
+        print(OWA_inputs)
+
+        # get the weights and set the values for w1,w2,w3,w4 where w1>=w2>=w3>=w4
+        self.robots_id = np.array([])
+        OWA_weights =np.array([self.w1,self.w2,self.w3,self.w4])
+        OWA_inputs_sorted = np.sort(OWA_weights)
+        self.w1 = OWA_inputs_sorted[3]
+        self.w2 = OWA_inputs_sorted[2]
+        self.w3 = OWA_inputs_sorted[1]
+        self.w4 = OWA_inputs_sorted[0]
 
         for element in range(len(self.removed_robots)):
             self.max_stimulus[self.removed_robots[element]]= 0
             self.min_stimulus[self.removed_robots[element]]= 0
             self.thirth_stimulus[self.removed_robots[element]]= 0
-        
-        for element in range(self.active_robots):
-            self.index=[0,1,2]
-            # print("min_max_scaled values are : "+str(values[element]))
-            #max value
-            index_max = np.argmax(values[element])
-            # print("The max index is: "+str(index_max))
-            self.max_element = values[element][index_max]
-            # min value
-            index_min = np.argmin(values[element])
-            # print("The min index is: "+str(index_min))
-            self.min_element = values[element][index_min]
+            self.fourth_stimulus[self.removed_robots[element]]= 0
 
-            # thirth value
-            if(index_max>index_min):
-                # print("Index list : "+str(self.index))
-                self.index.remove(index_max)
-                # print("Remove: "+str(self.index))
-                self.index.remove(index_min)
-                # print("Remove: "+str(self.index))
+        for element in range(self.number_of_robots):
+            OWA_inputs = np.sort(OWA_inputs[element]) 
 
-            elif(index_max==index_min): 
-                # print("Index list : "+str(self.index))
-                index_max = index_max +1
-                self.index.remove(index_min)
-                # print("Remove: "+str(self.index))
-                self.index.remove(index_max)
-                # print("Remove: "+str(self.index))
+            print("________________________________")
+            print(OWA_inputs)
 
-            else:
-                # print("Index list : "+str(self.index))
-                self.index.remove(index_min)
-                # print("Remove: "+str(self.index))
-                self.index.remove(index_max)
-                # print("Remove: "+str(self.index))
+            self.max_element = OWA_inputs[3]
+            self.middle1 = OWA_inputs[2]
+            self.middle2 = OWA_inputs[1]
+            self.min_element= OWA_inputs[0]
+            print("Max stimulus: " +str(self.max_element))
+            print("Middle1: "+str(self.middle1))
+            print("Middle2: "+str(self.middle1))
+            print("Min stimulus: " +str(self.min_element))
+            self.owa[element]= self.max_element*self.w1 + self.middle1*self.w2 + self.middle2*self.w3 + self.min_element*self.w4
+            print("Owa: "+str(self.owa[element]))
 
-            self.thirth_stimulus[element] = self.min_max_scaled[element][self.index[0]]
-            print("Max:"+str(self.max_element)+"          Min:"+str(self.min_element)+ "        Thirth:"+str(self.thirth_stimulus[element]))
-
-            # weight values
-            # w1=0.333
-            # w2=0.333
-            # w3=0.333 
-
-            self.owa[element]=self.max_element*self.w1+self.thirth_stimulus[element]*self.w2+self.min_element*self.w3
-        
         print("The owas are: "+str(self.owa))
         max_owa = max(self.owa)
         self.robot_goal_id = self.owa.index(max_owa)
-        # print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
+        print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
     
-
     def use_max_stimulus(self):
         # remove the max_stimulus element if needed
         for element in range(len(self.removed_robots)):
@@ -590,11 +569,7 @@ class DustbinRobot:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_id) 
-
-    # def dustbin_strategy(self):
-    #     if(self.system_init==True):
-    #         self.get_goal_id()
-      
+     
     def kill_the_process(self,msg):
         # update area explored
         self.exploration_tasks_update[msg.explored_sub_area] = True

@@ -157,7 +157,6 @@ class MultiRobotSystem:
                     
                     # add the object to the list of explored objects in order to avoid a reexploration
                     self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
-
                     self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
                     self.wait_until_section_reached()
                     
