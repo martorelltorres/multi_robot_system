@@ -69,8 +69,6 @@ class DustbinRobot:
         self.communication_times_delay = [0,0,0,0,0,0]
         self.communication_times_end = [0,0,0,0,0,0]
         self.elapsed_time = []
-        self.thirth_stimulus= []
-        self.fourth_stimulus = []
         self.system_init = False
         self.robot_data = [0,0]
         self.robots_information = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
@@ -93,12 +91,10 @@ class DustbinRobot:
         self.comm_signal = []
         self.stimulus = np.array([])
         self.robots_sense = np.array([])
-        self.max_stimulus=[]
-        self.min_stimulus = []
         self.scaled_senses = []
         self.explorer_robots = []
         self.senses = []
-        self.number_of_stimulus = 3
+        self.number_of_stimulus = 4
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
         self.removed_robots= []
@@ -117,10 +113,6 @@ class DustbinRobot:
 
         for i in range(self.active_robots):
             self.scaled_senses.append(self.senses)
-            self.max_stimulus.append(0)
-            self.min_stimulus.append(0)
-            self.thirth_stimulus.append(0)
-            self.fourth_stimulus.append(0)
             self.transmission_time.append(0)
 
         # initialize the robots variables
@@ -141,12 +133,16 @@ class DustbinRobot:
             self.transmission_init_time.append(0)    
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
-            self.robots_sense = np.append(self.robots_sense,0)
             self.s_norm.append(0)
             self.communication_latency.append(0)
         
+        for stimulus in range(self.number_of_stimulus):
+            self.robots_sense = np.append(self.robots_sense,0)
+        print("Robots sense: "+str(self.robots_sense))
+        
         self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense))
 
+        print(self.stimulus_variables)
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -270,7 +266,6 @@ class DustbinRobot:
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
         
         # Init periodic timers self.distance
-        # rospy.Timer(rospy.Duration(1), self.dustbin_trigger)
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
 
     def read_area_info(self):
@@ -466,24 +461,7 @@ class DustbinRobot:
         self.goal_id_pub.publish(msg)
         # set the flag to 
         self.set_transmission_init_time=True
-    
-    def Qlearning(self):
-        if(self.qlearning_init == False):
-            # Q matrix initialization 
-            self.Q = np.zeros.rand(self.number_of_stimulus, self.number_of_robots) 
-            # Setting hyperparameters
-            self.a = 0.1  # Learning rate
-            self.g = 0.9  # Penalization rate
-            self.e = 0.1  # Exploration probability
-            self.qlearning_init = True
-        self.select_action
-    
-    def select_action(self,state):
-        if np.random.rand() < self.e:
-            return np.random.randint(self.number_of_robots)  
-        else:
-            return np.argmax(self.Q[state])  
-    
+       
     def max_min_stimulus(self):
         minimum_values = []
         max_value = 0
@@ -502,36 +480,27 @@ class DustbinRobot:
         print(OWA_inputs)
 
         # get the weights and set the values for w1,w2,w3,w4 where w1>=w2>=w3>=w4
-        self.robots_id = np.array([])
         OWA_weights =np.array([self.w1,self.w2,self.w3,self.w4])
-        OWA_inputs_sorted = np.sort(OWA_weights)
-        self.w1 = OWA_inputs_sorted[3]
-        self.w2 = OWA_inputs_sorted[2]
-        self.w3 = OWA_inputs_sorted[1]
-        self.w4 = OWA_inputs_sorted[0]
+        OWA_weights_sorted = np.sort(OWA_weights)
+        self.w1 = OWA_weights_sorted[3]
+        self.w2 = OWA_weights_sorted[2]
+        self.w3 = OWA_weights_sorted[1]
+        self.w4 = OWA_weights_sorted[0]
 
-        for element in range(len(self.removed_robots)):
-            self.max_stimulus[self.removed_robots[element]]= 0
-            self.min_stimulus[self.removed_robots[element]]= 0
-            self.thirth_stimulus[self.removed_robots[element]]= 0
-            self.fourth_stimulus[self.removed_robots[element]]= 0
-
-        for element in range(self.number_of_robots):
-            OWA_inputs = np.sort(OWA_inputs[element]) 
-
-            print("________________________________")
-            print(OWA_inputs)
-
-            self.max_element = OWA_inputs[3]
-            self.middle1 = OWA_inputs[2]
-            self.middle2 = OWA_inputs[1]
-            self.min_element= OWA_inputs[0]
-            print("Max stimulus: " +str(self.max_element))
-            print("Middle1: "+str(self.middle1))
-            print("Middle2: "+str(self.middle1))
-            print("Min stimulus: " +str(self.min_element))
-            self.owa[element]= self.max_element*self.w1 + self.middle1*self.w2 + self.middle2*self.w3 + self.min_element*self.w4
-            print("Owa: "+str(self.owa[element]))
+        for robot in range(self.number_of_robots):
+            OWA_input = np.sort(OWA_inputs[robot]) 
+            self.max_element = OWA_input[3]
+            self.middle1 = OWA_input[2]
+            self.middle2 = OWA_input[1]
+            self.min_element= OWA_input[0]
+            self.owa[robot]= self.max_element*self.w1 + self.middle1*self.w2 + self.middle2*self.w3 + self.min_element*self.w4
+            # print("________________________________")
+            # print(OWA_inputs)
+            # print("Max stimulus: " +str(self.max_element))
+            # print("Middle1: "+str(self.middle1))
+            # print("Middle2: "+str(self.middle1))
+            # print("Min stimulus: " +str(self.min_element))
+            # print("Owa: "+str(self.owa[element]))
 
         print("The owas are: "+str(self.owa))
         max_owa = max(self.owa)
