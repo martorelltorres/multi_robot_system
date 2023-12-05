@@ -36,18 +36,6 @@ dutsbin_timer: 50
 # ------------------ AUV's TASK ALLOCATION -----------------------
 task_allocation: 1
 
-#Task allocation strategies
-
-# 1 Split the tasks depending of the number of robots
-#  Divide the tasks between the number of robots and assign tasks to each robot
-#  example:Tasks [0,1,2,3,4]-> r1_tasks[0,1,2], r2_tasks[3,4]
-
-# 2 Assign non consecutive random tasks
-# Assign the nearest polygon to the robot_0, and decide wich is the task for the robot_1. Tasks mustn't be consecutive.
-# example:Tasks [0,1,2,3,4]-> r1_tasks[3,4,0], r2_tasks[1,2]
-
-# 3 Hungarian algorithm
-
 
 
         

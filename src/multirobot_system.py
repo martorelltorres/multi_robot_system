@@ -32,6 +32,7 @@ class MultiRobotSystem:
         self.robot_ID = self.get_param('~robot_ID')   
         self.section_result = self.get_param('~section_result') 
         self.number_of_robots = self.get_param('number_of_robots')
+        self.offset_polygon_distance = self.get_param('offset_polygon_distance')
         self.actual_sections = []
         self.actual_section = 0
         self.area_handler =  area_partition("area_partition")
@@ -132,7 +133,7 @@ class MultiRobotSystem:
             y_distance = self.robot_position_east-self.random_points[element].y
             self.distance_AUV_object = 0
             self.distance_AUV_object = np.sqrt(x_distance**2+y_distance**2)
-            self.threshold_detection_distance = 7
+            self.threshold_detection_distance = self.offset_polygon_distance
             object_point = Point(self.random_points[element].x,self.random_points[element].y)
 
             # check if the object is in the AUV assigned sub-area
@@ -158,55 +159,12 @@ class MultiRobotSystem:
                     # add the object to the list of explored objects in order to avoid a reexploration
                     self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
                     self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
+                    self.return_to_exploration_path()
                     self.wait_until_section_reached()
                     
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east           
-
-    def execute_dense_mission(self,x,y,robot_id):
-        from shapely.geometry import Polygon
-        width = 10
-        length = 10
-
-        # Calcular las coordenadas de los vertices del rectangulo
-        half_width = width / 2
-        half_length = length / 2
-
-        # Coordenadas de los vertices del rectangulo
-        vertices = [(x - half_width, y - half_length),
-                    (x + half_width, y - half_length),
-                    (x + half_width, y + half_length),
-                    (x - half_width, y + half_length)]
-
-        # Crear el poligono del area a cubrir
-        area_polygon = Polygon(vertices)
-
-        # Pasos para las pasadas paralelas (2.5 m de distancia entre ellas)
-        step_size = 2.5
-
-        # Obtener limites de la coordenada x para las pasadas
-        x_min, x_max = area_polygon.bounds[0], area_polygon.bounds[2]
-
-        # Variable para alternar entre las direcciones de las pasadas
-        self.reverse = False
-
-        # Planificar pasadas horizontales paralelas
-        y_current = area_polygon.bounds[1] if not self.reverse else area_polygon.bounds[3]
-        while area_polygon.bounds[1] <= y_current <= area_polygon.bounds[3]:
-            # Obtener limites de la coordenada y para la pasada actual
-            x_start, x_end = (x_max, x_min) if self.reverse else (x_min, x_max)
-
-            # Planificar pasada horizontal
-            point_a = [x_start,y_current]
-            point_b = [x_end,y_current]
-
-            # Actualizar coordenada y para la proxima pasada
-            y_current += step_size
-
-            # Cambiar la direccion de las pasadas
-            self.reverse = not self.reverse
-            self.robot_handler.send_slow_section_strategy(point_a,point_b,robot_id)
 
     def update_section_result(self,msg):
         if (self.executing_dense_mission == False):
@@ -218,7 +176,7 @@ class MultiRobotSystem:
         point_a1 = [self.robot_position_north,self.robot_position_east]
         point_b1 = self.goal_section_point
         self.robot_handler.send_section_strategy(point_a1,point_b1,self.robot_ID)
-    
+
     def read_area_info(self):
         # Open the pickle file in binary mode
         with open('/home/uib/area_partition_data.pickle', 'rb') as file:
@@ -324,16 +282,15 @@ class MultiRobotSystem:
         self.robot_handler.send_goto_strategy(self.robot_position_north,self.robot_position_east,True)
   
     def wait_until_section_reached(self):
-
         if(self.final_status==0 and self.executing_dense_mission==False):
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
             self.actual_section = self.actual_sections[self.robot_ID][1]
             self.send_folowing_section = True
 
-        elif(self.final_status!=0 and self.executing_dense_mission==True): 
-            self.send_folowing_section = False
-            self.return_to_exploration_path()
-            self.executing_dense_mission = False
+        # elif(self.final_status!=0 and self.executing_dense_mission==True): 
+        #     self.send_folowing_section = False
+        #     self.return_to_exploration_path()
+        #     self.executing_dense_mission = False
   
     def print_polygon(self,event):
         points = []

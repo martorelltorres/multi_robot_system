@@ -27,23 +27,19 @@ import subprocess
 class DataExtraction:
 
     def __init__(self):
-
-        self.valid_combinations = []
-
         self.alpha = [1,2,3,4,5,6,7]
         self.beta = [1,2,3,4,5,6,7]
         self.gamma = [1,2,3,4,5,6,7]
         self.n = [0,2,4,6,8,10]
 
-        self.w1 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]
-        self.w2 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]
-        self.w3 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]
-        self.w4 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]
+        self.w1 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7]
+        self.w2 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7]
+        self.w3 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7]
+        self.w4 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7]
+
         self.simulation_count = -1
-        self.optimization_model = 2
+        self.optimization_model = 1
         self.combinations = []
-        self.robot_id = 0
-        self.exploration_tasks_update = np.array([False, False, False, False, False, False])
 
         self.response_threshold_folder ='/mnt/storage_disk/extracted_results/response_threshold'
         self.RTM_bagfiles = '/mnt/storage_disk/extracted_results/response_threshold/bagfiles'
@@ -154,8 +150,8 @@ class DataExtraction:
                 if(self.simulation_count<len(self.combinations)):
                     self.process()
                 else:
+                    self.simulation_count = -1
                     self.optimization_model = self.optimization_model +1
-                    self.combinations = []
                     self.process()
     
     def extract_csv(self):
@@ -186,7 +182,7 @@ class DataExtraction:
         data = self.read_yaml()
         if(self.optimization_model==1):
             if all(key in data for key in ['optimization_model','alpha', 'beta', 'gamma']):
-                data['optimization_model'] = self.optimization_model
+                data['optimization_model'] = 1
                 data['alpha'] = self.combinations[self.simulation_count][0]  
                 data['beta'] = self.combinations[self.simulation_count][1]  
                 data['gamma'] = self.combinations[self.simulation_count][2]  
@@ -194,7 +190,7 @@ class DataExtraction:
         if(self.optimization_model==2):
             if all(key in data for key in ['optimization_model','w1','w2','w3','w4']):
                 # for combination in self.combinations:
-                data['optimization_model'] = self.optimization_model
+                data['optimization_model'] = 2
                 data['w1'] = self.combinations[self.simulation_count][0]  
                 data['w2'] = self.combinations[self.simulation_count][1] 
                 data['w3'] = self.combinations[self.simulation_count][2]
