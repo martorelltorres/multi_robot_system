@@ -11,6 +11,7 @@ import subprocess
 import pickle
 import actionlib
 from shapely.geometry import Polygon,Point
+from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
@@ -42,7 +43,7 @@ class MultiRobotSystem:
         self.send_folowing_section = False
         self.points = []
         self.goal_section_point = [0,0]
-        self.first_time = True
+        self.threshold_detection_distance = self.offset_polygon_distance*1.2
         self.simulation_task_times = []
         self.task_monitoring = []
         self.section_cancelled = False
@@ -111,12 +112,14 @@ class MultiRobotSystem:
         self.object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_object_info",
                         ObjectInformation,
                         queue_size=1)
-        
-        
-        self.read_area_info()        
-        rospy.Timer(rospy.Duration(1), self.print_polygon)
-        rospy.Timer(rospy.Duration(1.0), self.object_detection)
 
+        self.pub_explored_object = rospy.Publisher('explored_object', PointStamped, queue_size=2)
+        
+        
+        self.read_area_info()   
+
+        rospy.Timer(rospy.Duration(1), self.print_polygon)
+        rospy.Timer(rospy.Duration(0.1), self.object_detection)
 
         self.initialization()
     
@@ -127,41 +130,63 @@ class MultiRobotSystem:
     def object_exploration_flag(self,msg):
         self.object_exploration = msg.data
     
+    def print_explored_object(self,element):
+        while not rospy.is_shutdown():
+            object = PointStamped()
+            object.header.stamp = rospy.Time.now()
+            object.header.frame_id = "world_ned"
+            object.point.x = self.random_points[element].x
+            object.point.y = self.random_points[element].y
+            object.point.z = 0
+            # Publish
+            self.pub_explored_object.publish(object)
+    
     def object_detection(self,event):
+        # check the distance from the AUV to the different objects
         for element in range(len(self.random_points)):
             x_distance = self.robot_position_north-self.random_points[element].x
             y_distance = self.robot_position_east-self.random_points[element].y
-            self.distance_AUV_object = 0
-            self.distance_AUV_object = np.sqrt(x_distance**2+y_distance**2)
-            self.threshold_detection_distance = self.offset_polygon_distance
+            distance_AUV_object = np.sqrt(x_distance**2+y_distance**2)
             object_point = Point(self.random_points[element].x,self.random_points[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and self.distance_AUV_object < self.threshold_detection_distance ):
-                if (self.first_time==True or (self.first_time==False and np.all(self.explored_objects_index[self.robot_ID] != element))):
-                    self.first_time = False
-                    print("Robot "+str(self.robot_ID)+ " has been detecting a PARDAAAL ID:" + str(element)+" !!!")
-                    self.object_detections = self.object_detections+1
+            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_objects_index[self.robot_ID] != element) ):               
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance):    
+                print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.random_points[element].x)+" , "+str(self.random_points[element].y))
+                # self.print_explored_object(element)
+                self.object_detections = self.object_detections+1
 
-                    # advise the object information
-                    msg = ObjectInformation()
-                    msg.header.stamp = rospy.Time.now()
-                    msg.north = object_point.x
-                    msg.east = object_point.y
-                    msg.detections = self.object_detections
-                    self.object_info_pub.publish(msg)
+                # advise the object information
+                msg = ObjectInformation()
+                msg.header.stamp = rospy.Time.now()
+                msg.north = object_point.x
+                msg.east = object_point.y
+                msg.detections = self.object_detections
+                self.object_info_pub.publish(msg)
 
-                    # go to the object position in order to explore the region
-                    point_a = [self.robot_position_north,self.robot_position_east]
-                    point_b = [self.random_points[element].x,self.random_points[element].y]
-                    self.executing_dense_mission = True
-                    
-                    # add the object to the list of explored objects in order to avoid a reexploration
-                    self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
-                    self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
-                    self.return_to_exploration_path()
-                    self.wait_until_section_reached()
-                    
+                # go to the object position in order to explore the region
+                point_a = [self.robot_position_north,self.robot_position_east]
+                point_b = [self.random_points[element].x,self.random_points[element].y]
+                
+                
+                # add the object to the list of explored objects in order to avoid a reexploration
+                self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
+                self.executing_dense_mission = True
+                self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
+                self.wait_until_section_reached()
+                self.return_to_exploration_path()
+                self.wait_until_section_reached()
+    
+    def wait_until_section_reached(self):
+        if(self.final_status==0):
+            self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
+            self.actual_section = self.actual_sections[self.robot_ID][1]
+            self.send_folowing_section = True
+
+        elif(self.final_status!=0): 
+            self.send_folowing_section = False
+            self.executing_dense_mission = False
+                                   
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east           
@@ -171,6 +196,7 @@ class MultiRobotSystem:
             self.final_status = msg.result.final_status
         else:
             self.final_status = 8888
+
     
     def return_to_exploration_path(self):
         point_a1 = [self.robot_position_north,self.robot_position_east]
@@ -280,17 +306,6 @@ class MultiRobotSystem:
 
         # move the robot to the surface
         self.robot_handler.send_goto_strategy(self.robot_position_north,self.robot_position_east,True)
-  
-    def wait_until_section_reached(self):
-        if(self.final_status==0 and self.executing_dense_mission==False):
-            self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
-            self.actual_section = self.actual_sections[self.robot_ID][1]
-            self.send_folowing_section = True
-
-        # elif(self.final_status!=0 and self.executing_dense_mission==True): 
-        #     self.send_folowing_section = False
-        #     self.return_to_exploration_path()
-        #     self.executing_dense_mission = False
   
     def print_polygon(self,event):
         points = []

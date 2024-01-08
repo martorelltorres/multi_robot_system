@@ -301,6 +301,7 @@ class DustbinRobot:
         self.buffered_data_pub.publish(msg)
         # Start the data gathering when the first robot detects an object
         if(self.start_data_gathering == True):
+            print("*****************get_goal_id*****************")
             self.start_data_gathering = False
             self.get_goal_id()
     
@@ -401,10 +402,13 @@ class DustbinRobot:
         return(scaled_value)
     
     def min_max_scale(self,values):
+        # get the minimum and maximum values
+        self.min_value = np.min(values)
+        self.max_value = np.max(values)
         for robot in range(self.active_robots):
             scaled_values = np.array([])
             for value in range(self.number_of_stimulus):
-                calc =((values[robot][value]- self.min_value)*self.max_value)/(np.max(values)-self.min_value)
+                calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
                 scaled_values = np.append(scaled_values,calc)
             self.scaled_senses[robot] = scaled_values
         return(self.scaled_senses)
@@ -600,11 +604,13 @@ class DustbinRobot:
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
+            # for element in range(len(self.random_points)):
+                # print("Element "+str(element)+" at position: "+str(self.random_points[element].x)+" , "+str(self.random_points[element].y))
             self.print_random_points()
     
     def print_random_points(self):
         while not rospy.is_shutdown():
-            for element in range(40):
+            for element in range(len(self.random_points)):
                 object = PointStamped()
                 object.header.stamp = rospy.Time.now()
                 object.header.frame_id = "world_ned"
@@ -696,7 +702,10 @@ class DustbinRobot:
 
         # publish the communication latency
         self.communication=True
-        self.communication_latency[self.robot_goal_id] = (rospy.Time.now().secs - self.data_gather_time[self.robot_goal_id])
+        if(self.data_gather_time[self.robot_goal_id]==0):
+            self.communication_latency[self.robot_goal_id] = 0
+        else:
+            self.communication_latency[self.robot_goal_id] = (rospy.Time.now().secs - self.data_gather_time[self.robot_goal_id])
         msg = CommunicationLatency()
         msg.header.stamp = rospy.Time.now()
         msg.comm_delay = self.communication_latency 

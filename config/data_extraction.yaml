@@ -1,8 +1,8 @@
 alpha: 1
-beta: 3
-gamma: 6
+beta: 5.5
+gamma: 3.5
 optimization_model: 1
-w1: 0.1
-w2: 0.1
-w3: 0.1
-w4: 0.7
+w1: 0.15
+w2: 0.15
+w3: 0.25
+w4: 0.45

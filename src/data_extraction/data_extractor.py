@@ -27,46 +27,45 @@ bag = rosbag.Bag(bagfile_path+ str(args.bagfile_name))
 start_time = bag.get_start_time()
 
 # Extract data from the specified topics and write to the CSV file
- # Extract data from the specified topics and write to the CSV file
-latency_R1_values = []
-latency_R2_values = []
-latency_R3_values = []
-latency_R4_values = []
-latency_R5_values = []
-latency_R6_values = []
-time_latency = []
+latency_R1_values = np.array([])
+latency_R2_values = np.array([])
+latency_R3_values = np.array([])
+latency_R4_values = np.array([])
+latency_R5_values = np.array([])
+latency_R6_values = np.array([])
+time_latency = np.array([])
 
-travelled_distance =[]
+travelled_distance = []
 time_distance = []
 
-transmitted_data_R1_values = []
-transmitted_data_R2_values = []
-transmitted_data_R3_values = []
-transmitted_data_R4_values = []
-transmitted_data_R5_values = []
-transmitted_data_R6_values = []
-transmitted_data_time_values = []
-all_transmitted_data= []
+transmitted_data_R1_values =[]
+transmitted_data_R2_values =[]
+transmitted_data_R3_values =[]
+transmitted_data_R4_values =[]
+transmitted_data_R5_values =[]
+transmitted_data_R6_values =[]
+transmitted_data_time_values =[]
+all_transmitted_data=[]
 
-buffered_data_R1_values = []
-buffered_data_R2_values = []
-buffered_data_R3_values = []
-buffered_data_R4_values = []
-buffered_data_R5_values = []
-buffered_data_R6_values = []
-buffered_data_time_values = []
+buffered_data_R1_values =[]
+buffered_data_R2_values =[]
+buffered_data_R3_values =[]
+buffered_data_R4_values =[]
+buffered_data_R5_values =[]
+buffered_data_R6_values =[]
+buffered_data_time_values =[]
 all_buffered_data=[]
 
 for topic, msg, t in bag.read_messages(topics=topics_of_interest):
     if "/mrs/communication_latency" in topic:
         latency_R1, latency_R2, latency_R3,latency_R4, latency_R5, latency_R6 = getattr(msg, 'comm_delay', (0, 0, 0, 0, 0, 0))
-        latency_R1_values.append(latency_R1)
-        latency_R2_values.append(latency_R2)
-        latency_R3_values.append(latency_R3)
-        latency_R4_values.append(latency_R4)
-        latency_R5_values.append(latency_R5)
-        latency_R6_values.append(latency_R6)
-        time_latency.append(msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 -start_time)  
+        latency_R1_values = np.append(latency_R1_values,latency_R1)
+        latency_R2_values= np.append(latency_R2_values,latency_R2)
+        latency_R3_values= np.append(latency_R3_values,latency_R3)
+        latency_R4_values= np.append(latency_R4_values,latency_R4)
+        latency_R5_values= np.append(latency_R5_values,latency_R5)
+        latency_R6_values= np.append(latency_R6_values,latency_R6)
+        time_latency = np.append(time_latency,msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 -start_time)  
         
 
     if "/mrs/asv_travelled_distance" in topic:
@@ -116,17 +115,17 @@ data = {'latency_R1': latency_R1_values,
         'time_latency': time_latency,
 }
 # Path to the output CSV file
-output_csv_path = data_folder+str("/latency.csv")
-df = pd.DataFrame(data)
-df.to_csv(output_csv_path, mode='w', index=False, header=True)
+# output_csv_path = data_folder+str("/latency.csv")
+# df = pd.DataFrame(data)
+# df.to_csv(output_csv_path, mode='w', index=False, header=True)
 
 # Crear un marco de datos con los datos
 data = {'distance': travelled_distance,
         'time_distance': time_distance}
 # Path to the output CSV file
-output_csv_path = data_folder+str("/distance.csv")
-df = pd.DataFrame(data)
-df.to_csv(output_csv_path, mode='w', index=False, header=True)
+# output_csv_path = data_folder+str("/distance.csv")
+# df = pd.DataFrame(data)
+# df.to_csv(output_csv_path, mode='w', index=False, header=True)
 
 # Crear un marco de datos con los datos
 data = {'transmitted_data_R1': transmitted_data_R1_values,
@@ -139,15 +138,19 @@ data = {'transmitted_data_R1': transmitted_data_R1_values,
         'all_transmitted_data': all_transmitted_data
 }
 # Path to the output CSV file
-output_csv_path = data_folder+str("/transmitted_data.csv")
-df = pd.DataFrame(data)
-df.to_csv(output_csv_path, mode='w', index=False, header=True)
+# output_csv_path = data_folder+str("/transmitted_data.csv")
+# df = pd.DataFrame(data)
+# df.to_csv(output_csv_path, mode='w', index=False, header=True)
 
 # Calculate the mean latency
-mean_latency = (np.array(latency_R1_values) + np.array(latency_R2_values) + np.array(latency_R3_values)+np.array(latency_R4_values)+np.array(latency_R5_values)+np.array(latency_R6_values)) / 6
+mean_latency = (np.mean(latency_R1_values) + np.mean(latency_R2_values) + np.mean(latency_R3_values)+ np.mean(latency_R4_values)+np.mean(latency_R5_values)+np.mean(latency_R6_values)) / 6
 
 # Calculate the standard deviation
-std_latency = np.std([latency_R1_values, latency_R2_values, latency_R3_values,latency_R4_values, latency_R5_values, latency_R6_values], axis=0)
+std_latency = (np.std(latency_R1_values)+np.std(latency_R2_values)+np.std(latency_R3_values)+np.std(latency_R4_values)+np.std(latency_R5_values)+np.std(latency_R6_values))/6
+
+print("MEAN LATENCY:"+str(mean_latency))
+print("STD: "+str(std_latency))
+
 
 # # Crear un marco de datos con los datos
 # data = {'mean': np.mean(mean_latency),
@@ -194,8 +197,6 @@ plt.legend()
 plt.savefig(data_folder + str("/mean_latency_with_std.png"))
 plt.show()
 
-
-
 # DATA TRANSMITTED
 plt.plot(transmitted_data_time_values, transmitted_data_R1_values, label='transmitted_data_R1')
 plt.plot(transmitted_data_time_values, transmitted_data_R2_values,  label='transmitted_data_R2')
@@ -212,15 +213,15 @@ save_path = data_folder+"/transmitted_data_plot.png"
 plt.savefig(save_path)
 plt.show()
 
-plt.plot(transmitted_data_time_values, all_transmitted_data, label='all_transmitted_data')
-plt.title('All transmitted data over Time')
-plt.xlabel('Time')
-plt.ylabel('Transmitted data')
-plt.legend()
-# Save the plot to a desired path
-save_path = data_folder+"/all_transmitted_data_plot.png"
-plt.savefig(save_path)
-plt.show()
+# plt.plot(transmitted_data_time_values, all_transmitted_data, label='all_transmitted_data')
+# plt.title('All transmitted data over Time')
+# plt.xlabel('Time')
+# plt.ylabel('Transmitted data')
+# plt.legend()
+# # Save the plot to a desired path
+# save_path = data_folder+"/all_transmitted_data_plot.png"
+# plt.savefig(save_path)
+# plt.show()
 
 # BUFFERED DATA
 # plt.plot(buffered_data_time_values, buffered_data_R1_values, label='buffered_data_R1')
