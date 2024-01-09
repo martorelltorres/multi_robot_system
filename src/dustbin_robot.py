@@ -71,7 +71,7 @@ class DustbinRobot:
         self.elapsed_time = []
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        self.robots_information = [[],[],[],[],[],[]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
@@ -152,12 +152,12 @@ class DustbinRobot:
         rospy.loginfo('[%s]: initialized', self.name)
 
         #Subscribers
-        for robot_id in range(self.number_of_robots):
+        for robot_agent in range(self.number_of_robots):
             rospy.Subscriber(
-                '/robot'+str(robot_id)+'/navigator/navigation',
+                '/robot'+str(robot_agent)+'/navigator/navigation',
                 NavSts,
                 self.update_robots_position,
-                robot_id,
+                robot_agent,
                 queue_size=1) 
         
         for robot_id in range(self.number_of_robots):
@@ -531,7 +531,6 @@ class DustbinRobot:
             scaled_values = self.min_max_scaled[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
-
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmax()  
         print(".................. ARTM PROBABILITY ..................")
@@ -541,15 +540,12 @@ class DustbinRobot:
         self.robots_id = np.roll(self.robots_id,1)
         self.robot_goal_id = self.robots_id[0]  
         
-    def update_robots_position(self, msg, robot_id):
+    def update_robots_position(self, msg, robot_agent):
         # fill the robots_information array with the robots information received from the NavSts 
-        self.robots_information[robot_id][0] = msg.position.north
-        self.robots_information[robot_id][1] = msg.position.east
-        self.robots_information[robot_id][2] = msg.orientation.yaw
-
+        self.robots_information[robot_agent] = [msg.position.north,msg.position.east,msg.orientation.yaw]
         # check the system initialization
         if(self.system_init == False):
-            self.initialization(robot_id) 
+            self.initialization(robot_agent) 
      
     def kill_the_process(self,msg):
         # update area explored
@@ -671,8 +667,7 @@ class DustbinRobot:
             self.tracking_strategy()
 
         # Communication area
-        if(self.radius < (self.adrift_radius+10)):
-
+        if(self.radius < (self.adrift_radius+5)):
             if(self.set_transmission_init_time==True):
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False

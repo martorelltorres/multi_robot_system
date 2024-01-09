@@ -52,7 +52,6 @@ class MultiRobotSystem:
         self.system_init = False
         self.object_detections = 0
         self.robot_initialization = np.array([])
-        # self.explored_objects_index = np.array([])
         self.explored_objects_index = []
         self.empty_array=np.array([])
         self.start = True
@@ -150,11 +149,11 @@ class MultiRobotSystem:
             object_point = Point(self.random_points[element].x,self.random_points[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_objects_index[self.robot_ID] != element) ):               
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance):    
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_objects_index[self.robot_ID] != element) ):                
                 print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.random_points[element].x)+" , "+str(self.random_points[element].y))
-                # self.print_explored_object(element)
                 self.object_detections = self.object_detections+1
+                # add the object to the list of explored objects in order to avoid a reexploration
+                self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
 
                 # advise the object information
                 msg = ObjectInformation()
@@ -164,19 +163,25 @@ class MultiRobotSystem:
                 msg.detections = self.object_detections
                 self.object_info_pub.publish(msg)
 
-                # go to the object position in order to explore the region
+                # # go to the object position in order to explore the region
                 point_a = [self.robot_position_north,self.robot_position_east]
                 point_b = [self.random_points[element].x,self.random_points[element].y]
-                
-                
-                # add the object to the list of explored objects in order to avoid a reexploration
-                self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
-                self.executing_dense_mission = True
-                self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
-                self.wait_until_section_reached()
-                self.return_to_exploration_path()
-                self.wait_until_section_reached()
-    
+
+                self.robot_handler.send_goto_strategy(point_b[0],point_b[1],False)
+                # self.executing_dense_mission = True
+                # self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
+                # # self.wait_until_section_reached()
+                # # self.executing_dense_mission = False
+                # self.return_to_exploration_path()
+                # self.executing_dense_mission = False
+                # self.wait_until_section_reached()
+
+
+    def return_to_exploration_path(self):
+        point_a1 = [self.robot_position_north,self.robot_position_east]
+        point_b1 = self.goal_section_point
+        self.robot_handler.send_section_strategy(point_a1,point_b1,self.robot_ID)
+            
     def wait_until_section_reached(self):
         if(self.final_status==0):
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
@@ -185,7 +190,12 @@ class MultiRobotSystem:
 
         elif(self.final_status!=0): 
             self.send_folowing_section = False
-            self.executing_dense_mission = False
+
+        # self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
+        # self.actual_section = self.actual_sections[self.robot_ID][1]
+        # self.send_folowing_section = True
+
+
                                    
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
@@ -194,14 +204,13 @@ class MultiRobotSystem:
     def update_section_result(self,msg):
         if (self.executing_dense_mission == False):
             self.final_status = msg.result.final_status
-        else:
-            self.final_status = 8888
 
-    
-    def return_to_exploration_path(self):
-        point_a1 = [self.robot_position_north,self.robot_position_east]
-        point_b1 = self.goal_section_point
-        self.robot_handler.send_section_strategy(point_a1,point_b1,self.robot_ID)
+        elif(self.executing_dense_mission == True):
+            self.final_status = 8888
+            
+        # self.final_status = msg.result.final_status
+
+
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -248,7 +257,7 @@ class MultiRobotSystem:
         else: 
             final_point = point1
 
-        self.goal_section_point = final_point
+        # self.goal_section_point = final_point
         self.robot_handler.send_section_strategy((self.robot_position_north,self.robot_position_east),final_point,self.robot_ID)
         self.wait_until_section_reached()
         # start the area exploration coverage

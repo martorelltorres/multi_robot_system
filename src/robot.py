@@ -56,13 +56,13 @@ class Robot:
         
 
         #Subscribers
-        for robot in range(self.number_of_robots):
-            rospy.Subscriber(
-                '/robot'+str(robot)+'/navigator/navigation',
-                NavSts,
-                self.update_robot_position,
-                robot,
-                queue_size=1)
+        # for robot in range(self.number_of_robots):
+        #     rospy.Subscriber(
+        #         '/robot'+str(robot)+'/navigator/navigation',
+        #         NavSts,
+        #         self.update_robot_position,
+        #         robot,
+        #         queue_size=1)
             
        
         #Publishers
@@ -79,15 +79,6 @@ class Robot:
                          self.name)
             rospy.signal_shutdown('Error creating client to goto service')
         
-        # try:
-        #     rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/disable_all_and_set_idle', 20)
-        #     self.disable_all_and_set_idle_srv = rospy.ServiceProxy(
-        #                 '/robot'+str(self.robot_ID)+'/captain/disable_all_and_set_idle', Trigger)
-        # except rospy.exceptions.ROSException:
-        #     rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
-        #                  self.name)
-        #     rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
-
         # Init periodic timers
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
 
@@ -167,10 +158,20 @@ class Robot:
         goto_req.disable_axis.roll = True
         goto_req.disable_axis.yaw = False
         goto_req.disable_axis.pitch = True
-        goto_req.priority = 10
+        goto_req.priority = 11
         goto_req.reference = 0 #REFERENCE_NED=0  REFERENCE_GLOBAL=1 REFERENCE_VEHICLE=2
         self.goto_srv(goto_req)
         rospy.sleep(1.0)
+
+    # PRIORITY DEFINITIONS
+    # uint32 PRIORITY_TELEOPERATION_LOW = 0
+    # uint32 PRIORITY_SAFETY_LOW = 5
+    # uint32 PRIORITY_NORMAL = 10
+    # uint32 PRIORITY_SAFETY = 30
+    # uint32 PRIORITY_TELEOPERATION = 40
+    # uint32 PRIORITY_SAFETY_HIGH  = 50
+    # uint32 PRIORITY_TELEOPERATION_HIGH = 60
+
     
     def send_section_strategy(self,initial_point,final_point,robot_id):
         initial_position_x = initial_point[0]
@@ -218,11 +219,11 @@ class Robot:
         section_req.final_position.y = final_position_y
         section_req.final_position.z = 2
         section_req.altitude_mode = False
-        section_req.tolerance.x = 3
-        section_req.tolerance.y = 3
-        section_req.tolerance.z = 1
+        section_req.tolerance.x = 1
+        section_req.tolerance.y = 1
+        section_req.tolerance.z = 0.5
         section_req.controller_type = WorldSectionGoal.LOSCTE
-        section_req.priority = GoalDescriptor.PRIORITY_SAFETY
+        section_req.priority = GoalDescriptor.PRIORITY_NORMAL
         section_req.surge_velocity = 5
         section_req.timeout = 6000
 
@@ -265,20 +266,20 @@ class Robot:
         # uint64 FAILURE=2
         # uint64 BUSY=3
 
-    def update_robot_position(self,msg,robot_id):
-        # fill the robots_information array with the robots information received from the NavSts 
-        self.robots_information[robot_id][0] = msg.position.north
-        self.robots_information[robot_id][1] = msg.position.east
-        self.robots_information[robot_id][2] = msg.position.depth
-        self.robots_information[robot_id][3] = msg.altitude
-        self.robots_information[robot_id][4] = msg.global_position.latitude
-        self.robots_information[robot_id][5] = msg.global_position.longitude
-        self.robots_information[robot_id][6] = msg.body_velocity.x
-        self.robots_information[robot_id][7] = msg.body_velocity.y
-        self.robots_information[robot_id][8] = msg.body_velocity.z
-        self.robots_information[robot_id][9] = msg.orientation.roll
-        self.robots_information[robot_id][10] = msg.orientation.pitch
-        self.robots_information[robot_id][11] = msg.orientation.yaw
+    # def update_robot_position(self,msg,robot_id):
+    #     # fill the robots_information array with the robots information received from the NavSts 
+    #     self.robots_information[robot_id][0] = msg.position.north
+    #     self.robots_information[robot_id][1] = msg.position.east
+    #     self.robots_information[robot_id][2] = msg.position.depth
+    #     self.robots_information[robot_id][3] = msg.altitude
+    #     self.robots_information[robot_id][4] = msg.global_position.latitude
+    #     self.robots_information[robot_id][5] = msg.global_position.longitude
+    #     self.robots_information[robot_id][6] = msg.body_velocity.x
+    #     self.robots_information[robot_id][7] = msg.body_velocity.y
+    #     self.robots_information[robot_id][8] = msg.body_velocity.z
+    #     self.robots_information[robot_id][9] = msg.orientation.roll
+    #     self.robots_information[robot_id][10] = msg.orientation.pitch
+    #     self.robots_information[robot_id][11] = msg.orientation.yaw
    
     def get_robot_position(self,robot_id):
         return(self.robots_information[robot_id][0],self.robots_information[robot_id][1],self.robots_information[robot_id][2],self.robots_information[robot_id][11])

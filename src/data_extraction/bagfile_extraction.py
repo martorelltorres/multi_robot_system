@@ -27,12 +27,11 @@ import subprocess
 class DataExtraction:
 
     def __init__(self):
-        self.alpha = [1,1.5,2,2.5,3,3.5,4,4.5,5,5.5]
-        self.beta = [1,1.5,2,2.5,3,3.5,4,4.5,5,5.5]
-        self.gamma = [1,1.5,2,2.5,3,3.5,4,4.5,5,5.5]
-        self.n = [0,2,4,6,8,10]
+        self.alpha = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10]
+        self.beta = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10]
+        self.gamma = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10]
 
-        self.w1 = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
+        self.w1 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
         self.w2 = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
         self.w3 = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
         self.w4 = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
@@ -42,7 +41,7 @@ class DataExtraction:
         self.combinations = []
 
         self.response_threshold_folder ='/mnt/storage_disk/extracted_results/response_threshold'
-        self.RTM_bagfiles = '/mnt/storage_disk/extracted_results/response_threshold/bagfiles_2'
+        self.RTM_bagfiles = '/mnt/storage_disk/extracted_results/response_threshold/bagfiles'
         self.RTM_params = '/mnt/storage_disk/extracted_results/response_threshold/params'
         self.RTM_csv = '/mnt/storage_disk/extracted_results/response_threshold/csv'
 
@@ -145,12 +144,12 @@ class DataExtraction:
             if (str.startswith('/record_')==False):
                 os.system('killall -9 rosmaster')
 
-                if(self.simulation_count<len(self.combinations) and self.optimization_model==1 ):
-                    self.process()
-                else:
-                    self.simulation_count = -1
-                    self.optimization_model = self.optimization_model +1
-                    self.process()
+        if(self.simulation_count<len(self.combinations) and self.optimization_model==1 ):
+            self.process()
+        else:
+            self.simulation_count = -1
+            self.optimization_model = self.optimization_model +1
+            self.process()
 
     def set_parameters(self):  
         data = self.read_yaml()
@@ -160,27 +159,6 @@ class DataExtraction:
                 data['alpha'] = self.combinations[self.simulation_count][0]  
                 data['beta'] = self.combinations[self.simulation_count][1]  
                 data['gamma'] = self.combinations[self.simulation_count][2]  
-
-                # data['alpha'] = 1 
-                # data['beta'] = 3.5  
-                # data['gamma'] = 5.5 
-
-                # data['alpha'] = 1 
-                # data['beta'] = 4  
-                # data['gamma'] = 5
-
-                # data['alpha'] = 1 
-                # data['beta'] = 4.5  
-                # data['gamma'] = 4.5
-
-                # data['alpha'] = 1 
-                # data['beta'] = 5  
-                # data['gamma'] = 4
-
-                # data['alpha'] = 1 
-                # data['beta'] = 5.5  
-                # data['gamma'] = 3.5
-
 
         if(self.optimization_model==2):
             if all(key in data for key in ['optimization_model','w1','w2','w3','w4']):
