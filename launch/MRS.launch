@@ -15,6 +15,8 @@
   <arg name="robot_4" default="robot4"/>  <!--AUV4-->
   <arg name="robot_5" default="robot5"/>  <!--AUV5-->
   <arg name="robot_6" default="robot6"/>  <!--ASV-->
+  <arg name="ASV_ID" default="6"/>  <!--ASV-->
+  
 
   <!-- Launch the AUV Simulation -->
   <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
@@ -55,6 +57,11 @@
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_0)/task_monitoring"/>
     </node>
+    <node name="$(arg robot_0)_acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true">
+      <param name="robot_ID" value="0"/>
+      <param name="ASV_ID" value="$(arg ASV_ID)"/>
+    </node>
+
 
     <!-- Robot 1 -->
     <node name="multi_robot_system_$(arg robot_1)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
@@ -66,6 +73,10 @@
       <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
+    </node>
+    <node name="$(arg robot_1)_acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true">
+      <param name="robot_ID" value="1"/>
+      <param name="ASV_ID" value="$(arg ASV_ID)"/>
     </node>
 
     <!-- Robot 2 -->
@@ -79,6 +90,10 @@
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/>
     </node>
+    <node name="$(arg robot_2)_acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true">
+      <param name="robot_ID" value="2"/>
+      <param name="ASV_ID" value="$(arg ASV_ID)"/>
+    </node>
 
     <!-- Robot 3 -->
     <node name="multi_robot_system_$(arg robot_3)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
@@ -90,6 +105,10 @@
       <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
+    </node>
+    <node name="$(arg robot_3)_acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true">
+      <param name="robot_ID" value="3"/>
+      <param name="ASV_ID" value="$(arg ASV_ID)"/>
     </node>
 
     <!-- Robot 4 -->
@@ -103,6 +122,10 @@
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_4)/task_monitoring"/>
     </node>
+    <node name="$(arg robot_4)_acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true">
+      <param name="robot_ID" value="4"/>
+      <param name="ASV_ID" value="$(arg ASV_ID)"/>
+    </node>
 
     <!-- Robot 5 -->
     <node name="multi_robot_system_$(arg robot_5)" pkg="multi_robot_system" type="multirobot_system.py" output="screen" respawn="true">
@@ -114,6 +137,10 @@
       <param name="robot_bvr_topic" value="/$(arg robot_5)/controller/body_velocity_req"/>
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_5)/task_monitoring"/>
+    </node>
+    <node name="$(arg robot_5)_acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true">
+      <param name="robot_ID" value="5"/>
+      <param name="ASV_ID" value="$(arg ASV_ID)"/>
     </node>
 
     <!-- ROBOT 6 ASV -->

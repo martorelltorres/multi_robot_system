@@ -20,7 +20,6 @@ class communications:
         self.robot_ID = self.get_param('~robot_ID',0) 
 
         self.system_init = False
-        # self.robots_information = [[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]
         self.robots_information = []
         self.data = [0,0,0,0,0,0,0,0,0,0,0,0]
         self.robots = []
@@ -36,7 +35,7 @@ class communications:
        # initialize the robots variables
         for robot in range(self.number_of_robots+1):# add one in order to get info from the ASV too
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
-            self.robots.append(robot)  # self.robots = [0,1,2]
+            self.robots.append(robot)  
             self.robots_information.append(self.data)
         
         for robot_ in range(self.number_of_robots):
@@ -45,7 +44,6 @@ class communications:
             self.image_transmission_time.append(0)
             
         #Publishers
-
         self.robot0_comm_pub = rospy.Publisher(node_name +"/robot0_communication",
                                         Communication,
                                         queue_size=1)

@@ -51,6 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   TaskMonitoring.msg
+  AcousticData.msg
   Distances.msg
   Communication.msg
   Data.msg
@@ -63,6 +64,7 @@ add_message_files(
   ObjectInformation.msg
   BufferedData.msg
   TransmittedData.msg
+  NED.msg
 )
 
 ## Generate services in the 'srv' folder
