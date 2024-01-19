@@ -167,7 +167,7 @@ class MultiRobotSystem:
                 point_a = [self.robot_position_north,self.robot_position_east]
                 point_b = [self.random_points[element].x,self.random_points[element].y]
 
-                self.robot_handler.send_goto_strategy(point_b[0],point_b[1],False)
+                # self.robot_handler.send_goto_strategy(point_b[0],point_b[1],False)
                 # self.executing_dense_mission = True
                 # self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
                 # # self.wait_until_section_reached()

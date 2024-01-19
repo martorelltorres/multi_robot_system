@@ -291,7 +291,7 @@ class DustbinRobot:
     def update_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
-        print("The robot "+str(robot_id)+ " storage disk is: "+str(self.storage_disk[robot_id]))
+        # print("The robot "+str(robot_id)+ " storage disk is: "+str(self.storage_disk[robot_id]))
         # set the time when the AUV detects an object
         self.data_gather_time[robot_id]= rospy.Time.now().secs
         # Publish the stored data
@@ -301,7 +301,6 @@ class DustbinRobot:
         self.buffered_data_pub.publish(msg)
         # Start the data gathering when the first robot detects an object
         if(self.start_data_gathering == True):
-            print("*****************get_goal_id*****************")
             self.start_data_gathering = False
             self.get_goal_id()
     
@@ -372,7 +371,6 @@ class DustbinRobot:
         self.time_robot_id = msg.robot_id
         self.time_init[robot_id] = msg.time.secs
         self.start_recording_time[self.time_robot_id] = self.t_start 
-        # print("Start dustbin strategy status : "+ str(self.start_dustbin_strategy))
         if (np.all(self.start_dustbin_strategy) == True):
             msg = Bool()
             msg.data = True 
@@ -428,12 +426,12 @@ class DustbinRobot:
 
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
 
-        print(".................. STIMULUS VARIABLES ..................")
-        print(self.stimulus_variables)
+        # print(".................. STIMULUS VARIABLES ..................")
+        # print(self.stimulus_variables)
         
         self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
-        print(".................. SCALED STIMULUS VARIABLES ..................")
-        print(self.min_max_scaled)
+        # print(".................. SCALED STIMULUS VARIABLES ..................")
+        # print(self.min_max_scaled)
            
         # remove the robots that have completed their work
         for element in range(len(self.removed_robots)):
@@ -520,10 +518,10 @@ class DustbinRobot:
         for element in range(self.active_robots):
             self.max_stimulus[element] = max(self.min_max_scaled[element])
 
-        print("The maximum stimulus values are: "+str(self.max_stimulus))
+        # print("The maximum stimulus values are: "+str(self.max_stimulus))
         
         maximum_value = max(self.max_stimulus)
-        print("The maximum value is: "+str(maximum_value))
+        # print("The maximum value is: "+str(maximum_value))
         self.robot_goal_id = self.max_stimulus.index(maximum_value)
         
     def ARTM(self):
@@ -533,8 +531,8 @@ class DustbinRobot:
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
         # extract the goal robot ID
         self.robot_goal_id = self.stimulus.argmax()  
-        print(".................. ARTM PROBABILITY ..................")
-        print(self.stimulus)
+        # print(".................. ARTM PROBABILITY ..................")
+        # print(self.stimulus)
 
     def round_robin(self):
         self.robots_id = np.roll(self.robots_id,1)
@@ -550,8 +548,8 @@ class DustbinRobot:
     def kill_the_process(self,msg):
         # update area explored
         self.exploration_tasks_update[msg.explored_sub_area] = True
-        print("__________TASK UPDATE__________")
-        print(self.exploration_tasks_update)
+        # print("__________TASK UPDATE__________")
+        # print(self.exploration_tasks_update)
         # check if the area is fully explored 
         if all(self.exploration_tasks_update):
             print("____________________The target area is totally explored____________________")
@@ -571,7 +569,7 @@ class DustbinRobot:
         self.remove_robot=True
         self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1
-        print("Robot "+str(robot_id)+" removed from the team")
+        # print("Robot "+str(robot_id)+" removed from the team")
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
