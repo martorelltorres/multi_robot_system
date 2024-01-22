@@ -23,7 +23,7 @@ class acoustic_communication:
         self.ASV_ID = self.get_param("~ASV_ID",0)
           
         #Publishers
-        self.acoustic_communication_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'_acoustic_communication',
+        self.acoustic_communication_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/acoustic_communication',
                                         AcousticData,
                                         queue_size=1)
    
@@ -55,6 +55,7 @@ class acoustic_communication:
         self.auv_north = msg.position.north
         self.auv_east = msg.position.east
         self.auv_depth = msg.position.depth
+        self.auv_yaw = msg.orientation.yaw
         # send data acoustically
         if( self.asv_init == True):
             self.communication_process()    
@@ -74,6 +75,7 @@ class acoustic_communication:
         acoustic_data_msg.position.north = self.auv_north
         acoustic_data_msg.position.east = self.auv_east
         acoustic_data_msg.position.depth = self.auv_depth
+        acoustic_data_msg.orientation.yaw = self.auv_yaw
         acoustic_data_msg.stored_data = self.stored_data
         self.acoustic_communication_pub.publish(acoustic_data_msg)
         self.rate.sleep()

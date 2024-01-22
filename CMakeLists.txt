@@ -65,6 +65,7 @@ add_message_files(
   BufferedData.msg
   TransmittedData.msg
   NED.msg
+  RPY.msg
 )
 
 ## Generate services in the 'srv' folder

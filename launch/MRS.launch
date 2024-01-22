@@ -1,7 +1,7 @@
 <launch>
  <!-- Params -->
   <arg name="place" default="andratx_exterior.yaml"/>
-  <arg name="enableIquaASV" default="true"/>
+  <arg name="enableIquaASV" default="false"/>
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
   <arg name="enableCollisonAvoidance" default="false"/>
@@ -14,11 +14,12 @@
   <arg name="robot_3" default="robot3"/>  <!--AUV3-->
   <arg name="robot_4" default="robot4"/>  <!--AUV4-->
   <arg name="robot_5" default="robot5"/>  <!--AUV5-->
-  <arg name="robot_6" default="robot6"/>  <!--ASV-->
+  <arg name="robot_6" default="robot6"/>  <!--ASV1-->
+  <arg name="robot_7" default="robot7"/>  <!--ASV2-->
   <arg name="ASV_ID" default="6"/>  <!--ASV-->
   
 
-  <!-- Launch the AUV Simulation -->
+  <!-- Launch the AUVs Simulation -->
   <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
     <arg name="place" value="$(arg place)"/>
     <arg name="robot0_name" value="$(arg robot_0)"/>
@@ -29,11 +30,17 @@
     <arg name="robot5_name" value="$(arg robot_5)"/>
   </include>
 
-  <!-- Launch the ASV Simulation -->
+  <!-- Launch the ASVs Simulation -->
   <include  file="$(find cola2_xiroi)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaASV)"/>
     <arg name="place" value="$(arg place)"/>
     <arg name="robot_name" value="$(arg robot_6)"/>
+  </include>
+  
+  <include  file="$(find cola2_xiroi)/launch/simulation.launch">
+    <arg name="enableIqua" value="$(arg enableIquaASV)"/>
+    <arg name="place" value="$(arg place)"/>
+    <arg name="robot_name" value="$(arg robot_7)"/>
   </include>
 
   <group ns="/mrs">
@@ -152,6 +159,16 @@
       <param name="adrift_radius" value="6"/>
       <param name="tracking_radius" value="8"/>
     </node>
+
+    <!-- ROBOT 7 ASV -->
+    <!-- <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
+      <param name="robot_ID" value="7"/>
+      <param name="section_action" value="/$(arg robot_7)/pilot/world_section_req"/>
+      <param name="section_result" value="/$(arg robot_7)/pilot/world_section_req/result"/>
+      <param name="repulsion_radius" value="2"/>
+      <param name="adrift_radius" value="6"/>
+      <param name="tracking_radius" value="8"/>
+    </node> -->
 
     <!-- Communications module -->
     <group if="$(arg enableCommunicationModule)">
