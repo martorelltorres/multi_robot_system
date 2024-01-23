@@ -261,7 +261,7 @@ class MultiRobotSystem:
         self.robot_handler.send_section_strategy((self.robot_position_north,self.robot_position_east),final_point,self.robot_ID)
         self.wait_until_section_reached()
         # start the area exploration coverage
-        print( "The robot"+str(self.robot_ID)+" started the exploration of area"+str(self.goals[self.robot_ID][1]))
+        print( "******* The robot"+str(self.robot_ID)+" started the exploration of area"+str(self.goals[self.robot_ID][1]))
         # flag used to start the object_detection, only starts when robots are in its assigned areas.
         self.coverage_start[self.robot_ID] = True
         # advise the time when the robot starts the coverage

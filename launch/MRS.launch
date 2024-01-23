@@ -5,7 +5,6 @@
   <arg name="enableIquaAUV" default="false"/>
   <arg name="enableRviz" default="true"/>
   <arg name="enableCollisonAvoidance" default="false"/>
-  <arg name="enableCommunicationModule" default="true"/>
 
   <!-- General robots information -->
   <arg name="robot_0" default="robot0"/>  <!--AUV0-->
@@ -18,7 +17,6 @@
   <arg name="robot_7" default="robot7"/>  <!--ASV2-->
   <arg name="ASV_ID" default="6"/>  <!--ASV-->
   
-
   <!-- Launch the AUVs Simulation -->
   <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
     <arg name="place" value="$(arg place)"/>
@@ -169,11 +167,6 @@
       <param name="adrift_radius" value="6"/>
       <param name="tracking_radius" value="8"/>
     </node> -->
-
-    <!-- Communications module -->
-    <group if="$(arg enableCommunicationModule)">
-      <node name="communications_sim" pkg="multi_robot_system" type="communications.py" output="screen" respawn="true"/>
-    </group>
   </group>
 
   <!-- RViz -->

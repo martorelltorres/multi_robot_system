@@ -7,7 +7,7 @@ Panels:
         - /tf1/Frames1
         - /Marker1
       Splitter Ratio: 0.520588219165802
-    Tree Height: 872
+    Tree Height: 441
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -212,6 +212,24 @@ Visualization Manager:
           Value: true
         robot6/usbl:
           Value: true
+        robot7/base_link:
+          Value: true
+        robot7/dynamics:
+          Value: true
+        robot7/gps:
+          Value: true
+        robot7/imu:
+          Value: true
+        robot7/imu_filter:
+          Value: true
+        robot7/odom:
+          Value: true
+        robot7/thruster_1:
+          Value: true
+        robot7/thruster_2:
+          Value: true
+        robot7/usbl:
+          Value: true
         world_ned:
           Value: true
       Marker Scale: 2
@@ -386,6 +404,22 @@ Visualization Manager:
               robot6/thruster_2:
                 {}
               robot6/usbl:
+                {}
+          robot7/dynamics:
+            {}
+          robot7/odom:
+            robot7/base_link:
+              robot7/gps:
+                {}
+              robot7/imu:
+                {}
+              robot7/imu_filter:
+                {}
+              robot7/thruster_1:
+                {}
+              robot7/thruster_2:
+                {}
+              robot7/usbl:
                 {}
       Update Interval: 0
       Value: true
@@ -1344,5 +1378,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 960
-  X: 0
+  X: 960
   Y: 0

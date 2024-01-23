@@ -66,9 +66,7 @@ class DustbinRobot:
         self.robot_at_center = False
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
-        self.communication_times_delay = [0,0,0,0,0,0]
-        self.communication_times_end = [0,0,0,0,0,0]
-        self.elapsed_time = [0,0,0,0,0,0]
+        self.elapsed_time = []
         self.system_init = False
         self.robot_data = [0,0]
         self.robots_information = [[],[],[],[],[],[]]
@@ -77,11 +75,8 @@ class DustbinRobot:
         self.enable_tracking = False
         self.set_end_time = False
         self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
-        # self.first_dustbin_time = True
-        self.trigger = False
         self.exploration_tasks_update = np.array([])
         self.battery_charge= []
-        self.s_norm = []
         self.distance = []
         self.transmission_init_time = []
         self.time_init = []
@@ -136,11 +131,10 @@ class DustbinRobot:
             self.distance.append(0)
             self.start_recording_time.append(0)
             self.data_gather_time.append(0)
-            # self.elapsed_time.append(0)
+            self.elapsed_time.append(0)
             self.transmission_init_time.append(0)    
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
-            self.s_norm.append(0)
             self.communication_latency.append(0)
         
         for stimulus in range(self.number_of_stimulus):
@@ -181,12 +175,12 @@ class DustbinRobot:
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
             
-        for robot in range(self.number_of_robots):
+        for element in range(self.number_of_robots):
             rospy.Subscriber(
-            '/mrs/robot'+str(robot)+'_start_coverage_time',
+            '/mrs/robot'+str(element)+'_start_coverage_time',
             CoverageStartTime,
             self.set_coverage_start_time,
-            robot,
+            element,
             queue_size=1)      
 
         #Publishers
@@ -330,19 +324,20 @@ class DustbinRobot:
         self.asv_yaw = msg.orientation.yaw
         self.asv_init = True
 
-        if (self.robot_at_center == False):
+        if (self.robot_at_center == False and self.asv_init == True):
             self.transit_to(self.main_polygon_centroid)
             self.robot_at_center = True
 
         if(self.enable_tracking == True):
             self.tracking()
    
-    def set_coverage_start_time(self,msg,robot_id):
-        self.set_elapsed_time(robot_id)
-        self.start_dustbin_strategy[robot_id]= True
+    def set_coverage_start_time(self,msg,element):
+        print("Setting coverage start time for robot"+str(element))
+        self.set_elapsed_time(element)
+        self.start_dustbin_strategy[element]= True
         self.t_start = msg.time.secs
         self.time_robot_id = msg.robot_id
-        self.time_init[robot_id] = msg.time.secs
+        self.time_init[element] = msg.time.secs
         self.start_recording_time[self.time_robot_id] = self.t_start 
         if (np.all(self.start_dustbin_strategy) == True):
             msg = Bool()
@@ -362,11 +357,14 @@ class DustbinRobot:
         depth = self.robots_information[robot_id][2]
         distance =  sqrt(x_diff**2 + y_diff**2 + depth**2)
         return(distance)
-
    
     def get_elapsed_time(self,robot_id):
-        time = rospy.Time.now().secs - self.start_recording_time[robot_id]
-        self.elapsed_time[robot_id]= time
+        if(self.start_dustbin_strategy[robot_id]== False):
+            time = 0
+            self.elapsed_time[robot_id]= time
+        else:
+            time = rospy.Time.now().secs - self.start_recording_time[robot_id]
+            self.elapsed_time[robot_id]= time
         return(time)
 
     def scale_value(self, value):
@@ -576,7 +574,8 @@ class DustbinRobot:
     def check_dustbin_robot(self):
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            self.goto_central_area()
+            if(self.asv_init == True):
+                self.goto_central_area()
                   
     def goto_central_area(self):
         self.transit_to(self.main_polygon_centroid)
