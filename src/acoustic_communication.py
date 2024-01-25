@@ -10,6 +10,7 @@ from sensor_msgs.msg import BatteryState
 import random
 from functools import partial
 from itertools import combinations
+import matplotlib.pyplot as plt
 
 class acoustic_communication:
 
@@ -64,9 +65,12 @@ class acoustic_communication:
         distance = np.sqrt((self.auv_north - self.asv_north)**2 + (self.auv_east - self.asv_east)**2 + (self.auv_depth)**2)
         # y = -0.0000001 + 0.0000776*x^1 + -0.0141229*x^2 + 0.8483710*x^3
         communication_freq = 0.848371 - 0.01412292*distance + 0.00007763495*distance**2
+        # Add noise
+        noise = np.random.normal(0, 0.3)
+        freq_with_noise = communication_freq + noise
         # Create a rate
-        self.rate = rospy.Rate(communication_freq)
-        return(communication_freq)
+        self.rate = rospy.Rate(freq_with_noise)
+        return(freq_with_noise)
 
     def communication_process(self):
         self.get_comm_freq()

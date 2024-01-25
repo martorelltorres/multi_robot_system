@@ -150,7 +150,7 @@ class MultiRobotSystem:
 
             # check if the object is in the AUV assigned sub-area
             if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_objects_index[self.robot_ID] != element) ):                
-                print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.random_points[element].x)+" , "+str(self.random_points[element].y))
+                # print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.random_points[element].x)+" , "+str(self.random_points[element].y))
                 self.object_detections = self.object_detections+1
                 # add the object to the list of explored objects in order to avoid a reexploration
                 self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
@@ -261,7 +261,7 @@ class MultiRobotSystem:
         self.robot_handler.send_section_strategy((self.robot_position_north,self.robot_position_east),final_point,self.robot_ID)
         self.wait_until_section_reached()
         # start the area exploration coverage
-        print( "******* The robot"+str(self.robot_ID)+" started the exploration of area"+str(self.goals[self.robot_ID][1]))
+        # print( "******* The robot"+str(self.robot_ID)+" started the exploration of area"+str(self.goals[self.robot_ID][1]))
         # flag used to start the object_detection, only starts when robots are in its assigned areas.
         self.coverage_start[self.robot_ID] = True
         # advise the time when the robot starts the coverage

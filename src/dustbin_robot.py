@@ -10,7 +10,7 @@ import matplotlib
 import pickle
 import actionlib       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16, Bool, Int16MultiArray,Float32MultiArray,Float32
+from std_msgs.msg import Int16, Int8, Bool
 from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
@@ -34,6 +34,7 @@ class DustbinRobot:
         # Get config parameters from the parameter server
         self.number_of_robots = self.get_param('number_of_robots')
         self.robot_ID = self.get_param('~robot_ID',0) 
+        self.asv_ID = self.get_param('~asv_ID',0)
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.section_action = self.get_param('section_action','/robot4/pilot/world_section_req') 
@@ -101,6 +102,8 @@ class DustbinRobot:
         self.data_gather_time = []
         self.start_recording_time = []
         self.start_data_gathering = True
+        self.number_of_asvs= 2
+        self.asvs_positions= [[],[]]
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
@@ -145,7 +148,13 @@ class DustbinRobot:
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
-        #Subscribers        
+        #Subscribers 
+        if(self.asv_ID==1):       
+            rospy.Subscriber('/mrs/central_agent_decision',
+                            Int8,
+                            self.update_goal_id,
+                            queue_size=1)
+        
         for robot_agent in range(self.number_of_robots):
             rospy.Subscriber('/robot'+str(robot_agent)+'/acoustic_communication',
                             AcousticData,
@@ -159,10 +168,12 @@ class DustbinRobot:
                                 self.update_object_information,
                                 robot_id,
                                 queue_size=1)
-
-        rospy.Subscriber('/robot'+str(self.robot_ID)+'/navigator/navigation',
+        
+        for asv in range(2):
+            rospy.Subscriber('/robot'+str(6+asv)+'/navigator/navigation',
                             NavSts,    
                             self.update_asv_position,
+                            asv,
                             queue_size=1)
         
         rospy.Subscriber('/mrs/exploration_area_update',
@@ -184,11 +195,15 @@ class DustbinRobot:
             queue_size=1)      
 
         #Publishers
-        self.corrected_bvr = rospy.Publisher('/robot6/controller/body_velocity_req',
+        self.corrected_bvr = rospy.Publisher('/robot'+str(self.robot_ID)+'/controller/body_velocity_req',
                                                 BodyVelocityReq,
                                                 queue_size=1)
         
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
+
+        self.decision_pub = rospy.Publisher('central_agent_decision',
+                                            Int8,
+                                            queue_size=1)
 
         self.markerPub_repulsion = rospy.Publisher('repulsion_radius',
                                                     Marker,
@@ -213,11 +228,7 @@ class DustbinRobot:
         self.reset_storage_pub = rospy.Publisher('reset_storage_disk',
                                         Int16,
                                         queue_size=1)
-        
-        # self.robot_distances_pub = rospy.Publisher("robot_distances",
-        #                                 Distances,
-        #                                 queue_size=1)
-        
+               
         # ---------------------------------------------------------------------------
         self.goal_id_pub = rospy.Publisher('goal_id',
                                         Data,
@@ -289,21 +300,25 @@ class DustbinRobot:
         # Start the data gathering when the first robot detects an object
         if(self.start_data_gathering == True):
             self.start_data_gathering = False
-            self.get_goal_id()
+            if(self.asv_ID==0):
+                self.get_goal_id()
+    
+    def update_goal_id(self, msg):
+        self.robot_goal_id = msg.data
     
     def update_travelled_distance(self,event):
         if (self.first_time == True):
             self.x_old_position = 0
             self.y_old_position = 0
-            self.x_current_position = self.asv_north_position
-            self.y_current_position = self.asv_east_position
+            self.x_current_position = self.asvs_positions[self.asv_ID][0]
+            self.y_current_position = self.asvs_positions[self.asv_ID][1]
             self.update_distance()
             self.first_time = False
         else:
             self.x_old_position = self.x_current_position
             self.y_old_position = self.y_current_position
-            self.x_current_position = self.asv_north_position
-            self.y_current_position = self.asv_east_position
+            self.x_current_position = self.asvs_positions[self.asv_ID][0]
+            self.y_current_position = self.asvs_positions[self.asv_ID][1]
             self.update_distance()
         
         # publish the data
@@ -318,10 +333,8 @@ class DustbinRobot:
         distance =  sqrt(x_diff**2 + y_diff**2)
         self.travelled_distance = self.travelled_distance + distance
  
-    def update_asv_position(self, msg):
-        self.asv_north_position = msg.position.north
-        self.asv_east_position = msg.position.east      
-        self.asv_yaw = msg.orientation.yaw
+    def update_asv_position(self, msg, asv):
+        self.asvs_positions[asv] = [msg.position.north,msg.position.east,msg.orientation.yaw]
         self.asv_init = True
 
         if (self.robot_at_center == False and self.asv_init == True):
@@ -332,7 +345,6 @@ class DustbinRobot:
             self.tracking()
    
     def set_coverage_start_time(self,msg,element):
-        print("Setting coverage start time for robot"+str(element))
         self.set_elapsed_time(element)
         self.start_dustbin_strategy[element]= True
         self.t_start = msg.time.secs
@@ -352,8 +364,8 @@ class DustbinRobot:
         self.start_recording_time[robot_id] = rospy.Time.now().secs
                  
     def get_distance(self, robot_id):
-        x_diff =  self.asv_north_position - self.robots_information[robot_id][0]
-        y_diff =  self.asv_east_position - self.robots_information[robot_id][1] 
+        x_diff =  self.asvs_positions[self.asv_ID][0] - self.robots_information[robot_id][0]
+        y_diff =  self.asvs_positions[self.asv_ID][1] - self.robots_information[robot_id][1] 
         depth = self.robots_information[robot_id][2]
         distance =  sqrt(x_diff**2 + y_diff**2 + depth**2)
         return(distance)
@@ -395,12 +407,6 @@ class DustbinRobot:
             #get the communication signal based on RSSI
             if(self.optimization_model==2):
                 self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
-            
-            print("**** Robot "+str(self.robots_id[robot])+"stimulus ****")
-            print("Elapsed time:" +str(self.robots_sense[0]))
-            print("Distance: "+str(self.robots_sense[1]))
-            print("Storage disk: "+str(self.robots_sense[2]))
-            print("Communication signal: "+str(self.comm_signal[self.robots_id[robot]]))
 
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
 
@@ -410,6 +416,7 @@ class DustbinRobot:
         self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
         # print(".................. SCALED STIMULUS VARIABLES ..................")
         # print(self.min_max_scaled)
+        # print("Communication signal: "+str(self.comm_signal))
            
         # remove the robots that have completed their work
         for element in range(len(self.removed_robots)):
@@ -507,10 +514,28 @@ class DustbinRobot:
             scaled_values = self.min_max_scaled[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
-        # extract the goal robot ID
-        self.robot_goal_id = self.stimulus.argmax()  
-        # print(".................. ARTM PROBABILITY ..................")
-        # print(self.stimulus)
+        
+        if(self.asv_ID==0):
+            print("*************EXTRACTING GOAL ID")
+            # extract the goal robot ID
+            sorted_stimulus = sorted(self.stimulus, reverse=True)
+            selected_auv = np.where(self.stimulus==sorted_stimulus[0])
+        
+            distance1 = self.get_euclidean_distance(self.asvs_positions[0][0],self.asvs_positions[0][1],self.robots_information[selected_auv[0]][0],self.robots_information[selected_auv[0]][1])
+            distance2 = self.get_euclidean_distance(self.asvs_positions[1][0],self.asvs_positions[1][1],self.robots_information[selected_auv[0]][0],self.robots_information[selected_auv[0]][1])
+            
+            if(distance1<distance2):
+                self.robot_goal_id = np.where(self.stimulus==sorted_stimulus[0])
+                # send the decission to the other ASV
+                msg = Int8()
+                msg.data = np.where(self.stimulus==sorted_stimulus[1])
+                self.decision_pub.publish(msg)
+            else:
+                self.robot_goal_id = np.where(self.stimulus==sorted_stimulus[1])
+                # send the decission to the other ASV
+                msg = Int8()
+                msg.data = np.where(self.stimulus==sorted_stimulus[0])
+                self.decision_pub.publish(msg)
 
     def round_robin(self):
         self.robots_id = np.roll(self.robots_id,1)
@@ -536,8 +561,8 @@ class DustbinRobot:
     def kill_the_process(self,msg):
         # update area explored
         self.exploration_tasks_update[msg.explored_sub_area] = True
-        # print("__________TASK UPDATE__________")
-        # print(self.exploration_tasks_update)
+        print("__________TASK UPDATE__________")
+        print(self.exploration_tasks_update)
         # check if the area is fully explored 
         if all(self.exploration_tasks_update):
             print("____________________The target area is totally explored____________________")
@@ -557,7 +582,6 @@ class DustbinRobot:
         self.remove_robot=True
         self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1
-        # print("Robot "+str(robot_id)+" removed from the team")
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
@@ -587,8 +611,6 @@ class DustbinRobot:
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
-            # for element in range(len(self.random_points)):
-                # print("Element "+str(element)+" at position: "+str(self.random_points[element].x)+" , "+str(self.random_points[element].y))
             self.print_random_points()
     
     def print_random_points(self):
@@ -629,9 +651,9 @@ class DustbinRobot:
 
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
-        self.asv_position_north = self.asv_north_position
+        self.asv_position_north = self.asvs_positions[self.asv_ID][0]
         self.auv_position_east = self.robots_information[self.robot_goal_id][1]
-        self.asv_position_east = self.asv_east_position
+        self.asv_position_east = self.asvs_positions[self.asv_ID][1]
         self.auv_yaw = self.robots_information[self.robot_goal_id][2]
         self.tracking_marker()
         self.adrift_marker()
@@ -715,7 +737,7 @@ class DustbinRobot:
         linear_velocity = constant_linear_velocity
         alpha_ref = atan2(position_y,position_x)
         #obtain the minimum agle between both robots
-        angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
+        angle_error = atan2(sin(alpha_ref-self.asvs_positions[self.asv_ID][2]), cos(alpha_ref-self.asvs_positions[self.asv_ID][2]))
         self.angular_velocity = constant_angular_velocity * angle_error
         self.xr = linear_velocity*cos(angle_error)
         self.yr = linear_velocity*sin(angle_error)
@@ -732,7 +754,7 @@ class DustbinRobot:
 
         linear_velocity = self.velocity_adjustment * constant_linear_velocity
         alpha_ref = atan2(self.y_lateral_distance,self.x_lateral_distance)
-        angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
+        angle_error = atan2(sin(alpha_ref-self.asvs_positions[self.asv_ID][2]), cos(alpha_ref-self.asvs_positions[self.asv_ID][2]))
         self.angular_velocity = constant_angular_velocity * angle_error
         self.xr = linear_velocity*cos(angle_error)
         self.yr = linear_velocity*sin(angle_error)
@@ -794,7 +816,7 @@ class DustbinRobot:
         self.anchor.action = Marker.ADD
         self.anchor.pose.position.x = self.auv_position_north
         self.anchor.pose.position.y = self.auv_position_east
-        self.anchor.pose.position.z = -0.2
+        self.anchor.pose.position.z = -10.2
         self.anchor.pose.orientation.x = 0
         self.anchor.pose.orientation.y = 0
         self.anchor.pose.orientation.z = 0
@@ -818,7 +840,7 @@ class DustbinRobot:
         self.robotMarker.action = Marker.ADD
         self.robotMarker.pose.position.x = self.auv_position_north
         self.robotMarker.pose.position.y = self.auv_position_east
-        self.robotMarker.pose.position.z = -0.3
+        self.robotMarker.pose.position.z = -10.3
         self.robotMarker.pose.orientation.x = 0
         self.robotMarker.pose.orientation.y = 0
         self.robotMarker.pose.orientation.z = 0
@@ -842,7 +864,7 @@ class DustbinRobot:
         self.follow.action = Marker.ADD
         self.follow.pose.position.x = self.auv_position_north
         self.follow.pose.position.y = self.auv_position_east
-        self.follow.pose.position.z = -0.1
+        self.follow.pose.position.z = -10.1
         self.follow.pose.orientation.x = 0
         self.follow.pose.orientation.y = 0
         self.follow.pose.orientation.z = 0
