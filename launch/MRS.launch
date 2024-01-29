@@ -149,25 +149,15 @@
     </node>
 
     <!-- ROBOT 6 ASV -->
-    <node name="dustbin_robot_$(arg robot_6)" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
+    <node name="dustbin_robot" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
       <param name="robot_ID" value="6"/>
       <param name="asv_ID" value="0"/>
-      <param name="section_action" value="/$(arg robot_6)/pilot/world_section_req"/>
-      <param name="section_result" value="/$(arg robot_6)/pilot/world_section_req/result"/>
-      <param name="repulsion_radius" value="2"/>
-      <param name="adrift_radius" value="6"/>
-      <param name="tracking_radius" value="8"/>
     </node>
 
     <!-- ROBOT 7 ASV -->
     <node name="dustbin_robot_$(arg robot_7)" pkg="multi_robot_system" type="dustbin_robot.py" output="screen" respawn="true">
       <param name="robot_ID" value="7"/>
       <param name="asv_ID" value="1"/>
-      <param name="section_action" value="/$(arg robot_7)/pilot/world_section_req"/>
-      <param name="section_result" value="/$(arg robot_7)/pilot/world_section_req/result"/>
-      <param name="repulsion_radius" value="2"/>
-      <param name="adrift_radius" value="6"/>
-      <param name="tracking_radius" value="8"/>
     </node>
   </group>
 

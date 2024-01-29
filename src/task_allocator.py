@@ -96,20 +96,6 @@ class task_allocation:
                     current_nearest_polygon = self.area_handler.determine_nearest_polygon(self.robot_position_north,self.robot_position_east,voronoy_polygons)
                     robot_tasks[self.robot_id].append(current_nearest_polygon)
 
-            #         if(current_nearest_polygon == self.nearest_polygon and self.first_robot == False):
-            #             self.polygons[self.nearest_polygon]
-
-            #         self.nearest_polygon = current_nearest_polygon
-            #         robot_tasks[self.robot_id].append(self.nearest_polygon)
-
-            # if(self.robot_id==0):
-            #     self.nearest_polygon = self.area_handler.determine_nearest_polygon(self.robot_position_north,self.robot_position_east,voronoy_polygons)
-            #     robot_tasks[self.robot_id].append(self.nearest_polygon)
-
-            # for robot in range(self.number_of_robots):
-            #     for task in range(polygon_number-1):
-
-            #         robot_tasks[self.robot_id].append(self.nearest_polygon)
 
         #*********************************** Hungarian algorithm**************************************************
         elif(self.task_allocator==3):
