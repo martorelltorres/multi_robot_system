@@ -10,7 +10,7 @@ import matplotlib
 import pickle
 import actionlib       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16, Int8, Bool
+from std_msgs.msg import Int16, Bool, Int16MultiArray
 from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
@@ -22,6 +22,7 @@ import sys
 import subprocess
 #import classes
 from area_partition import area_partition
+from asv_allocator import ASVAllocator
  
 class DustbinRobot:
   
@@ -57,6 +58,7 @@ class DustbinRobot:
 
         self.optimization_strategy = self.get_param("optimization_strategy",1)
         self.area_handler =  area_partition("area_partition")
+        self.allocator = ASVAllocator("asv_allocator")
 
         # Initialize some variables
         self.qlearning_init = False
@@ -102,8 +104,8 @@ class DustbinRobot:
         self.data_gather_time = []
         self.start_recording_time = []
         self.start_data_gathering = True
-        self.number_of_asvs= 2
-        self.asvs_positions= [[],[]]
+        self.goalAUV_settled = False
+        self.robot_goal_id = 2
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
@@ -140,7 +142,7 @@ class DustbinRobot:
             self.stimulus = np.append(self.stimulus,0)
             self.communication_latency.append(0)
         
-        for stimulus in range(self.number_of_stimulus):
+        for stimulus in range(4):
             self.robots_sense = np.append(self.robots_sense,0)
     
         self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense))
@@ -149,19 +151,13 @@ class DustbinRobot:
         rospy.loginfo('[%s]: initialized', self.name)
 
         #Subscribers 
-        if(self.asv_ID==1):       
-            rospy.Subscriber('/mrs/central_agent_decision',
-                            Int8,
-                            self.update_goal_id,
-                            queue_size=1)
-        
         for robot_agent in range(self.number_of_robots):
             rospy.Subscriber('/robot'+str(robot_agent)+'/acoustic_communication',
                             AcousticData,
                             self.update_acoustic_info,
                             robot_agent,
                             queue_size=1)
-        
+       
         for robot_id in range(self.number_of_robots):
             rospy.Subscriber("/mrs/robot"+str(robot_id)+"_object_info",
                                 ObjectInformation,
@@ -169,12 +165,10 @@ class DustbinRobot:
                                 robot_id,
                                 queue_size=1)
         
-        for asv in range(2):
-            rospy.Subscriber('/robot'+str(6+asv)+'/navigator/navigation',
-                            NavSts,    
-                            self.update_asv_position,
-                            asv,
-                            queue_size=1)
+        rospy.Subscriber('/asv'+str(self.asv_ID)+'/navigator/navigation',
+                        NavSts,    
+                        self.update_asv_position,
+                        queue_size=1)
         
         rospy.Subscriber('/mrs/exploration_area_update',
                             ExplorationUpdate,    
@@ -185,7 +179,11 @@ class DustbinRobot:
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
-            
+        rospy.Subscriber('/mrs/robot'+str(self.robot_ID)+'_goalAUV',
+                        Int16,    
+                        self.set_goalAUV,
+                        queue_size=1)
+                
         for element in range(self.number_of_robots):
             rospy.Subscriber(
             '/mrs/robot'+str(element)+'_start_coverage_time',
@@ -201,9 +199,7 @@ class DustbinRobot:
         
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
 
-        self.decision_pub = rospy.Publisher('central_agent_decision',
-                                            Int8,
-                                            queue_size=1)
+        self.pub_elapsed_time = rospy.Publisher('asv'+str(self.asv_ID)+'_elapsed_time', Int16MultiArray, queue_size=2)
 
         self.markerPub_repulsion = rospy.Publisher('repulsion_radius',
                                                     Marker,
@@ -298,51 +294,11 @@ class DustbinRobot:
         msg.storage = self.storage_disk
         self.buffered_data_pub.publish(msg)
         # Start the data gathering when the first robot detects an object
+        # if(self.start_data_gathering == True and self.goalAUV_settled==True):
         if(self.start_data_gathering == True):
             self.start_data_gathering = False
             self.get_goal_id()
-    
-    def update_goal_id(self, msg):
-        self.robot_goal_id = msg.data
-    
-    def update_travelled_distance(self,event):
-        if (self.first_time == True):
-            self.x_old_position = 0
-            self.y_old_position = 0
-            self.x_current_position = self.asvs_positions[self.asv_ID][0]
-            self.y_current_position = self.asvs_positions[self.asv_ID][1]
-            self.update_distance()
-            self.first_time = False
-        else:
-            self.x_old_position = self.x_current_position
-            self.y_old_position = self.y_current_position
-            self.x_current_position = self.asvs_positions[self.asv_ID][0]
-            self.y_current_position = self.asvs_positions[self.asv_ID][1]
-            self.update_distance()
-        
-        # publish the data
-        msg = TravelledDistance()
-        msg.header.stamp = rospy.Time.now()
-        msg.travelled_distance = self.travelled_distance 
-        self.travelled_distance_pub.publish(msg)
-    
-    def update_distance(self):
-        x_diff =  self.x_current_position - self.x_old_position
-        y_diff =  self.y_current_position - self.y_old_position 
-        distance =  sqrt(x_diff**2 + y_diff**2)
-        self.travelled_distance = self.travelled_distance + distance
- 
-    def update_asv_position(self, msg, asv):
-        self.asvs_positions[asv] = [msg.position.north,msg.position.east,msg.orientation.yaw]
-        self.asv_init = True
 
-        if (self.robot_at_center == False and self.asv_init == True):
-            self.transit_to(self.main_polygon_centroid)
-            self.robot_at_center = True
-
-        if(self.enable_tracking == True):
-            self.tracking()
-   
     def set_coverage_start_time(self,msg,element):
         self.set_elapsed_time(element)
         self.start_dustbin_strategy[element]= True
@@ -358,205 +314,65 @@ class DustbinRobot:
             msg = Bool()
             msg.data = False 
             self.coverage_init_pub.publish(msg)
-                      
-    def set_elapsed_time(self,robot_id):
-        self.start_recording_time[robot_id] = rospy.Time.now().secs
-                 
-    def get_distance(self, robot_id):
-        x_diff =  self.asvs_positions[self.asv_ID][0] - self.robots_information[robot_id][0]
-        y_diff =  self.asvs_positions[self.asv_ID][1] - self.robots_information[robot_id][1] 
-        depth = self.robots_information[robot_id][2]
-        distance =  sqrt(x_diff**2 + y_diff**2 + depth**2)
-        return(distance)
-   
-    def get_elapsed_time(self,robot_id):
-        if(self.start_dustbin_strategy[robot_id]== False):
-            time = 0
-            self.elapsed_time[robot_id]= time
-        else:
-            time = rospy.Time.now().secs - self.start_recording_time[robot_id]
-            self.elapsed_time[robot_id]= time
-        return(time)
-
-    def scale_value(self, value):
-        scaled_value =(value- self.min_value)/(self.max_value-self.min_value)
-        return(scaled_value)
     
-    def min_max_scale(self,values):
-        # get the minimum and maximum values
-        self.min_value = np.min(values)
-        self.max_value = np.max(values)
-        for robot in range(self.active_robots):
-            scaled_values = np.array([])
-            for value in range(self.number_of_stimulus):
-                calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
-                scaled_values = np.append(scaled_values,calc)
-            self.scaled_senses[robot] = scaled_values
-        return(self.scaled_senses)
-       
-    def get_stimulus(self):
-        for robot in range(self.active_robots):
-            # get the time elapsed between AUV visits
-            self.robots_sense[0] = self.get_elapsed_time(self.robots_id[robot])
-            # get the distance between ASV-AUV's
-            distance = self.get_distance(self.robots_id[robot])
-            self.robots_sense[1] = distance
-            # obtain the amount of data to be transferred
-            self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
-            #get the communication signal based on RSSI
-            if(self.optimization_model==2):
-                self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
-
-            self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
-
-        # print(".................. STIMULUS VARIABLES ..................")
-        # print(self.stimulus_variables)
+    def set_goalAUV(self, msg):
+        self.goalAUV_settled = True
+        self.robot_goal_id = msg.data
+    
+    def update_travelled_distance(self,event):
+        if (self.first_time == True):
+            self.x_old_position = 0
+            self.y_old_position = 0
+            self.x_current_position = self.asv_north
+            self.y_current_position = self.asv_east
+            self.update_distance()
+            self.first_time = False
+        else:
+            self.x_old_position = self.x_current_position
+            self.y_old_position = self.y_current_position
+            self.x_current_position = self.asv_north
+            self.y_current_position = self.asv_east
+            self.update_distance()
         
-        self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
-        # print(".................. SCALED STIMULUS VARIABLES ..................")
-        # print(self.min_max_scaled)
-        # print("Communication signal: "+str(self.comm_signal))
-           
-        # remove the robots that have completed their work
-        for element in range(len(self.removed_robots)):
-            self.stimulus[self.removed_robots[element]] = 0
-        return(self.stimulus)
+        # publish the data
+        msg = TravelledDistance()
+        msg.header.stamp = rospy.Time.now()
+        msg.travelled_distance = self.travelled_distance 
+        self.travelled_distance_pub.publish(msg)
+    
+    def update_distance(self):
+        x_diff =  self.x_current_position - self.x_old_position
+        y_diff =  self.y_current_position - self.y_old_position 
+        distance =  sqrt(x_diff**2 + y_diff**2)
+        self.travelled_distance = self.travelled_distance + distance
+ 
+    def update_asv_position(self, msg):
+        self.asv_north = msg.position.north
+        self.asv_east = msg.position.east
+        self.asv_yaw = msg.orientation.yaw
+        self.asv_init = True
 
+        if (self.robot_at_center == False and self.asv_init == True):
+            self.transit_to(self.main_polygon_centroid)
+            self.robot_at_center = True
+
+        if(self.enable_tracking == True):
+            self.tracking()
+    
+    def update_acoustic_info(self, msg, robot_agent):
+        # fill the robots_information array with the robots information received from the NavSts 
+        self.robots_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
+    
     def get_goal_id(self):
-        self.get_stimulus()
-        if(self.asv_ID==0):
-            if(self.optimization_model==1):
-                self.ARTM()
-
-            elif(self.optimization_model==2):
-                self.OWA()
-                
-            elif(self.optimization_model==3):
-                self.use_max_stimulus()
-                
-            elif(self.optimization_model==4):
-                self.round_robin()
-
-        print("The resulting AUV goal ID is: "+str(self.robot_goal_id))
-        # this flag launches the tracking strategy
         self.enable_tracking = True
-
         # publish the goal_id
         msg = Data()
         msg.header.stamp = rospy.Time.now()
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
         # set the flag to 
-        self.set_transmission_init_time=True
-       
-    def max_min_stimulus(self):
-        minimum_values = []
-        max_value = 0
-        for element in range(len(self.robots_id)):
-            minimum_values.append(min(self.min_max_scaled[element])) 
-        print("The minimum values are: "+str(minimum_values))
-        max_value = max(minimum_values)
-        print("The maximum value of the minimum values is: "+str(max_value))
-        self.robot_goal_id = minimum_values.index(max_value)
+        self.set_transmission_init_time=True        
     
-    def OWA(self):
-        self.number_of_stimulus = 4 #Set to 4 in order to take into account the comm signal RSSI 
-        OWA_inputs = self.min_max_scale(self.stimulus_variables)
-        self.owa=[0,0,0,0,0,0]
-        print("________________________________")
-        print(OWA_inputs)
-
-        # get the weights and set the values for w1,w2,w3,w4 where w1>=w2>=w3>=w4
-        OWA_weights =np.array([self.w1,self.w2,self.w3,self.w4])
-        OWA_weights_sorted = np.sort(OWA_weights)
-        self.w1 = OWA_weights_sorted[3]
-        self.w2 = OWA_weights_sorted[2]
-        self.w3 = OWA_weights_sorted[1]
-        self.w4 = OWA_weights_sorted[0]
-
-        for robot in range(self.number_of_robots):
-            OWA_input = np.sort(OWA_inputs[robot]) 
-            self.max_element = OWA_input[3]
-            self.middle1 = OWA_input[2]
-            self.middle2 = OWA_input[1]
-            self.min_element= OWA_input[0]
-            self.owa[robot]= self.max_element*self.w1 + self.middle1*self.w2 + self.middle2*self.w3 + self.min_element*self.w4
-            # print("________________________________")
-            # print(OWA_inputs)
-            # print("Max stimulus: " +str(self.max_element))
-            # print("Middle1: "+str(self.middle1))
-            # print("Middle2: "+str(self.middle1))
-            # print("Min stimulus: " +str(self.min_element))
-            # print("Owa: "+str(self.owa[element]))
-
-        print("The owas are: "+str(self.owa))
-        max_owa = max(self.owa)
-        self.robot_goal_id = self.owa.index(max_owa)
-        print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
-    
-    def use_max_stimulus(self):
-        # remove the max_stimulus element if needed
-        for element in range(len(self.removed_robots)):
-            self.max_stimulus[self.removed_robots[element]]= 0
-        
-        for element in range(self.active_robots):
-            self.max_stimulus[element] = max(self.min_max_scaled[element])
-
-        # print("The maximum stimulus values are: "+str(self.max_stimulus))
-        
-        maximum_value = max(self.max_stimulus)
-        # print("The maximum value is: "+str(maximum_value))
-        self.robot_goal_id = self.max_stimulus.index(maximum_value)
-        
-    def ARTM(self):
-        for robot in range(self.active_robots):
-            scaled_values = self.min_max_scaled[robot]
-            s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
-            self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
-        
-        if(self.asv_ID==0):
-            print("*************EXTRACTING GOAL ID*************")
-            # extract the goal robot ID
-            sorted_stimulus_index = np.argsort(-self.stimulus) #- in order to sort in decending order
-            selected_auv = sorted_stimulus_index[0]
-        
-            distance1 = self.get_euclidean_distance(self.asvs_positions[0][0],self.asvs_positions[0][1],self.robots_information[selected_auv][0],self.robots_information[selected_auv][1])
-            distance2 = self.get_euclidean_distance(self.asvs_positions[1][0],self.asvs_positions[1][1],self.robots_information[selected_auv][0],self.robots_information[selected_auv][1])
-            
-            if(distance1<distance2):
-                self.robot_goal_id = selected_auv
-                # send the decission to the other ASV
-                msg = Int8()
-                msg.data = sorted_stimulus_index[1]
-                self.decision_pub.publish(msg)
-            else:
-                self.robot_goal_id = selected_auv
-                # send the decission to the other ASV
-                msg = Int8()
-                msg.data = sorted_stimulus_index[1]
-                self.decision_pub.publish(msg)
-
-    def round_robin(self):
-        self.robots_id = np.roll(self.robots_id,1)
-        self.robot_goal_id = self.robots_id[0]  
-    
-    def normalize(self,value, min_val, max_val, new_min, new_max):
-        normalized_value = new_min + (value - min_val) * (new_max - new_min) / (max_val - min_val)
-        return normalized_value
-    
-    def update_acoustic_info(self, msg, robot_agent):
-        # fill the robots_information array with the robots information received from the NavSts 
-        self.robots_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
-        distance = self.get_distance(robot_agent)
-        # set RSSI communication signal 
-        rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
-        normalized_value = self.normalize(rssi, -85, -40, 0, 1)
-        self.comm_signal[robot_agent] = normalized_value
-
-        # check the system initialization
-        if(self.system_init == False):
-            self.initialization(robot_agent) 
-
     def kill_the_process(self,msg):
         # update area explored
         self.exploration_tasks_update[msg.explored_sub_area] = True
@@ -574,24 +390,7 @@ class DustbinRobot:
                     os.system("rosnode kill " + str)
 
     def remove_robot_from_dustbin_goals(self,msg):
-        # remove the robot from the dustbin goals
-        robot_id = msg.data
-        self.robots_id = np.delete(self.robots_id, np.where(self.robots_id == robot_id))
-        self.robot_to_remove = robot_id
-        self.remove_robot=True
-        self.removed_robots.append(robot_id)
-        self.active_robots = self.active_robots -1
-        # set at minimum value the robots that have completed their work 
-        if(self.robot_to_remove!=999 and self.remove_robot==True):
-            for element in range(len(self.removed_robots)):
-                if(self.optimization_model==1):
-                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0]
-                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0]
-                elif(self.optimization_model==2):
-                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
-                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
-            self.remove_robot=False
-
+        self.allocator.set_dustbin_robots(self,msg)
         self.check_dustbin_robot()
     
     def check_dustbin_robot(self):
@@ -604,35 +403,13 @@ class DustbinRobot:
         self.transit_to(self.main_polygon_centroid)
         self.robot_at_center = True
 
-    def initialization(self,robot_id):
-        if(self.robots_information[robot_id][0] != 0):
-            self.robot_initialization[robot_id] = True
-        
-        if((self.robot_initialization == True).all()):
-            self.system_init = True
-            self.print_random_points()
-    
-    def print_random_points(self):
-        while not rospy.is_shutdown():
-            for element in range(len(self.random_points)):
-                object = PointStamped()
-                object.header.stamp = rospy.Time.now()
-                object.header.frame_id = "world_ned"
-                object.point.x = self.random_points[element].x
-                object.point.y = self.random_points[element].y
-                object.point.z = 0
-                # Publish
-                self.pub_object.publish(object)
-
     def get_lateral_position(self):
         yaw_rad = math.radians(self.auv_yaw)
-
         # Obtain lateral positiona at predefined distance
         lateral_pos_1_x = self.auv_position_north + self.adrift_radius * math.cos(yaw_rad + math.pi / 2)
         lateral_pos_1_y = self.auv_position_east + self.adrift_radius * math.sin(yaw_rad + math.pi / 2)
         lateral_pos_2_x = self.auv_position_north + self.adrift_radius * math.cos(yaw_rad - math.pi / 2)
         lateral_pos_2_y = self.auv_position_east + self.adrift_radius * math.sin(yaw_rad - math.pi / 2)
-
         # find the closest position
         dist_1 = self.get_euclidean_distance(self.asv_position_north,self.asv_position_east,lateral_pos_1_x,lateral_pos_1_y)
         dist_2 = self.get_euclidean_distance(self.asv_position_north,self.asv_position_east,lateral_pos_2_x,lateral_pos_2_y)
@@ -650,9 +427,9 @@ class DustbinRobot:
 
     def tracking(self):
         self.auv_position_north = self.robots_information[self.robot_goal_id][0]
-        self.asv_position_north = self.asvs_positions[self.asv_ID][0]
+        self.asv_position_north = self.asv_north
         self.auv_position_east = self.robots_information[self.robot_goal_id][1]
-        self.asv_position_east = self.asvs_positions[self.asv_ID][1]
+        self.asv_position_east = self.asv_east
         self.auv_yaw = self.robots_information[self.robot_goal_id][2]
         self.tracking_marker()
         self.adrift_marker()
@@ -719,6 +496,24 @@ class DustbinRobot:
         self.get_goal_id()
         
         # self.dustbin_strategy()
+
+    def set_elapsed_time(self,robot_id):
+        self.start_recording_time[robot_id] = rospy.Time.now().secs
+        self.get_elapsed_time(robot_id)
+
+    def get_elapsed_time(self,robot_id):
+        if(self.start_dustbin_strategy[robot_id]== False):
+            time = 0
+            self.elapsed_time[robot_id]= time
+        else:
+            time = rospy.Time.now().secs - self.start_recording_time[robot_id]
+            self.elapsed_time[robot_id]= time
+
+        # Publish information
+        msg = Int16MultiArray()
+        msg.data = self.elapsed_time
+        self.pub_elapsed_time.publish(msg)
+        return(time)
     
     def extract_safety_position(self):
         self.m =-(1/ (self.auv_position_east-self.asv_position_east)/(self.auv_position_north-self.asv_position_north))
@@ -736,7 +531,7 @@ class DustbinRobot:
         linear_velocity = constant_linear_velocity
         alpha_ref = atan2(position_y,position_x)
         #obtain the minimum agle between both robots
-        angle_error = atan2(sin(alpha_ref-self.asvs_positions[self.asv_ID][2]), cos(alpha_ref-self.asvs_positions[self.asv_ID][2]))
+        angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
         self.angular_velocity = constant_angular_velocity * angle_error
         self.xr = linear_velocity*cos(angle_error)
         self.yr = linear_velocity*sin(angle_error)
@@ -753,7 +548,7 @@ class DustbinRobot:
 
         linear_velocity = self.velocity_adjustment * constant_linear_velocity
         alpha_ref = atan2(self.y_lateral_distance,self.x_lateral_distance)
-        angle_error = atan2(sin(alpha_ref-self.asvs_positions[self.asv_ID][2]), cos(alpha_ref-self.asvs_positions[self.asv_ID][2]))
+        angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
         self.angular_velocity = constant_angular_velocity * angle_error
         self.xr = linear_velocity*cos(angle_error)
         self.yr = linear_velocity*sin(angle_error)

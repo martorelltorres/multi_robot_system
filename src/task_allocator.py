@@ -10,8 +10,8 @@ from multi_robot_system.msg import TaskMonitoring
 #import classes
 from area_partition import area_partition
 from robot import Robot
-from task_allocation_algorithms.hungarian_algorithm import Hungarian
-from task_allocation_algorithms.aco import ACO
+# from task_allocation_algorithms.hungarian_algorithm import Hungarian
+# from task_allocation_algorithms.aco import ACO
 
 
 class task_allocation:
@@ -94,84 +94,7 @@ class task_allocation:
             for robot in range(self.number_of_robots):
                 if(self.robot_id==robot):
                     current_nearest_polygon = self.area_handler.determine_nearest_polygon(self.robot_position_north,self.robot_position_east,voronoy_polygons)
-                    robot_tasks[self.robot_id].append(current_nearest_polygon)
-
-
-        #*********************************** Hungarian algorithm**************************************************
-        elif(self.task_allocator==3):
-            tasks_number = self.area_handler.get_polygon_number()
-            estimated_time_tasks = self.area_handler.get_estimated_polygons_coverage_time()
-            # battery_charge = self.robot_handler.get_battery_status()
-            # task_allocation.battery_status[self.robot_ID] = battery_charge
-            costs = np.array([])
-            # create de cost matrix using the time_task values
-            for task in range(tasks_number):
-                cost_function = estimated_time_tasks[task]
-                costs = np.append([costs],[cost_function])
-            
-            # cost_matrix = np.array([])
-            # for row in range(tasks_number):
-            #     cost_matrix = np.append(cost_matrix,costs)
-            # cost_matrix = cost_matrix.reshape(tasks_number,tasks_number)
-
-            # create the cost_matrix adding a random factor to the cost matrix
-
-            # for robot in range(self.number_of_robots):
-            #     cost_matrix = np.array([])
-            #     random_costs =np.array([])
-            #     for element in range(len(costs)):
-            #         random_costs = np.append([random_costs],[costs[element]*random.uniform(1,10.5)]) 
-            #         cost_matrix = np.append(cost_matrix,random_costs)
-            #     print("The random costs are: " +str(random_costs))
-            # # cost_matrix = cost_matrix.reshape(self.number_of_robots,tasks_number)
-            # max_random_cost = max(random_costs)
-
-            cost_matrix = np.array([])
-
-            for robot in range(tasks_number):
-                cost_matrix = np.append(cost_matrix,costs)
-            cost_matrix = cost_matrix.reshape(tasks_number,tasks_number)
-
-            cost_matrix=np.transpose(cost_matrix) 
-
-
-            # # make the cost_matrix square
-
-            # new_row = np.array([])
-            # if (tasks_number>self.number_of_robots):
-            #     rows_to_add = tasks_number-self.number_of_robots
-            #     for element in range(tasks_number):
-            #         new_row = np.append(new_row,0)
-
-            #     for rows in range(rows_to_add):
-            #         cost_matrix = np.append(cost_matrix,new_row)
-            
-            #     cost_matrix = cost_matrix.reshape(tasks_number,tasks_number)
-
-            # if(self.number_of_robots > tasks_number):
-            #     rows_to_add = self.number_of_robots-tasks_number
-            #     new_row = np.zeros(self.number_of_robots)
-            #     for rows in range(rows_to_add):
-            #         cost_matrix = np.append(cost_matrix,new_row)
-                
-            #     cost_matrix = cost_matrix.reshape(self.number_of_robots,self.number_of_robots)
-
-            print("The cost_matrix values are: " +str(cost_matrix))         
-            self.hungarian_algortithm = Hungarian(cost_matrix)
-            hungarian_output = self.hungarian_algortithm.calculate()
-            print("The hungarian output is: "+str(hungarian_output))
-            results = self.hungarian_algortithm.get_results()
-            total_potential = self.hungarian_algortithm.get_total_potential()
-            print("----------------------------------------------")
-            print(results)
-            print(total_potential)
-
-        #*********************************** Particle Swarm Optimization (PSO)************************************************
-        elif(self.task_allocator==4):
-            tasks_number = self.area_handler.get_polygon_number()
-            robots_velocity = self.robot_handler.get_robot_velocity()
-            aco = ACO(self.number_of_robots,tasks_number,robots_velocity,env.targets,env.time_lim)
-
+                    robot_tasks[self.robot_id].append(current_nearest_polygon)   
           
 
         return(self.robots_tasks)
