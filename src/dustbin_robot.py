@@ -147,12 +147,48 @@ class DustbinRobot:
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
-        for auv_agent in range(self.number_of_robots):
-            rospy.Subscriber('/robot'+str(auv_agent)+'/navigator/navigation',
-                            NavSts,
-                            self.update_auv_info,
-                            auv_agent,
-                            queue_size=1)
+        # for auv_agent in range(self.number_of_robots):
+        #     rospy.Subscriber('/robot'+str(auv_agent)+'/navigator/navigation',
+        #                     NavSts,
+        #                     self.update_auv_info,
+        #                     auv_agent,
+        #                     queue_size=1)
+        # AUVs position subscribers
+        rospy.Subscriber('/robot0/navigator/navigation',
+                NavSts,
+                self.update_auv_info,
+                0,
+                queue_size=1)
+        
+        rospy.Subscriber('/robot1/navigator/navigation',
+            NavSts,
+            self.update_auv_info,
+            1,
+            queue_size=1)
+        
+        rospy.Subscriber('/robot2/navigator/navigation',
+            NavSts,
+            self.update_auv_info,
+            2,
+            queue_size=1)
+        
+        rospy.Subscriber('/robot3/navigator/navigation',
+                NavSts,
+                self.update_auv_info,
+                3,
+                queue_size=1)
+        
+        rospy.Subscriber('/robot4/navigator/navigation',
+            NavSts,
+            self.update_auv_info,
+            4,
+            queue_size=1)
+        
+        rospy.Subscriber('/robot5/navigator/navigation',
+            NavSts,
+            self.update_auv_info,
+            5,
+            queue_size=1)
         
         for robot_id in range(self.number_of_robots):
             rospy.Subscriber("/mrs/robot"+str(robot_id)+"_object_info",
@@ -257,9 +293,19 @@ class DustbinRobot:
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
+        rospy.Timer(rospy.Duration(1.0),self.communication_signal)
+    
+    def communication_signal(self, event):
+        # set RSSI communication signal 
+        for auv in range(self.number_of_robots):
+            distance = self.get_distance(auv)
+            rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
+            normalized_value = self.normalize(rssi, -85, -40, 0, 1)
+            self.comm_signal[auv] = abs(normalized_value -1) # lower threshold values fixes lower Pf
         
     def update_auv_info(self,msg, auv_agent):
         self.auvs_info[auv_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
+
         # check the system initialization
         if(self.system_init == False):
             self.initialization(auv_agent)
@@ -281,7 +327,7 @@ class DustbinRobot:
     def update_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
-        print("The robot "+str(robot_id)+ " storage disk is: "+str(self.storage_disk[robot_id]))
+        # print("The robot "+str(robot_id)+ " storage disk is: "+str(self.storage_disk[robot_id]))
         # set the time when the AUV detects an object
         self.data_gather_time[robot_id]= rospy.Time.now().secs
         # Publish the stored data
@@ -355,9 +401,9 @@ class DustbinRobot:
         self.start_recording_time[robot_id] = rospy.Time.now().secs
                  
     def get_distance(self, robot_id):
-        x_diff =  self.asv_north_position - self.auvs_info[robot_id][0]
-        y_diff =  self.asv_east_position - self.auvs_info[robot_id][1] 
-        distance =  sqrt(x_diff**2 + y_diff**2)
+        x_position =  self.asv_north_position - self.auvs_info[robot_id][0]
+        y_position =  self.asv_east_position - self.auvs_info[robot_id][1] 
+        distance =  sqrt(x_position**2 + y_position**2)
         return(distance)
    
     def get_elapsed_time(self,robot_id):
@@ -386,11 +432,11 @@ class DustbinRobot:
             if(self.optimization_model==2):
                 self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
             
-            print("**** Robot "+str(self.robots_id[robot])+"stimulus ****")
-            print("Elapsed time:" +str(self.robots_sense[0]))
-            print("Distance: "+str(self.robots_sense[1]))
-            print("Storage disk: "+str(self.robots_sense[2]))
-            print("Communication signal: "+str(self.comm_signal[self.robots_id[robot]]))
+            # print("**** Robot "+str(self.robots_id[robot])+"stimulus ****")
+            # print("Elapsed time:" +str(self.robots_sense[0]))
+            # print("Distance: "+str(self.robots_sense[1]))
+            # print("Storage disk: "+str(self.robots_sense[2]))
+            # print("Communication signal: "+str(self.comm_signal[self.robots_id[robot]]))
 
             self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
 
@@ -460,14 +506,7 @@ class DustbinRobot:
     def normalize(self,value, min_val, max_val, new_min, new_max):
         normalized_value = new_min + (value - min_val) * (new_max - new_min) / (max_val - min_val)
         return normalized_value
-    
-    def update_acoustic_info(self, msg, robot_agent):
-        distance = self.get_distance(robot_agent)
-        # set RSSI communication signal 
-        rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
-        normalized_value = self.normalize(rssi, -85, -40, 0, 1)
-        self.comm_signal[robot_agent] = abs(normalized_value -1) # lower threshold values fixes lower Pf
- 
+     
     def kill_the_process(self,msg):
         # update area explored
         self.exploration_tasks_update[msg.explored_sub_area] = True

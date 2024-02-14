@@ -1,6 +1,6 @@
-alpha: 1
-beta: 2
-gamma: 7
+alpha: 0
+beta: 0
+gamma: 10
 optimization_model: 1
 w1: 0.15
 w2: 0.15
