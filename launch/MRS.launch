@@ -39,7 +39,6 @@
     <arg name="enableIqua" value="$(arg enableIquaASV)"/>
     <arg name="place" value="$(arg place)"/>
     <arg name="robot_name" value="$(arg robot_7)"/>
-    <remap from="/robot7/navigator/navigation" to="/asv1/navigator/navigation"/>
   </include>
 
   <group ns="/mrs">

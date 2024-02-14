@@ -101,7 +101,7 @@ class ASVAllocator:
         self.start_recording_time = []
         self.start_data_gathering = True
         self.number_of_asvs= 2
-        self.asvs_positions= [[],[]]
+        self.asvs_positions= np.array([[0,0,0],[0,0,0]])
         self.asvs_init = np.array([])
         self.init=False
         self.elapsed_time =np.array([])
@@ -175,6 +175,7 @@ class ASVAllocator:
                             asv,
                             queue_size=1)
             
+        for asv in range(self.number_of_asvs):
             rospy.Subscriber('/mrs/asv'+str(asv)+'_elapsed_time',
                             Int16MultiArray,    
                             self.update_elapsed_time,
@@ -250,16 +251,12 @@ class ASVAllocator:
         else:
             time = rospy.Time.now().secs - self.start_recording_time[robot_id]
             self.elapsed_time[robot_id]= time
-        if(self.init==True):
-            self.update_stimulus_matrix()
         return(time)
     
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     def update_acoustic_info(self, msg, robot_agent):
         # fill the robots_information array with the robots information received from the NavSts 
         self.robots_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
-        if(self.init==True):
-            self.update_stimulus_matrix()
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
@@ -290,10 +287,9 @@ class ASVAllocator:
 
     def update_asv_position(self, msg, asv):
         self.asvs_init[asv]=True
-        print(self.asvs_init)
         self.asvs_positions[asv] = [msg.position.north,msg.position.east,msg.orientation.yaw]
 
-        if(self.asvs_init[1]==True):
+        if(np.all(self.asvs_init) == True):
             self.init=True
             self.update_stimulus_matrix()
     
