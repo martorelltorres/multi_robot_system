@@ -19,7 +19,6 @@ class acoustic_communication:
         self.stored_data = 0
         self.asv_init = False
         node_name = rospy.get_name()
-        self.number_of_robots = self.get_param('number_of_robots')
         self.robot_ID = self.get_param('~robot_ID',0) 
         self.ASV_ID = self.get_param("~ASV_ID",0)
           

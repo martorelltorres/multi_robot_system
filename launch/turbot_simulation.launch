@@ -99,7 +99,7 @@
             <arg name="enableRelayBoard" value="false"/>
         </include>
     </group>
-        <group if="$(arg robot3)">
+    <group if="$(arg robot3)">
         <!-- ROBOT4 -->
         <include file="$(find cola2_turbot)/launch/simulation.launch">
             <!-- Params -->

@@ -36,8 +36,8 @@ class ASVAllocator:
         self.asv_ID = self.get_param('~asv_ID',0)
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
-        self.section_action = self.get_param('section_action','/robot4/pilot/world_section_req') 
-        self.section_result = self.get_param('section_result','/robot4/pilot/world_section_req/result') 
+        self.section_action = self.get_param('section_action','/robot6/pilot/world_section_req') 
+        self.section_result = self.get_param('section_result','/robot6/pilot/world_section_req/result') 
         self.repulsion_radius = self.get_param("repulsion_radius",20)
         self.adrift_radius = self.get_param("adrift_radius",30)
         self.tracking_radius = self.get_param("tracking_radius",50)
@@ -65,7 +65,6 @@ class ASVAllocator:
         self.robot_at_center = False
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
-        # self.elapsed_time = []
         self.system_init = False
         self.robot_data = [0,0]
         self.robots_information = [[],[],[],[],[],[]]
@@ -168,12 +167,18 @@ class ASVAllocator:
                                 robot_id,
                                 queue_size=1)
         
-        for asv in range(self.number_of_asvs):
-            rospy.Subscriber('/asv'+str(asv)+'/navigator/navigation',
-                            NavSts,    
-                            self.update_asv_position,
-                            asv,
-                            queue_size=1)
+        
+        rospy.Subscriber('/robot6/navigator/navigation',
+                        NavSts,    
+                        self.update_asv_position,
+                        0,
+                        queue_size=1)
+        
+        rospy.Subscriber('/robot7/navigator/navigation',
+                        NavSts,    
+                        self.update_asv_position,
+                        1,
+                        queue_size=1)
             
         for asv in range(self.number_of_asvs):
             rospy.Subscriber('/mrs/asv'+str(asv)+'_elapsed_time',
@@ -219,11 +224,8 @@ class ASVAllocator:
         self.random_points = data['array6']
     
     #  --------------------- ELAPSED TIME---------------------------------
-    
     def update_elapsed_time(self,msg,asv):
         self.times[asv] = msg.data
-        print("*************************************")
-        print(self.times)
 
     def set_coverage_start_time(self,msg,element):
         self.set_elapsed_time(element)
@@ -260,15 +262,16 @@ class ASVAllocator:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
+        else:
+            self.update_stimulus_matrix()
     
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
         # set RSSI communication signal 
         rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
         normalized_value = self.normalize(rssi, -85, -40, 0, 1)
-        self.comm_signal[auv_id] = normalized_value
+        self.comm_signal[auv_id] = abs(normalized_value-1)
         
-    
     def normalize(self,value, min_val, max_val, new_min, new_max):
         normalized_value = new_min + (value - min_val) * (new_max - new_min) / (max_val - min_val)
         return normalized_value
@@ -291,8 +294,7 @@ class ASVAllocator:
 
         if(np.all(self.asvs_init) == True):
             self.init=True
-            self.update_stimulus_matrix()
-    
+            
     #  ----------------------- DATA STORED --------------------------------    
     def update_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
@@ -310,12 +312,15 @@ class ASVAllocator:
         self.buffered_data_pub.publish(msg)
     
     def update_stimulus_matrix(self):
+        # get the information from the AUVs and create the matrix stimulus
         for asv in range(self.number_of_asvs):
             for robot in range(self.active_robots):
                 # get the time elapsed between ASV visits
-                self.robots_sense[0] = self.elapsed_time[self.robots_id[robot]]
+                self.robots_sense[0] = self.times[asv][robot]
                 # get the distance between ASV-AUV's
                 distance = self.get_distance(asv,self.robots_id[robot])
+                if(distance<1):
+                    print("AUV ID: "+str(self.robots_id[robot])+" ASV ID: "+str(asv))
                 self.robots_sense[1] = distance
                 # obtain the amount of data to be transferred
                 self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
@@ -324,8 +329,11 @@ class ASVAllocator:
                 self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
 
                 self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
-            # print("------- VALUES FOR ASV"+str(asv)+"--------")
+
+            print("------- VALUES FOR ASV"+str(asv)+"--------")
             print(self.stimulus_variables)
+
+            # normalize the stimulus values
             self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
    
     # --------------------------------------------------------------------------------------
@@ -347,28 +355,7 @@ class ASVAllocator:
                 elif(self.optimization_model==2):
                     self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
                     self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
-            self.remove_robot=False
-
-
-    def update_state(self):
-        for robot in range(self.active_robots):
-            # get the time elapsed between AUV visits
-            self.robots_sense[0] = self.get_elapsed_time(self.robots_id[robot])
-            # get the distance between ASV-AUV's
-            distance = self.get_distance(self.robots_id[robot])
-            self.robots_sense[1] = distance
-            # obtain the amount of data to be transferred
-            self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
-            #get the communication signal based on RSSI
-            self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
-
-            self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
-        
-        self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
-        # remove the robots that have completed their work
-        for element in range(len(self.removed_robots)):
-            self.stimulus[self.removed_robots[element]] = 0
-        return(self.stimulus)     
+            self.remove_robot=False  
     
     def min_max_scale(self,values):
         # get the minimum and maximum values
@@ -377,8 +364,13 @@ class ASVAllocator:
         for robot in range(self.active_robots):
             scaled_values = np.array([])
             for value in range(self.number_of_stimulus):
-                calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
-                scaled_values = np.append(scaled_values,calc)
+                if(value==1): #distance stimulus: the minor the distance the greater the stimulus value
+                    calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
+                    dist = abs(calc-1)
+                    scaled_values = np.append(scaled_values,dist)
+                else:
+                    calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
+                    scaled_values = np.append(scaled_values,calc)
             self.scaled_senses[robot] = scaled_values
         return(self.scaled_senses)
     
@@ -388,9 +380,9 @@ class ASVAllocator:
         
         if((self.robot_initialization == True).all()):
             self.system_init = True
-            self.print_random_points()
+            self.plot_random_points()
 
-    def print_random_points(self):
+    def plot_random_points(self):
         while not rospy.is_shutdown():
             for element in range(len(self.random_points)):
                 object = PointStamped()

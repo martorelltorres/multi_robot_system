@@ -3,7 +3,7 @@
 # ---------------------------------------------------------
 
 # ------------------ ROBOTS INFO -----------------------
-number_of_robots: 6 
+number_of_robots: 6 #OJO!!!
 # be sure that all the simulated architectures has the same NED origin 
 
 # Andratx exterior
