@@ -72,7 +72,7 @@ class DustbinRobot:
         self.elapsed_time = []
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[],[],[],[],[],[]]
+        self.auvs_information = [[],[],[],[],[],[]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
@@ -104,8 +104,6 @@ class DustbinRobot:
         self.data_gather_time = []
         self.start_recording_time = []
         self.start_data_gathering = True
-        self.goalAUV_settled = False
-        self.robot_goal_id = 2
         self.set_transmission_init_time=False
 
         # Set the number of stimulus depending of the optimization strategy
@@ -180,10 +178,6 @@ class DustbinRobot:
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
-        # rospy.Subscriber('/mrs/robot'+str(self.robot_ID)+'_goalAUV',
-        #                 Int16,    
-        #                 self.set_goalAUV,
-        #                 queue_size=1)
                 
         for element in range(self.number_of_robots):
             rospy.Subscriber(
@@ -295,7 +289,6 @@ class DustbinRobot:
         msg.storage = self.storage_disk
         self.buffered_data_pub.publish(msg)
         # Start the data gathering when the first robot detects an object
-        # if(self.start_data_gathering == True and self.goalAUV_settled==True):
         if(self.start_data_gathering == True):
             self.start_data_gathering = False
             self.process()
@@ -315,10 +308,6 @@ class DustbinRobot:
             msg = Bool()
             msg.data = False 
             self.coverage_init_pub.publish(msg)
-    
-    # def set_goalAUV(self, msg):
-    #     self.goalAUV_settled = True
-    #     self.robot_goal_id = msg.data
     
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -362,11 +351,11 @@ class DustbinRobot:
     
     def update_acoustic_info(self, msg, robot_agent):
         # fill the robots_information array with the robots information received from the NavSts 
-        self.robots_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
+        self.auvs_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
     
     def process(self):
-        self.enable_tracking = True
         self.robot_goal_id= self.allocator.get_asv_goal_id(self.asv_ID)
+        self.enable_tracking = True
         print("*********************************************************")
         print("The ASV_"+str(self.asv_ID)+": "+str(self.robot_goal_id))
         print("*********************************************************")
@@ -431,11 +420,11 @@ class DustbinRobot:
         return(distance)
 
     def tracking(self):
-        self.auv_position_north = self.robots_information[self.robot_goal_id][0]
+        self.auv_position_north = self.auvs_information[self.robot_goal_id][0]
         self.asv_position_north = self.asv_north
-        self.auv_position_east = self.robots_information[self.robot_goal_id][1]
+        self.auv_position_east = self.auvs_information[self.robot_goal_id][1]
         self.asv_position_east = self.asv_east
-        self.auv_yaw = self.robots_information[self.robot_goal_id][2]
+        self.auv_yaw = self.auvs_information[self.robot_goal_id][2]
         self.tracking_marker()
         self.adrift_marker()
         self.repulsion_marker()
@@ -605,30 +594,6 @@ class DustbinRobot:
         goto_req.reference = 0 
         self.goto_srv(goto_req)
 
-    def adrift_marker(self):
-        self.anchor = Marker()
-        self.anchor.header.frame_id = "world_ned"
-        self.anchor.header.stamp = rospy.Time.now()
-        self.anchor.ns = "mrs"
-        self.anchor.id = 0
-        self.anchor.type = Marker.CYLINDER
-        self.anchor.action = Marker.ADD
-        self.anchor.pose.position.x = self.auv_position_north
-        self.anchor.pose.position.y = self.auv_position_east
-        self.anchor.pose.position.z = -10.2
-        self.anchor.pose.orientation.x = 0
-        self.anchor.pose.orientation.y = 0
-        self.anchor.pose.orientation.z = 0
-        self.anchor.pose.orientation.w = 1.0
-        self.anchor.scale.x = self.adrift_radius*2
-        self.anchor.scale.y = self.adrift_radius*2
-        self.anchor.scale.z = 0.1
-        self.anchor.color.r = 0.0
-        self.anchor.color.g = 1.0
-        self.anchor.color.b = 0.0
-        self.anchor.color.a = 1
-        self.markerPub_adrift.publish(self.anchor)
-
     def repulsion_marker(self):
         self.robotMarker = Marker()
         self.robotMarker.header.frame_id = "world_ned"
@@ -639,7 +604,7 @@ class DustbinRobot:
         self.robotMarker.action = Marker.ADD
         self.robotMarker.pose.position.x = self.auv_position_north
         self.robotMarker.pose.position.y = self.auv_position_east
-        self.robotMarker.pose.position.z = -10.3
+        self.robotMarker.pose.position.z = 10.1
         self.robotMarker.pose.orientation.x = 0
         self.robotMarker.pose.orientation.y = 0
         self.robotMarker.pose.orientation.z = 0
@@ -650,8 +615,32 @@ class DustbinRobot:
         self.robotMarker.color.r = 1.0
         self.robotMarker.color.g = 0.0
         self.robotMarker.color.b = 0.0
-        self.robotMarker.color.a = 1
+        self.robotMarker.color.a = 0.5
         self.markerPub_repulsion.publish(self.robotMarker)
+        
+    def adrift_marker(self):
+        self.anchor = Marker()
+        self.anchor.header.frame_id = "world_ned"
+        self.anchor.header.stamp = rospy.Time.now()
+        self.anchor.ns = "mrs"
+        self.anchor.id = 0
+        self.anchor.type = Marker.CYLINDER
+        self.anchor.action = Marker.ADD
+        self.anchor.pose.position.x = self.auv_position_north
+        self.anchor.pose.position.y = self.auv_position_east
+        self.anchor.pose.position.z = 10.2
+        self.anchor.pose.orientation.x = 0
+        self.anchor.pose.orientation.y = 0
+        self.anchor.pose.orientation.z = 0
+        self.anchor.pose.orientation.w = 1.0
+        self.anchor.scale.x = self.adrift_radius*2
+        self.anchor.scale.y = self.adrift_radius*2
+        self.anchor.scale.z = 0.1
+        self.anchor.color.r = 0.0
+        self.anchor.color.g = 1.0
+        self.anchor.color.b = 0.0
+        self.anchor.color.a = 0.5
+        self.markerPub_adrift.publish(self.anchor)
 
     def tracking_marker(self):
         self.follow = Marker()
@@ -663,7 +652,7 @@ class DustbinRobot:
         self.follow.action = Marker.ADD
         self.follow.pose.position.x = self.auv_position_north
         self.follow.pose.position.y = self.auv_position_east
-        self.follow.pose.position.z = -10.1
+        self.follow.pose.position.z = 10.3
         self.follow.pose.orientation.x = 0
         self.follow.pose.orientation.y = 0
         self.follow.pose.orientation.z = 0
@@ -674,7 +663,7 @@ class DustbinRobot:
         self.follow.color.r = 0.0
         self.follow.color.g = 0.0
         self.follow.color.b = 1.0
-        self.follow.color.a = 1
+        self.follow.color.a = 0.5
         self.markerPub_tracking.publish(self.follow)
 
     def object_point(self,x,y):

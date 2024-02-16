@@ -383,7 +383,6 @@ class ASVAllocator:
         sorted_goal_ids = np.argsort(self.stimulus)  
         return(sorted_goal_ids)
     # --------------------------------------------------------------------------------------
-            
     def min_max_scale(self,values):
         # get the minimum and maximum values
         self.min_value = np.min(values)
