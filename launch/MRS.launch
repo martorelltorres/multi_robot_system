@@ -15,7 +15,7 @@
   <arg name="robot_5" default="robot5"/>  <!--AUV5-->
   <arg name="robot_6" default="robot6"/>  <!--ASV1-->
   <arg name="robot_7" default="robot7"/>  <!--ASV2-->
-  <arg name="ASV_ID" default="6"/>  <!--ASV-->
+  <arg name="ASV_ID" default="6"/>  <!--ASV acoustic communication link-->
   
   <!-- Launch the AUVs Simulation -->
   <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">

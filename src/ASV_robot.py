@@ -487,21 +487,21 @@ class DustbinRobot:
 
         # When the data transmission ends reset the elapsed_time
         self.set_elapsed_time(self.robot_goal_id)
+        self.send_elapsed_time()
         self.process()
         
         # self.dustbin_strategy()
 
     def set_elapsed_time(self,robot_id):
         self.start_recording_time[robot_id] = rospy.Time.now().secs
-        self.get_elapsed_time(robot_id)
 
-    def get_elapsed_time(self,robot_id):
-        if(self.start_dustbin_strategy[robot_id]== False):
+    def send_elapsed_time(self):
+        if(self.start_dustbin_strategy[self.robot_goal_id]== False):
             time = 0
-            self.elapsed_time[robot_id]= time
+            self.elapsed_time[self.robot_goal_id]= time
         else:
-            time = rospy.Time.now().secs - self.start_recording_time[robot_id]
-            self.elapsed_time[robot_id]= time
+            time = rospy.Time.now().secs - self.start_recording_time[self.robot_goal_id]
+            self.elapsed_time[self.robot_goal_id]= time
 
         # Publish information
         msg = Int16MultiArray()
@@ -617,7 +617,7 @@ class DustbinRobot:
         self.robotMarker.color.b = 0.0
         self.robotMarker.color.a = 0.5
         self.markerPub_repulsion.publish(self.robotMarker)
-        
+
     def adrift_marker(self):
         self.anchor = Marker()
         self.anchor.header.frame_id = "world_ned"
