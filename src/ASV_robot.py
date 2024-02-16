@@ -106,6 +106,7 @@ class DustbinRobot:
         self.start_data_gathering = True
         self.goalAUV_settled = False
         self.robot_goal_id = 2
+        self.set_transmission_init_time=False
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
@@ -169,7 +170,7 @@ class DustbinRobot:
                         NavSts,    
                         self.update_asv_position,
                         queue_size=1)
-        
+               
         rospy.Subscriber('/mrs/exploration_area_update',
                             ExplorationUpdate,    
                             self.kill_the_process,
@@ -179,10 +180,10 @@ class DustbinRobot:
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)
-        rospy.Subscriber('/mrs/robot'+str(self.robot_ID)+'_goalAUV',
-                        Int16,    
-                        self.set_goalAUV,
-                        queue_size=1)
+        # rospy.Subscriber('/mrs/robot'+str(self.robot_ID)+'_goalAUV',
+        #                 Int16,    
+        #                 self.set_goalAUV,
+        #                 queue_size=1)
                 
         for element in range(self.number_of_robots):
             rospy.Subscriber(
@@ -201,15 +202,15 @@ class DustbinRobot:
 
         self.pub_elapsed_time = rospy.Publisher('asv'+str(self.asv_ID)+'_elapsed_time', Int16MultiArray, queue_size=2)
 
-        self.markerPub_repulsion = rospy.Publisher('repulsion_radius',
+        self.markerPub_repulsion = rospy.Publisher('asv'+str(self.asv_ID)+'repulsion_radius',
                                                     Marker,
                                                     queue_size=1)
 
-        self.markerPub_adrift = rospy.Publisher('adrift_radius',
+        self.markerPub_adrift = rospy.Publisher('asv'+str(self.asv_ID)+'adrift_radius',
                                                 Marker,
                                                 queue_size=1)
 
-        self.markerPub_tracking = rospy.Publisher('tracking_radius',
+        self.markerPub_tracking = rospy.Publisher('asv'+str(self.asv_ID)+'tracking_radius',
                                                 Marker,
                                                 queue_size=1)
         
@@ -280,7 +281,7 @@ class DustbinRobot:
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
         self.voronoi_offset_polygons = data['array5']
-        self.random_points = data['array6']
+        self.random_points = data['array6']   
     
     def update_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
@@ -297,7 +298,7 @@ class DustbinRobot:
         # if(self.start_data_gathering == True and self.goalAUV_settled==True):
         if(self.start_data_gathering == True):
             self.start_data_gathering = False
-            self.get_goal_id()
+            self.process()
 
     def set_coverage_start_time(self,msg,element):
         self.set_elapsed_time(element)
@@ -315,9 +316,9 @@ class DustbinRobot:
             msg.data = False 
             self.coverage_init_pub.publish(msg)
     
-    def set_goalAUV(self, msg):
-        self.goalAUV_settled = True
-        self.robot_goal_id = msg.data
+    # def set_goalAUV(self, msg):
+    #     self.goalAUV_settled = True
+    #     self.robot_goal_id = msg.data
     
     def update_travelled_distance(self,event):
         if (self.first_time == True):
@@ -363,8 +364,12 @@ class DustbinRobot:
         # fill the robots_information array with the robots information received from the NavSts 
         self.robots_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
     
-    def get_goal_id(self):
+    def process(self):
         self.enable_tracking = True
+        self.robot_goal_id= self.allocator.get_asv_goal_id(self.asv_ID)
+        print("*********************************************************")
+        print("The ASV_"+str(self.asv_ID)+": "+str(self.robot_goal_id))
+        print("*********************************************************")
         # publish the goal_id
         msg = Data()
         msg.header.stamp = rospy.Time.now()
@@ -493,7 +498,7 @@ class DustbinRobot:
 
         # When the data transmission ends reset the elapsed_time
         self.set_elapsed_time(self.robot_goal_id)
-        self.get_goal_id()
+        self.process()
         
         # self.dustbin_strategy()
 

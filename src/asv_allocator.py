@@ -11,7 +11,7 @@ import pickle
 import actionlib
 import message_filters       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16MultiArray, Bool
+from std_msgs.msg import Int16MultiArray, Bool, Int16
 from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
@@ -104,6 +104,8 @@ class ASVAllocator:
         self.asvs_init = np.array([])
         self.init=False
         self.elapsed_time =np.array([])
+        self.auv_goal_ids = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
+        self.asv_id = 100
         # -----------------------------------------------------------------
 
         for asv in range(self.number_of_asvs):
@@ -197,7 +199,6 @@ class ASVAllocator:
                   
 
         #Publishers
-
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
 
         
@@ -207,6 +208,15 @@ class ASVAllocator:
         
         self.buffered_data_pub = rospy.Publisher('data_buffered',
                                 BufferedData,
+                                queue_size=1)
+        
+
+        self.send_goal_asv0_pub = rospy.Publisher('asv0_goal_id',
+                                Int16,
+                                queue_size=1)
+        
+        self.send_goal_asv1_pub = rospy.Publisher('asv1_goal_id',
+                                Int16,
                                 queue_size=1)
 
     def read_area_info(self):
@@ -319,8 +329,6 @@ class ASVAllocator:
                 self.robots_sense[0] = self.times[asv][robot]
                 # get the distance between ASV-AUV's
                 distance = self.get_distance(asv,self.robots_id[robot])
-                if(distance<1):
-                    print("AUV ID: "+str(self.robots_id[robot])+" ASV ID: "+str(asv))
                 self.robots_sense[1] = distance
                 # obtain the amount of data to be transferred
                 self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
@@ -330,13 +338,68 @@ class ASVAllocator:
 
                 self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
 
-            print("------- VALUES FOR ASV"+str(asv)+"--------")
-            print(self.stimulus_variables)
+            # print("------- VALUES FOR ASV"+str(asv)+"--------")
+            # print(self.stimulus_variables)
 
             # normalize the stimulus values
-            self.min_max_scaled = self.min_max_scale(self.stimulus_variables)
-   
+            normalized_values = self.min_max_scale(self.stimulus_variables)
+            # obtain the sorted goal id's for each ASV using ARTM
+            sorted_ids = self.ARTM(normalized_values)
+            self.auv_goal_ids[asv] = sorted_ids
+
+        asv0_goals = self.auv_goal_ids[0]
+        asv1_goals = self.auv_goal_ids[1]
+
+        # if both ASV has as first goal the same AUV 
+        if(asv0_goals[0] == asv1_goals[0]):
+            # set the first AUV to the first ASV and the second AUV to the second ASV
+            self.set_goal_id(0,asv0_goals[0])
+            self.set_goal_id(1,asv1_goals[1])
+
+        # if ASVs has different goal AUV
+        else:
+            self.set_goal_id(0,asv0_goals[0])
+            self.set_goal_id(1,asv0_goals[0])
+    
+    def set_goal_id(self,asv_id,data):
+        if(asv_id==0):
+            self.asv0_goal_id = data
+        elif(asv_id==1):
+            self.asv1_goal_id = data
+
+    def get_asv_goal_id(self,asv_id):
+        if(asv_id==0):
+            return(self.asv0_goal_id)
+        elif(asv_id==1):
+            return(self.asv1_goal_id)
+
+    def ARTM(self,normalized_values):
+        for robot in range(self.active_robots):
+            scaled_values = normalized_values[robot]
+            s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
+            self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
+        # extract the sorted goal robot IDs
+        sorted_goal_ids = np.array([])
+        sorted_goal_ids = np.argsort(self.stimulus)  
+        return(sorted_goal_ids)
     # --------------------------------------------------------------------------------------
+            
+    def min_max_scale(self,values):
+        # get the minimum and maximum values
+        self.min_value = np.min(values)
+        self.max_value = np.max(values)
+        for robot in range(self.active_robots):
+            scaled_values = np.array([])
+            for value in range(self.number_of_stimulus):
+                if(value==1): #distance stimulus: the minor the distance the greater the stimulus value
+                    calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
+                    dist = abs(calc-1)
+                    scaled_values = np.append(scaled_values,dist)
+                else:
+                    calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
+                    scaled_values = np.append(scaled_values,calc)
+            self.scaled_senses[robot] = scaled_values
+        return(self.scaled_senses)
     
     def set_dustbin_robots(self,msg):
          # remove the robot from the dustbin goals
@@ -356,24 +419,7 @@ class ASVAllocator:
                     self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
                     self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
             self.remove_robot=False  
-    
-    def min_max_scale(self,values):
-        # get the minimum and maximum values
-        self.min_value = np.min(values)
-        self.max_value = np.max(values)
-        for robot in range(self.active_robots):
-            scaled_values = np.array([])
-            for value in range(self.number_of_stimulus):
-                if(value==1): #distance stimulus: the minor the distance the greater the stimulus value
-                    calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
-                    dist = abs(calc-1)
-                    scaled_values = np.append(scaled_values,dist)
-                else:
-                    calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
-                    scaled_values = np.append(scaled_values,calc)
-            self.scaled_senses[robot] = scaled_values
-        return(self.scaled_senses)
-    
+        
     def initialization(self,robot_id):
         if(self.robots_information[robot_id][0] != 0):
             self.robot_initialization[robot_id] = True
@@ -449,12 +495,6 @@ class ASVAllocator:
         maximum_value = max(self.max_stimulus)
         # print("The maximum value is: "+str(maximum_value))
         self.robot_goal_id = self.max_stimulus.index(maximum_value)
-        
-    def ARTM(self):
-        for robot in range(self.active_robots):
-            scaled_values = self.min_max_scaled[robot]
-            s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
-            self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
