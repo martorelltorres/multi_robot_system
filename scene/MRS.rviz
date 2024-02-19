@@ -1319,7 +1319,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0adrift_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1327,7 +1327,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0repulsion_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1335,7 +1335,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0tracking_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -1363,7 +1363,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv1adrift_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1371,7 +1371,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv1repulsion_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1379,7 +1379,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv1tracking_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -1397,25 +1397,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 308.980224609375
+      Distance: 267.9871826171875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -114.39392852783203
-        Y: -42.00645446777344
+        X: -104.39881134033203
+        Y: -7.047776222229004
         Z: 6.233110616449267e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: true
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4102035760879517
+      Pitch: 1.5247963666915894
       Target Frame: turbot/base_link
       Value: XYOrbit (rviz)
-      Yaw: 2.3722214698791504
+      Yaw: 3.0172224044799805
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875

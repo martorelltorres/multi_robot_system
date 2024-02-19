@@ -67,12 +67,13 @@ class DustbinRobot:
         self.get_information = False
         self.start_to_publish = False
         self.robot_at_center = False
+        self.robot_goal_id = None
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
         self.elapsed_time = []
         self.system_init = False
         self.robot_data = [0,0]
-        self.auvs_information = [[],[],[],[],[],[]]
+        self.auvs_information = [[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
@@ -105,6 +106,7 @@ class DustbinRobot:
         self.start_recording_time = []
         self.start_data_gathering = True
         self.set_transmission_init_time=False
+        self.goal_id_settled=False
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
@@ -151,8 +153,13 @@ class DustbinRobot:
 
         #Subscribers 
         for robot_agent in range(self.number_of_robots):
-            rospy.Subscriber('/robot'+str(robot_agent)+'/acoustic_communication',
-                            AcousticData,
+            # rospy.Subscriber('/robot'+str(robot_agent)+'/acoustic_communication',
+            #                 AcousticData,
+            #                 self.update_acoustic_info,
+            #                 robot_agent,
+            #                 queue_size=1)
+            rospy.Subscriber('/robot'+str(robot_agent)+'/navigator/navigation',
+                            NavSts,
                             self.update_acoustic_info,
                             robot_agent,
                             queue_size=1)
@@ -262,6 +269,7 @@ class DustbinRobot:
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
+        rospy.Timer(rospy.Duration(1.0), self.send_elapsed_time)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -352,9 +360,13 @@ class DustbinRobot:
     def update_acoustic_info(self, msg, robot_agent):
         # fill the robots_information array with the robots information received from the NavSts 
         self.auvs_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
-    
+
     def process(self):
-        self.robot_goal_id= self.allocator.get_asv_goal_id(self.asv_ID)
+        # obtain the goal_auv from the allocator
+        self.robot_goal_id = self.allocator.get_asv_goal_id(self.asv_ID)
+        self.goal_id_settled=True
+        # advise the allocator that the received goal_auv has been assigned
+        self.allocator.set_bussy_auvs(self.robot_goal_id,self.asv_ID)
         self.enable_tracking = True
         print("*********************************************************")
         print("The ASV_"+str(self.asv_ID)+": "+str(self.robot_goal_id))
@@ -487,7 +499,6 @@ class DustbinRobot:
 
         # When the data transmission ends reset the elapsed_time
         self.set_elapsed_time(self.robot_goal_id)
-        self.send_elapsed_time()
         self.process()
         
         # self.dustbin_strategy()
@@ -495,13 +506,15 @@ class DustbinRobot:
     def set_elapsed_time(self,robot_id):
         self.start_recording_time[robot_id] = rospy.Time.now().secs
 
-    def send_elapsed_time(self):
-        if(self.start_dustbin_strategy[self.robot_goal_id]== False):
-            time = 0
-            self.elapsed_time[self.robot_goal_id]= time
-        else:
-            time = rospy.Time.now().secs - self.start_recording_time[self.robot_goal_id]
-            self.elapsed_time[self.robot_goal_id]= time
+    def send_elapsed_time(self,event):
+        for auv in range(self.number_of_robots):
+            # if the AUV does not start the coverage
+            if(self.start_dustbin_strategy[auv]== False):
+                time = 0
+                self.elapsed_time[auv]= time
+            else:
+                time = rospy.Time.now().secs - self.start_recording_time[auv]
+                self.elapsed_time[auv]= time
 
         # Publish information
         msg = Int16MultiArray()

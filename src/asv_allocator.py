@@ -26,7 +26,7 @@ class ASVAllocator:
   
     def __init__(self, name):
         """ Init the class """
-        rospy.sleep(7)
+        rospy.sleep(5)
         self.name = name
         node_name = rospy.get_name()
 
@@ -65,6 +65,7 @@ class ASVAllocator:
         self.robot_at_center = False
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
+        self.bussy_auvs = [None,None]
         self.system_init = False
         self.robot_data = [0,0]
         self.robots_information = [[],[],[],[],[],[]]
@@ -169,7 +170,6 @@ class ASVAllocator:
                                 robot_id,
                                 queue_size=1)
         
-        
         rospy.Subscriber('/robot6/navigator/navigation',
                         NavSts,    
                         self.update_asv_position,
@@ -209,15 +209,6 @@ class ASVAllocator:
         self.buffered_data_pub = rospy.Publisher('data_buffered',
                                 BufferedData,
                                 queue_size=1)
-        
-
-        self.send_goal_asv0_pub = rospy.Publisher('asv0_goal_id',
-                                Int16,
-                                queue_size=1)
-        
-        self.send_goal_asv1_pub = rospy.Publisher('asv1_goal_id',
-                                Int16,
-                                queue_size=1)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -236,6 +227,9 @@ class ASVAllocator:
     #  --------------------- ELAPSED TIME---------------------------------
     def update_elapsed_time(self,msg,asv):
         self.times[asv] = msg.data
+        self.sync_elapsed_time = np.minimum(self.times[0],self.times[1])
+        print("*****************SYNC ELAPSED TIME***************")
+        print(self.sync_elapsed_time)
 
     def set_coverage_start_time(self,msg,element):
         self.set_elapsed_time(element)
@@ -326,7 +320,7 @@ class ASVAllocator:
         for asv in range(self.number_of_asvs):
             for robot in range(self.active_robots):
                 # get the time elapsed between ASV visits
-                self.robots_sense[0] = self.times[asv][robot]
+                self.robots_sense[0] = self.sync_elapsed_time[robot]
                 # get the distance between ASV-AUV's
                 distance = self.get_distance(asv,self.robots_id[robot])
                 self.robots_sense[1] = distance
@@ -346,26 +340,32 @@ class ASVAllocator:
             # obtain the sorted goal id's for each ASV using ARTM
             sorted_ids = self.ARTM(normalized_values)
             self.auv_goal_ids[asv] = sorted_ids
+        
 
-        asv0_goals = self.auv_goal_ids[0]
-        asv1_goals = self.auv_goal_ids[1]
+        self.asv0_goals = self.auv_goal_ids[0]
+        self.asv1_goals = self.auv_goal_ids[1]
 
         # if both ASV has as first goal the same AUV 
-        if(asv0_goals[0] == asv1_goals[0]):
+        if(self.asv0_goals[0] == self.asv1_goals[0] and (self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[1] not in self.bussy_auvs)):
             # set the first AUV to the first ASV and the second AUV to the second ASV
-            self.set_goal_id(0,asv0_goals[0])
-            self.set_goal_id(1,asv1_goals[1])
+            self.set_goal_id(0,self.asv0_goals[0])
+            self.set_goal_id(1,self.asv1_goals[1])
 
         # if ASVs has different goal AUV
-        else:
-            self.set_goal_id(0,asv0_goals[0])
-            self.set_goal_id(1,asv0_goals[0])
+        elif(self.asv0_goals[0] != self.asv1_goals[0] and(self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[0] not in self.bussy_auvs)):
+            self.set_goal_id(0,self.asv0_goals[0])
+            self.set_goal_id(1,self.asv0_goals[0])
     
-    def set_goal_id(self,asv_id,data):
+    def set_bussy_auvs(self,auv_id, asv_id):
+        # This method handles the assigneds AUVs in order to avoid duplicities in the assignation process. 
+        # The same AUV can't be assigned to both ASVs
+        self.bussy_auvs[asv_id] = auv_id
+
+    def set_goal_id(self,asv_id,id_data):
         if(asv_id==0):
-            self.asv0_goal_id = data
+            self.asv0_goal_id = id_data
         elif(asv_id==1):
-            self.asv1_goal_id = data
+            self.asv1_goal_id = id_data
 
     def get_asv_goal_id(self,asv_id):
         if(asv_id==0):

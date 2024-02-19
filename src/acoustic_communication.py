@@ -62,7 +62,6 @@ class acoustic_communication:
 
     def get_comm_freq(self):
         distance = np.sqrt((self.auv_north - self.asv_north)**2 + (self.auv_east - self.asv_east)**2 + (self.auv_depth)**2)
-        # y = -0.0000001 + 0.0000776*x^1 + -0.0141229*x^2 + 0.8483710*x^3
         communication_freq = 0.848371 - 0.01412292*distance + 0.00007763495*distance**2
         # Add noise
         # noise = np.random.normal(0, 0.3)
