@@ -281,7 +281,8 @@ class ASVRobot:
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
         # set the time when the AUV detects an object
-        self.data_gather_time[robot_id]= rospy.Time.now().secs 
+        if (self.communication_latency[robot_id]==0):
+            self.data_gather_time[robot_id]= rospy.Time.now().secs 
         # Publish the stored data
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()

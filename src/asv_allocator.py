@@ -281,7 +281,7 @@ class ASVAllocator:
     
     def update_communication_latency(self, msg, asv_id):
         self.latency_data[asv_id]= msg.comm_delay
-        latency = np.maximum(self.latency_data[0],self.latency_data[1])
+        latency = np.minimum(self.latency_data[0],self.latency_data[1])
 
         # Publish information
         msg = CommunicationLatency()
