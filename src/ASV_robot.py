@@ -149,19 +149,24 @@ class ASVRobot:
         rospy.loginfo('[%s]: initialized', self.name)
 
         #Subscribers 
-        for robot_agent in range(self.number_of_robots):
-            rospy.Subscriber('/robot'+str(robot_agent)+'/navigator/navigation',
+        for robot_id in range(self.number_of_robots):
+            rospy.Subscriber('/robot'+str(robot_id)+'/acoustic_communication',
                             NavSts,
                             self.update_acoustic_info,
-                            robot_agent,
+                            robot_id,
                             queue_size=1)
        
-        for robot_id in range(self.number_of_robots):
             rospy.Subscriber("/mrs/robot"+str(robot_id)+"_object_info",
                                 ObjectInformation,
                                 self.update_object_information,
                                 robot_id,
                                 queue_size=1)
+            
+            rospy.Subscriber('/mrs/robot'+str(robot_id)+'_start_coverage_time',
+                            CoverageStartTime,
+                            self.set_coverage_start_time,
+                            robot_id,
+                            queue_size=1)  
         
         rospy.Subscriber('/asv'+str(self.asv_ID)+'/navigator/navigation',
                         NavSts,    
@@ -176,15 +181,7 @@ class ASVRobot:
         rospy.Subscriber('/mrs/exploration_finished',
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
-                            queue_size=1)
-                
-        for element in range(self.number_of_robots):
-            rospy.Subscriber(
-            '/mrs/robot'+str(element)+'_start_coverage_time',
-            CoverageStartTime,
-            self.set_coverage_start_time,
-            element,
-            queue_size=1)      
+                            queue_size=1)  
 
         #Publishers
         self.corrected_bvr = rospy.Publisher('/robot'+str(self.robot_ID)+'/controller/body_velocity_req',
