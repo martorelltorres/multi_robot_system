@@ -111,6 +111,7 @@ class ASVAllocator:
         self.asv_id = 100
         self.data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
         self.latency_data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
+        self.transmited_data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
         # -----------------------------------------------------------------
 
         for asv in range(self.number_of_asvs):
@@ -198,6 +199,14 @@ class ASVAllocator:
                         self.update_communication_latency,
                         asv,
                         queue_size=1)
+            
+            rospy.Subscriber('/mrs/asv'+str(asv)+'_data_transmited',
+                        TransmittedData,    
+                        self.update_transmitted_data,
+                        asv,
+                        queue_size=1)
+            
+            
 
         #Publishers
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
@@ -218,6 +227,10 @@ class ASVAllocator:
         self.communication_latency_pub = rospy.Publisher('allocator_communication_latency',
                                 CommunicationLatency,
                                 queue_size=2)
+        
+        self.data_transmited_pub = rospy.Publisher('allocator_data_transmited',
+                                TransmittedData,
+                                queue_size=1)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -255,6 +268,16 @@ class ASVAllocator:
         self.buffered_data_pub.publish(msg)
 
         self.update_stimulus_matrix()
+    
+    def update_transmitted_data(self, msg, asv_id):
+        self.transmited_data[asv_id]= msg.transmitted_data
+        data = np.maximum(self.transmited_data[0],self.transmited_data[1])
+
+        # Publish information
+        msg = TransmittedData()
+        msg.header.stamp = rospy.Time.now()
+        msg.transmitted_data = data
+        self.data_transmited_pub.publish(msg)
     
     def update_communication_latency(self, msg, asv_id):
         self.latency_data[asv_id]= msg.comm_delay
@@ -333,8 +356,8 @@ class ASVAllocator:
 
         self.asv0_goals = self.auv_goal_ids[0]
         self.asv1_goals = self.auv_goal_ids[1]
-        print("ASV0 goals are: "+str(self.asv0_goals))
-        print("ASV1 goals are: "+str(self.asv1_goals))
+        # print("ASV0 goals are: "+str(self.asv0_goals))
+        # print("ASV1 goals are: "+str(self.asv1_goals))
 
         # if both ASV has as first goal the same AUV 
         if(self.asv0_goals[0] == self.asv1_goals[0] and self.first==True):

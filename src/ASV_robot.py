@@ -38,8 +38,6 @@ class ASVRobot:
         self.asv_ID = self.get_param('~asv_ID',0)
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
-        self.section_action = self.get_param('section_action','/robot6/pilot/world_section_req') 
-        self.section_result = self.get_param('section_result','/robot6/pilot/world_section_req/result') 
         self.repulsion_radius = self.get_param("repulsion_radius",20)
         self.adrift_radius = self.get_param("adrift_radius",30)
         self.tracking_radius = self.get_param("tracking_radius",50)
@@ -230,7 +228,7 @@ class ASVRobot:
                                 BufferedData,
                                 queue_size=1)
         
-        self.data_transmited_pub = rospy.Publisher('data_transmited',
+        self.data_transmited_pub = rospy.Publisher('asv'+str(self.asv_ID)+'_data_transmited',
                                 TransmittedData,
                                 queue_size=1)
                
@@ -283,7 +281,7 @@ class ASVRobot:
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
         # set the time when the AUV detects an object
-        self.data_gather_time[robot_id]= rospy.Time.now().secs
+        self.data_gather_time[robot_id]= rospy.Time.now().secs 
         # Publish the stored data
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
@@ -458,8 +456,9 @@ class ASVRobot:
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
 
-            # print("Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+            print("Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
             if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
+                
                 # publish the amount of transmited data
                 msg = TransmittedData()
                 msg.header.stamp = rospy.Time.now()
@@ -486,7 +485,7 @@ class ASVRobot:
             if(self.data_gather_time[auv]==0):
                 self.communication_latency[auv] = 0
             else:
-                self.communication_latency[auv] = (rospy.Time.now().secs - self.data_gather_time[auv])
+                self.communication_latency[auv] =  rospy.Time.now().secs - self.data_gather_time[auv]
         
         # publish the communication latency
         msg = CommunicationLatency()
@@ -497,6 +496,7 @@ class ASVRobot:
         # When the data transmission ends reset the elapsed_time
         self.communication_latency[self.robot_goal_id]= 0
         self.elapsed_time[self.robot_goal_id] = 0
+        self.data_gather_time[self.robot_goal_id] = 0
         self.set_elapsed_time(self.robot_goal_id)
         self.process()
         
