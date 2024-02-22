@@ -24,7 +24,7 @@ import subprocess
 from area_partition import area_partition
 from asv_allocator import ASVAllocator
  
-class DustbinRobot:
+class ASVRobot:
   
     def __init__(self, name):
         """ Init the class """
@@ -234,7 +234,7 @@ class DustbinRobot:
                                 TransmittedData,
                                 queue_size=1)
                
-        self.communication_latency_pub = rospy.Publisher('communication_latency',
+        self.communication_latency_pub = rospy.Publisher('asv'+str(self.asv_ID)+'_communication_latency',
                                 CommunicationLatency,
                                 queue_size=2)
         
@@ -282,7 +282,6 @@ class DustbinRobot:
     def update_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
-        # print("The robot "+str(robot_id)+ " storage disk is: "+str(self.storage_disk[robot_id]))
         # set the time when the AUV detects an object
         self.data_gather_time[robot_id]= rospy.Time.now().secs
         # Publish the stored data
@@ -357,7 +356,7 @@ class DustbinRobot:
         self.auvs_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
 
     def process(self):
-        rospy.sleep(1)
+        rospy.sleep(0.5)
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator.get_asv_goal_id(self.asv_ID)
 
@@ -365,16 +364,13 @@ class DustbinRobot:
         self.allocator.set_bussy_auvs(self.robot_goal_id,self.asv_ID)
 
         self.enable_tracking = True
-        print("*********************************************************")
-        print("The ASV_"+str(self.asv_ID)+": "+str(self.robot_goal_id))
-        print("*********************************************************")
 
         # publish the goal_id
         msg = Data()
         msg.header.stamp = rospy.Time.now()
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
-        
+
         # set the flag to 
         self.set_transmission_init_time=True        
     
@@ -484,19 +480,23 @@ class DustbinRobot:
         msg = Int16()
         msg.data = reset_id 
         self.reset_storage_pub.publish(msg)
-
-        # publish the communication latency
+        
         self.communication=True
-        if(self.data_gather_time[self.robot_goal_id]==0):
-            self.communication_latency[self.robot_goal_id] = 0
-        else:
-            self.communication_latency[self.robot_goal_id] = (rospy.Time.now().secs - self.data_gather_time[self.robot_goal_id])
+        for auv in range(self.number_of_robots):
+            if(self.data_gather_time[auv]==0):
+                self.communication_latency[auv] = 0
+            else:
+                self.communication_latency[auv] = (rospy.Time.now().secs - self.data_gather_time[auv])
+        
+        # publish the communication latency
         msg = CommunicationLatency()
         msg.header.stamp = rospy.Time.now()
         msg.comm_delay = self.communication_latency 
         self.communication_latency_pub.publish(msg)
-
+        
         # When the data transmission ends reset the elapsed_time
+        self.communication_latency[self.robot_goal_id]= 0
+        self.elapsed_time[self.robot_goal_id] = 0
         self.set_elapsed_time(self.robot_goal_id)
         self.process()
         
@@ -715,8 +715,8 @@ class DustbinRobot:
    
 if __name__ == '__main__':
     try:
-        rospy.init_node('dustbin_robot')
-        dustbin_robot = DustbinRobot(rospy.get_name())
+        rospy.init_node('asv_robot')
+        asv_robot = ASVRobot(rospy.get_name())
         rospy.spin()
     except rospy.ROSInterruptException:
         pass    

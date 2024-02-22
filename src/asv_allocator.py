@@ -110,6 +110,7 @@ class ASVAllocator:
         self.auv_goal_ids = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
         self.asv_id = 100
         self.data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
+        self.latency_data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
         # -----------------------------------------------------------------
 
         for asv in range(self.number_of_asvs):
@@ -166,7 +167,6 @@ class ASVAllocator:
                             robot_agent,
                             queue_size=1)
         
-                    
         rospy.Subscriber('/robot6/navigator/navigation',
                         NavSts,    
                         self.update_asv_position,
@@ -180,17 +180,24 @@ class ASVAllocator:
                         queue_size=1)
             
         for asv in range(self.number_of_asvs):
+
             rospy.Subscriber('/mrs/asv'+str(asv)+'_elapsed_time',
                             Int16MultiArray,    
                             self.update_elapsed_time,
                             asv,
                             queue_size=1)
+            
             rospy.Subscriber('/mrs/asv'+str(asv)+'_data_buffered',
                         BufferedData,    
                         self.update_acquired_data,
                         asv,
                         queue_size=1)
-                  
+            
+            rospy.Subscriber('/mrs/asv'+str(asv)+'_communication_latency',
+                        CommunicationLatency,    
+                        self.update_communication_latency,
+                        asv,
+                        queue_size=1)
 
         #Publishers
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
@@ -207,6 +214,10 @@ class ASVAllocator:
         self.pub_elapsed_time = rospy.Publisher('allocator_elapsed_time',
                                                  Int16MultiArray,
                                                 queue_size=2)
+        
+        self.communication_latency_pub = rospy.Publisher('allocator_communication_latency',
+                                CommunicationLatency,
+                                queue_size=2)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -244,6 +255,16 @@ class ASVAllocator:
         self.buffered_data_pub.publish(msg)
 
         self.update_stimulus_matrix()
+    
+    def update_communication_latency(self, msg, asv_id):
+        self.latency_data[asv_id]= msg.comm_delay
+        latency = np.maximum(self.latency_data[0],self.latency_data[1])
+
+        # Publish information
+        msg = CommunicationLatency()
+        msg.header.stamp = rospy.Time.now()
+        msg.comm_delay = latency
+        self.communication_latency_pub.publish(msg)
     
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     def update_acoustic_info(self, msg, robot_agent):
@@ -300,8 +321,8 @@ class ASVAllocator:
 
                 self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
 
-            # print("------- VALUES FOR ASV"+str(asv)+"--------")
-            # print(self.stimulus_variables)
+            print("------- VALUES FOR ASV"+str(asv)+"--------")
+            print(self.stimulus_variables)
 
             # normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
@@ -419,20 +440,6 @@ class ASVAllocator:
                 # Publish
                 self.pub_object.publish(object)
     
-    def max_min_stimulus(self):
-        minimum_values = []
-        max_value = 0
-        for element in range(len(self.robots_id)):
-            minimum_values.append(min(self.min_max_scaled[element])) 
-        print("The minimum values are: "+str(minimum_values))
-        max_value = max(minimum_values)
-        print("The maximum value of the minimum values is: "+str(max_value))
-        self.robot_goal_id = minimum_values.index(max_value)
-
-    def round_robin(self):
-        self.robots_id = np.roll(self.robots_id,1)
-        self.robot_goal_id = self.robots_id[0]  
-    
     def OWA(self):
         self.number_of_stimulus = 4 #Set to 4 in order to take into account the comm signal RSSI 
         OWA_inputs = self.min_max_scale(self.stimulus_variables)
@@ -460,20 +467,6 @@ class ASVAllocator:
         max_owa = max(self.owa)
         self.robot_goal_id = self.owa.index(max_owa)
         print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
-    
-    def use_max_stimulus(self):
-        # remove the max_stimulus element if needed
-        for element in range(len(self.removed_robots)):
-            self.max_stimulus[self.removed_robots[element]]= 0
-        
-        for element in range(self.active_robots):
-            self.max_stimulus[element] = max(self.min_max_scaled[element])
-
-        # print("The maximum stimulus values are: "+str(self.max_stimulus))
-        
-        maximum_value = max(self.max_stimulus)
-        # print("The maximum value is: "+str(maximum_value))
-        self.robot_goal_id = self.max_stimulus.index(maximum_value)
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):
