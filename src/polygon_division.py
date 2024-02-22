@@ -46,10 +46,11 @@ class polygon_division:
             'array3': self.main_polygon,
             'array4': self.main_polygon_centroid,
             'array5': self.voronoi_offset_polygons,
-            'array6': self.random_points
+            'array6': self.random_points,
+            'array7': self.high_priority_points
         }
 
-        with open('/home/uib/area_partition_data.pickle', 'wb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'wb') as file:
             pickle.dump(data, file)
         print("...process finished")
  
@@ -165,7 +166,8 @@ class polygon_division:
             self.main_polygon = Polygon(self.local_points)
             self.main_polygon_centroid = self.main_polygon.centroid
             self.polygon_points = self.local_points
-            self.generate_random_points_within_polygon(self.main_polygon,40)
+            self.random_points = self.generate_random_points_within_polygon(self.main_polygon,80)
+            self.high_priority_points = self.generate_random_points_within_polygon(self.main_polygon,20)
             # .........................................................................
             # Generate random points within the polygon
             num_points = 500
@@ -298,8 +300,8 @@ class polygon_division:
         # Calculate the bounding box of the polygon
         min_x, min_y, max_x, max_y = polygon.bounds
         
-        self.random_points = []
-        while len(self.random_points) < num_points:
+        random_objects = []
+        while len(random_objects) < num_points:
             # Generate random coordinates within the bounding box
             x = uniform(min_x, max_x)
             y = uniform(min_y, max_y)
@@ -307,10 +309,10 @@ class polygon_division:
             
             # Check if the point is within the polygon
             if polygon.contains(point):
-                self.random_points.append(point)
+                random_objects.append(point)
         
         self.random_points_generated = True
-        return self.random_points
+        return random_objects
     
 def get_param(self, param_name, default = None):
     if rospy.has_param(param_name):

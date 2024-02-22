@@ -28,7 +28,7 @@ class DustbinRobot:
   
     def __init__(self, name):
         """ Init the class """
-        # rospy.sleep(7)
+        rospy.sleep(3)
         self.name = name
         node_name = rospy.get_name()
 
@@ -268,7 +268,7 @@ class DustbinRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -291,6 +291,7 @@ class DustbinRobot:
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
         self.buffered_data_pub.publish(msg)
+
         # Start the data gathering when the first robot detects an object
         if(self.start_data_gathering == True):
             self.start_data_gathering = False

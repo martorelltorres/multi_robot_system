@@ -58,11 +58,13 @@ class ASVAllocator:
 
         # Initialize some variables
         self.qlearning_init = False
+        self.first=True
         self.pose = [0,0]
         self.data_transmited = []
         self.get_information = False
         self.start_to_publish = False
         self.robot_at_center = False
+        self.acquired_data = [0,0,0,0,0,0]
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
         self.bussy_auvs = [None,None]
@@ -214,7 +216,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/area_partition_data.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -279,8 +281,6 @@ class ASVAllocator:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
-        # else:
-        #     self.update_stimulus_matrix()
     
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
@@ -311,22 +311,7 @@ class ASVAllocator:
 
         if(np.all(self.asvs_init) == True):
             self.init=True
-            
-    #  ----------------------- DATA STORED --------------------------------    
-    def update_object_information(self,msg,robot_id):
-        # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
-        if(self.init==True):
-            self.update_stimulus_matrix()
-
-        # print("The robot "+str(robot_id)+ " storage disk is: "+str(self.storage_disk[robot_id]))
-        # set the time when the AUV detects an object
-        self.data_gather_time[robot_id]= rospy.Time.now().secs
-        # Publish the stored data
-        msg = BufferedData()
-        msg.header.stamp = rospy.Time.now()
-        msg.storage = self.storage_disk
-        self.buffered_data_pub.publish(msg)
+   
     
     def update_stimulus_matrix(self):
         # get the information from the AUVs and create the matrix stimulus
@@ -359,13 +344,23 @@ class ASVAllocator:
         self.asv1_goals = self.auv_goal_ids[1]
 
         # if both ASV has as first goal the same AUV 
-        if(self.asv0_goals[0] == self.asv1_goals[0] and (self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[1] not in self.bussy_auvs)):
+        if(self.asv0_goals[0] == self.asv1_goals[0] and self.first==True):
             # set the first AUV to the first ASV and the second AUV to the second ASV
+            self.set_goal_id(0,self.asv0_goals[0])
+            self.set_goal_id(1,self.asv1_goals[1])
+            self.first=False
+
+        elif(self.asv0_goals[0] == self.asv1_goals[0] and (self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[1] not in self.bussy_auvs and self.first_time==False)):
             self.set_goal_id(0,self.asv0_goals[0])
             self.set_goal_id(1,self.asv1_goals[1])
 
         # if ASVs has different goal AUV
-        elif(self.asv0_goals[0] != self.asv1_goals[0] and(self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[0] not in self.bussy_auvs)):
+        elif(self.asv0_goals[0] != self.asv1_goals[0] and self.first==True):
+            self.set_goal_id(0,self.asv0_goals[0])
+            self.set_goal_id(1,self.asv0_goals[0])
+            self.first=False
+
+        elif(self.asv0_goals[0] != self.asv1_goals[0] and(self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[0] not in self.bussy_auvs and self.first_time==False)):
             self.set_goal_id(0,self.asv0_goals[0])
             self.set_goal_id(1,self.asv0_goals[0])
     
