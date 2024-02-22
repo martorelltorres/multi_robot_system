@@ -28,7 +28,7 @@ class DustbinRobot:
   
     def __init__(self, name):
         """ Init the class """
-        rospy.sleep(7)
+        # rospy.sleep(7)
         self.name = name
         node_name = rospy.get_name()
 
@@ -153,11 +153,6 @@ class DustbinRobot:
 
         #Subscribers 
         for robot_agent in range(self.number_of_robots):
-            # rospy.Subscriber('/robot'+str(robot_agent)+'/acoustic_communication',
-            #                 AcousticData,
-            #                 self.update_acoustic_info,
-            #                 robot_agent,
-            #                 queue_size=1)
             rospy.Subscriber('/robot'+str(robot_agent)+'/navigator/navigation',
                             NavSts,
                             self.update_acoustic_info,
@@ -232,7 +227,7 @@ class DustbinRobot:
                                         Data,
                                         queue_size=1)
         
-        self.buffered_data_pub = rospy.Publisher('data_buffered',
+        self.buffered_data_pub = rospy.Publisher('asv'+str(self.asv_ID)+'_data_buffered',
                                 BufferedData,
                                 queue_size=1)
         

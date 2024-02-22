@@ -107,6 +107,7 @@ class ASVAllocator:
         self.elapsed_time =np.array([])
         self.auv_goal_ids = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
         self.asv_id = 100
+        self.data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
         # -----------------------------------------------------------------
 
         for asv in range(self.number_of_asvs):
@@ -163,13 +164,7 @@ class ASVAllocator:
                             robot_agent,
                             queue_size=1)
         
-        for robot_id in range(self.number_of_robots):
-            rospy.Subscriber("/mrs/robot"+str(robot_id)+"_object_info",
-                                ObjectInformation,
-                                self.update_object_information,
-                                robot_id,
-                                queue_size=1)
-        
+                    
         rospy.Subscriber('/robot6/navigator/navigation',
                         NavSts,    
                         self.update_asv_position,
@@ -188,6 +183,12 @@ class ASVAllocator:
                             self.update_elapsed_time,
                             asv,
                             queue_size=1)
+            rospy.Subscriber('/mrs/asv'+str(asv)+'_data_buffered',
+                        BufferedData,    
+                        self.update_acquired_data,
+                        asv,
+                        queue_size=1)
+            
                        
         for element in range(self.number_of_robots):
             rospy.Subscriber(
@@ -206,9 +207,10 @@ class ASVAllocator:
                                             Bool,
                                             queue_size=1)
         
-        self.buffered_data_pub = rospy.Publisher('data_buffered',
+        self.buffered_data_pub = rospy.Publisher('allocator_data_buffered',
                                 BufferedData,
                                 queue_size=1)
+
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -228,8 +230,6 @@ class ASVAllocator:
     def update_elapsed_time(self,msg,asv):
         self.times[asv] = msg.data
         self.sync_elapsed_time = np.minimum(self.times[0],self.times[1])
-        print("*****************SYNC ELAPSED TIME***************")
-        print(self.sync_elapsed_time)
 
     def set_coverage_start_time(self,msg,element):
         self.set_elapsed_time(element)
@@ -246,6 +246,19 @@ class ASVAllocator:
             msg = Bool()
             msg.data = False 
             self.coverage_init_pub.publish(msg)
+    
+    def update_acquired_data(self, msg, asv_id):
+        self.data[asv_id] = msg.storage
+        self.acquired_data = np.minimum(self.data[0],self.data[1])
+
+        # Publish information
+        msg = BufferedData()
+        msg.header.stamp = rospy.Time.now()
+        msg.storage = self.acquired_data
+        self.buffered_data_pub.publish(msg)
+
+        self.update_stimulus_matrix()
+
 
     def set_elapsed_time(self,robot_id):
         self.start_recording_time[robot_id] = rospy.Time.now().secs
@@ -266,8 +279,8 @@ class ASVAllocator:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
-        else:
-            self.update_stimulus_matrix()
+        # else:
+        #     self.update_stimulus_matrix()
     
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
@@ -325,7 +338,7 @@ class ASVAllocator:
                 distance = self.get_distance(asv,self.robots_id[robot])
                 self.robots_sense[1] = distance
                 # obtain the amount of data to be transferred
-                self.robots_sense[2] = self.storage_disk[self.robots_id[robot]]
+                self.robots_sense[2] = self.acquired_data[self.robots_id[robot]]
                 #get the communication signal based on RSSI
                 self.get_communication_signal(asv,self.robots_id[robot])
                 self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
