@@ -190,15 +190,6 @@ class ASVAllocator:
                         self.update_acquired_data,
                         asv,
                         queue_size=1)
-            
-                       
-        for element in range(self.number_of_robots):
-            rospy.Subscriber(
-            '/mrs/robot'+str(element)+'_start_coverage_time',
-            CoverageStartTime,
-            self.set_coverage_start_time,
-            element,
-            queue_size=1)
                   
 
         #Publishers
@@ -212,7 +203,10 @@ class ASVAllocator:
         self.buffered_data_pub = rospy.Publisher('allocator_data_buffered',
                                 BufferedData,
                                 queue_size=1)
-
+        
+        self.pub_elapsed_time = rospy.Publisher('allocator_elapsed_time',
+                                                 Int16MultiArray,
+                                                queue_size=2)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -233,22 +227,12 @@ class ASVAllocator:
         self.times[asv] = msg.data
         self.sync_elapsed_time = np.minimum(self.times[0],self.times[1])
 
-    def set_coverage_start_time(self,msg,element):
-        self.set_elapsed_time(element)
-        self.start_dustbin_strategy[element]= True
-        self.t_start = msg.time.secs
-        self.time_robot_id = msg.robot_id
-        self.time_init[element] = msg.time.secs
-        self.start_recording_time[self.time_robot_id] = self.t_start 
-        if (np.all(self.start_dustbin_strategy) == True):
-            msg = Bool()
-            msg.data = True 
-            self.coverage_init_pub.publish(msg)
-        else:
-            msg = Bool()
-            msg.data = False 
-            self.coverage_init_pub.publish(msg)
-    
+        # Publish information
+        msg = Int16MultiArray()
+        msg.data = self.sync_elapsed_time
+        self.pub_elapsed_time.publish(msg)
+
+    #  --------------------- ACQUIRED DATA ---------------------------------
     def update_acquired_data(self, msg, asv_id):
         self.data[asv_id] = msg.storage
         self.acquired_data = np.minimum(self.data[0],self.data[1])
@@ -260,19 +244,6 @@ class ASVAllocator:
         self.buffered_data_pub.publish(msg)
 
         self.update_stimulus_matrix()
-
-
-    def set_elapsed_time(self,robot_id):
-        self.start_recording_time[robot_id] = rospy.Time.now().secs
-    
-    def get_elapsed_time(self,robot_id):
-        if(self.start_dustbin_strategy[robot_id]== False):
-            time = 0
-            self.elapsed_time[robot_id]= time
-        else:
-            time = rospy.Time.now().secs - self.start_recording_time[robot_id]
-            self.elapsed_time[robot_id]= time
-        return(time)
     
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     def update_acoustic_info(self, msg, robot_agent):
@@ -311,8 +282,7 @@ class ASVAllocator:
 
         if(np.all(self.asvs_init) == True):
             self.init=True
-   
-    
+
     def update_stimulus_matrix(self):
         # get the information from the AUVs and create the matrix stimulus
         for asv in range(self.number_of_asvs):
@@ -342,6 +312,8 @@ class ASVAllocator:
 
         self.asv0_goals = self.auv_goal_ids[0]
         self.asv1_goals = self.auv_goal_ids[1]
+        print("ASV0 goals are: "+str(self.asv0_goals))
+        print("ASV1 goals are: "+str(self.asv1_goals))
 
         # if both ASV has as first goal the same AUV 
         if(self.asv0_goals[0] == self.asv1_goals[0] and self.first==True):

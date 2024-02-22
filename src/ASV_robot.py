@@ -106,7 +106,6 @@ class DustbinRobot:
         self.start_recording_time = []
         self.start_data_gathering = True
         self.set_transmission_init_time=False
-        self.goal_id_settled=False
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
@@ -358,20 +357,24 @@ class DustbinRobot:
         self.auvs_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
 
     def process(self):
+        rospy.sleep(1)
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator.get_asv_goal_id(self.asv_ID)
-        self.goal_id_settled=True
+
         # advise the allocator that the received goal_auv has been assigned
         self.allocator.set_bussy_auvs(self.robot_goal_id,self.asv_ID)
+
         self.enable_tracking = True
         print("*********************************************************")
         print("The ASV_"+str(self.asv_ID)+": "+str(self.robot_goal_id))
         print("*********************************************************")
+
         # publish the goal_id
         msg = Data()
         msg.header.stamp = rospy.Time.now()
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
+        
         # set the flag to 
         self.set_transmission_init_time=True        
     
