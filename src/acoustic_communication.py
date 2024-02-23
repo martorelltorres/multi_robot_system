@@ -11,6 +11,9 @@ import random
 from functools import partial
 from itertools import combinations
 import matplotlib.pyplot as plt
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Quaternion,PointStamped
+import tf       
 
 class acoustic_communication:
 
@@ -22,10 +25,10 @@ class acoustic_communication:
         self.robot_ID = self.get_param('~robot_ID',0) 
         self.ASV_ID = self.get_param("~ASV_ID",0)
           
-        #Publishers
-        self.acoustic_communication_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/acoustic_communication',
-                                        AcousticData,
-                                        queue_size=1)
+        #Publishers      
+        self.pose_covariance_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/acoustic_communication',
+                                PoseWithCovarianceStamped,
+                                queue_size=2)
    
         #Subscribers         
         rospy.Subscriber('/robot'+str(self.robot_ID)+'/navigator/navigation',
@@ -55,31 +58,43 @@ class acoustic_communication:
         self.auv_north = msg.position.north
         self.auv_east = msg.position.east
         self.auv_depth = msg.position.depth
+        self.auv_roll = msg.orientation.roll
+        self.auv_pitch = msg.orientation.pitch
         self.auv_yaw = msg.orientation.yaw
         # send data acoustically
         if( self.asv_init == True):
             self.communication_process()    
 
     def get_comm_freq(self):
-        distance = np.sqrt((self.auv_north - self.asv_north)**2 + (self.auv_east - self.asv_east)**2 + (self.auv_depth)**2)
-        communication_freq = 0.848371 - 0.01412292*distance + 0.00007763495*distance**2
+        self.distance = np.sqrt((self.auv_north - self.asv_north)**2 + (self.auv_east - self.asv_east)**2 + (self.auv_depth)**2)
+        communication_freq = 0.848371 - 0.01412292*self.distance + 0.00007763495*self.distance**2
         # Add noise
-        noise = np.random.normal(0, 0.3)
+        noise = np.random.normal(0, 0.1)
         freq_with_noise = communication_freq + noise
         # Create a rate
-        self.rate = rospy.Rate(communication_freq)
-        return(communication_freq)
+        self.rate = rospy.Rate(freq_with_noise)
+        return(freq_with_noise)
 
+    
     def communication_process(self):
         self.get_comm_freq()
-        acoustic_data_msg = AcousticData()
-        acoustic_data_msg.header.stamp = rospy.Time.now()
-        acoustic_data_msg.position.north = self.auv_north
-        acoustic_data_msg.position.east = self.auv_east
-        acoustic_data_msg.position.depth = self.auv_depth
-        acoustic_data_msg.orientation.yaw = self.auv_yaw
-        acoustic_data_msg.stored_data = self.stored_data
-        self.acoustic_communication_pub.publish(acoustic_data_msg)
+        # obtain the accuracy from the experimental characterization curve
+        accuracy = (+1.9400*10**-5*self.distance**3)+(0.009959*self.distance**2)+(0.896506*self.distance)+16.90
+        # create PoseWithCovarianceStamped message
+        msg = PoseWithCovarianceStamped()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = '/robot'+str(self.robot_ID)+'/base_link'
+        msg.pose.pose.position.x = self.auv_north
+        msg.pose.pose.position.y = self.auv_east
+        msg.pose.pose.position.z = self.auv_depth
+        # convert Euler angles to Quaternion
+        quaternion_from_euler = tf.transformations.quaternion_from_euler(self.auv_roll, self.auv_pitch, self.auv_yaw)
+        quaternion = Quaternion(*quaternion_from_euler)
+        msg.pose.pose.orientation = quaternion
+        msg.pose.covariance[0] = accuracy
+        msg.pose.covariance[8] = accuracy
+        msg.pose.covariance[16] = accuracy
+        self.pose_covariance_pub.publish(msg)
         self.rate.sleep()
       
     def reset_values(self,msg):

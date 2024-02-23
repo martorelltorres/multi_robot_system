@@ -8,15 +8,18 @@ import time
 from math import *
 import matplotlib
 import pickle
-import actionlib       
+import actionlib
+import tf       
 import matplotlib.pyplot as plt
 from std_msgs.msg import Int16, Bool, Int16MultiArray
-from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
 from multi_robot_system.msg import CoverageStartTime,AcousticData,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,ObjectInformation,Communication,Distances, Data
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Quaternion,PointStamped
+
 import os
 import sys
 import subprocess
@@ -151,7 +154,7 @@ class ASVRobot:
         #Subscribers 
         for robot_id in range(self.number_of_robots):
             rospy.Subscriber('/robot'+str(robot_id)+'/acoustic_communication',
-                            NavSts,
+                            PoseWithCovarianceStamped,
                             self.update_acoustic_info,
                             robot_id,
                             queue_size=1)
@@ -235,6 +238,10 @@ class ASVRobot:
         
         self.travelled_distance_pub = rospy.Publisher('asv_travelled_distance',
                                 TravelledDistance,
+                                queue_size=2)
+        
+        self.pose_covariance_pub = rospy.Publisher('pose_with_covariance',
+                                PoseWithCovarianceStamped,
                                 queue_size=2)
         
         # Services clients
@@ -348,8 +355,10 @@ class ASVRobot:
             self.tracking()
     
     def update_acoustic_info(self, msg, robot_agent):
-        # fill the robots_information array with the robots information received from the NavSts 
-        self.auvs_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
+        # tranform from quaternion to euler angles
+        rpy = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
+        # fill the robots_information array with the robots information received from the PoseWithCovariance 
+        self.auvs_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2]]
 
     def process(self):
         rospy.sleep(0.5)
@@ -387,7 +396,7 @@ class ASVRobot:
                     os.system("rosnode kill " + str)
 
     def remove_robot_from_dustbin_goals(self,msg):
-        self.allocator.set_dustbin_robots(self,msg)
+        self.allocator.set_dustbin_robots(msg)
         self.check_dustbin_robot()
     
     def check_dustbin_robot(self):
@@ -454,7 +463,9 @@ class ASVRobot:
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
 
-            print("Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+            if(self.storage_disk[self.robot_goal_id]>0):
+                print("Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+            
             if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
                 
                 # publish the amount of transmited data
@@ -609,11 +620,11 @@ class ASVRobot:
         self.robotMarker.header.frame_id = "world_ned"
         self.robotMarker.header.stamp = rospy.Time.now()
         self.robotMarker.ns = "mrs"
-        self.robotMarker.id = 0
+        self.robotMarker.id = 2
         self.robotMarker.type = Marker.CYLINDER
         self.robotMarker.action = Marker.ADD
-        self.robotMarker.pose.position.x = self.auv_position_north
-        self.robotMarker.pose.position.y = self.auv_position_east
+        self.robotMarker.pose.position.x = float(self.auv_position_north)
+        self.robotMarker.pose.position.y = float(self.auv_position_east)
         self.robotMarker.pose.position.z = 10.1
         self.robotMarker.pose.orientation.x = 0
         self.robotMarker.pose.orientation.y = 0
@@ -633,11 +644,11 @@ class ASVRobot:
         self.anchor.header.frame_id = "world_ned"
         self.anchor.header.stamp = rospy.Time.now()
         self.anchor.ns = "mrs"
-        self.anchor.id = 0
+        self.anchor.id = 1
         self.anchor.type = Marker.CYLINDER
         self.anchor.action = Marker.ADD
-        self.anchor.pose.position.x = self.auv_position_north
-        self.anchor.pose.position.y = self.auv_position_east
+        self.anchor.pose.position.x = float(self.auv_position_north)
+        self.anchor.pose.position.y = float(self.auv_position_east)
         self.anchor.pose.position.z = 10.2
         self.anchor.pose.orientation.x = 0
         self.anchor.pose.orientation.y = 0
@@ -660,8 +671,8 @@ class ASVRobot:
         self.follow.id = 0
         self.follow.type = Marker.CYLINDER
         self.follow.action = Marker.ADD
-        self.follow.pose.position.x = self.auv_position_north
-        self.follow.pose.position.y = self.auv_position_east
+        self.follow.pose.position.x = float(self.auv_position_north)
+        self.follow.pose.position.y = float(self.auv_position_east)
         self.follow.pose.position.z = 10.3
         self.follow.pose.orientation.x = 0
         self.follow.pose.orientation.y = 0
@@ -681,7 +692,7 @@ class ASVRobot:
         self.object.header.frame_id = "world_ned"
         self.object.header.stamp = rospy.Time.now()
         self.object.ns = "mrs"
-        self.object.id = 0
+        self.object.id = 5
         self.object.type = Marker.CYLINDER
         self.object.action = Marker.ADD
         self.object.pose.position.x = x

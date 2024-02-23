@@ -18,6 +18,9 @@ from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
 from multi_robot_system.msg import CoverageStartTime,AcousticData,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,ObjectInformation,Communication,Distances, Data
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Quaternion,PointStamped
+import tf     
 import os
 import sys
 import subprocess
@@ -163,7 +166,7 @@ class ASVAllocator:
         #Subscribers       
         for robot_agent in range(self.number_of_robots):
             rospy.Subscriber('/robot'+str(robot_agent)+'/acoustic_communication',
-                            AcousticData,
+                            PoseWithCovarianceStamped,
                             self.update_acoustic_info,
                             robot_agent,
                             queue_size=1)
@@ -291,8 +294,10 @@ class ASVAllocator:
     
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     def update_acoustic_info(self, msg, robot_agent):
-        # fill the robots_information array with the robots information received from the NavSts 
-        self.robots_information[robot_agent] = [msg.position.north, msg.position.east, msg.position.depth, msg.orientation.yaw]
+        # tranform from quaternion to euler angles
+        rpy = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
+        # fill the robots_information array with the robots information received from the PoseWithCovariance 
+        self.robots_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2]]
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
@@ -356,19 +361,15 @@ class ASVAllocator:
 
         self.asv0_goals = self.auv_goal_ids[0]
         self.asv1_goals = self.auv_goal_ids[1]
-        # print("ASV0 goals are: "+str(self.asv0_goals))
-        # print("ASV1 goals are: "+str(self.asv1_goals))
+        print("ASV0 goals are: "+str(self.asv0_goals))
+        print("ASV1 goals are: "+str(self.asv1_goals))
 
-        # if both ASV has as first goal the same AUV 
+        # if both ASV has as first goal the same goal AUV 
         if(self.asv0_goals[0] == self.asv1_goals[0] and self.first==True):
             # set the first AUV to the first ASV and the second AUV to the second ASV
             self.set_goal_id(0,self.asv0_goals[0])
             self.set_goal_id(1,self.asv1_goals[1])
             self.first=False
-
-        elif(self.asv0_goals[0] == self.asv1_goals[0] and (self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[1] not in self.bussy_auvs and self.first_time==False)):
-            self.set_goal_id(0,self.asv0_goals[0])
-            self.set_goal_id(1,self.asv1_goals[1])
 
         # if ASVs has different goal AUV
         elif(self.asv0_goals[0] != self.asv1_goals[0] and self.first==True):
@@ -376,6 +377,12 @@ class ASVAllocator:
             self.set_goal_id(1,self.asv0_goals[0])
             self.first=False
 
+        # if goal auv are equal
+        elif(self.asv0_goals[0] == self.asv1_goals[0] and (self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[1] not in self.bussy_auvs and self.first_time==False)):
+            self.set_goal_id(0,self.asv0_goals[0])
+            self.set_goal_id(1,self.asv1_goals[1])
+
+        # if goal auv are different
         elif(self.asv0_goals[0] != self.asv1_goals[0] and(self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[0] not in self.bussy_auvs and self.first_time==False)):
             self.set_goal_id(0,self.asv0_goals[0])
             self.set_goal_id(1,self.asv0_goals[0])
@@ -388,8 +395,11 @@ class ASVAllocator:
     def set_goal_id(self,asv_id,id_data):
         if(asv_id==0):
             self.asv0_goal_id = id_data
+            print("ASV0 goal auv: "+str(self.asv0_goal_id))
         elif(asv_id==1):
             self.asv1_goal_id = id_data
+            print("ASV1 goal auv: "+str(self.asv1_goal_id))
+        
 
     def get_asv_goal_id(self,asv_id):
         if(asv_id==0):

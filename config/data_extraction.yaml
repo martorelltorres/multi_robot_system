@@ -1,6 +1,6 @@
-alpha: 0
-beta: 0
-gamma: 10
+alpha: 0    #elapsed time
+beta: 0     #distance
+gamma: 10   #data
 optimization_model: 1
 w1: 0.15
 w2: 0.15
