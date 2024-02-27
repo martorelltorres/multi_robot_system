@@ -39,15 +39,15 @@ class polygon_division:
 
     
     def write_json(self):
-      
+        self.priority_objects = self.generate_random_points_within_polygon(self.main_polygon,15)
         data = {
             'array1': self.cluster_centroids,
             'array2': self.voronoi_polygons,
             'array3': self.main_polygon,
             'array4': self.main_polygon_centroid,
             'array5': self.voronoi_offset_polygons,
-            'array6': self.random_points,
-            'array7': self.high_priority_points
+            'array6': self.regular_objects,
+            'array7': self.priority_objects
         }
 
         with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'wb') as file:
@@ -166,8 +166,7 @@ class polygon_division:
             self.main_polygon = Polygon(self.local_points)
             self.main_polygon_centroid = self.main_polygon.centroid
             self.polygon_points = self.local_points
-            self.random_points = self.generate_random_points_within_polygon(self.main_polygon,80)
-            self.high_priority_points = self.generate_random_points_within_polygon(self.main_polygon,20)
+            self.regular_objects = self.generate_random_points_within_polygon(self.main_polygon,35)
             # .........................................................................
             # Generate random points within the polygon
             num_points = 500
@@ -311,7 +310,6 @@ class polygon_division:
             if polygon.contains(point):
                 random_objects.append(point)
         
-        self.random_points_generated = True
         return random_objects
     
 def get_param(self, param_name, default = None):

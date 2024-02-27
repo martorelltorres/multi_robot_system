@@ -73,7 +73,7 @@ class ASVAllocator:
         self.bussy_auvs = [None,None]
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[],[],[],[],[],[]]
+        self.robots_information = [[],[],[],[],[],[],[]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
@@ -127,6 +127,7 @@ class ASVAllocator:
             self.number_of_stimulus=4
 
         self.read_area_info()
+
         # intialize the variables
         for robot in range(self.number_of_stimulus):
             self.senses.append(0)
@@ -208,12 +209,11 @@ class ASVAllocator:
                         self.update_transmitted_data,
                         asv,
                         queue_size=1)
-            
-            
 
         #Publishers
-        self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
+        self.pub_priority_object = rospy.Publisher('priority_object_point', PointStamped, queue_size=2)
 
+        self.pub_regular_object = rospy.Publisher('regular_object_point', PointStamped, queue_size=2)
         
         self.coverage_init_pub = rospy.Publisher('coverage_init',
                                             Bool,
@@ -234,6 +234,10 @@ class ASVAllocator:
         self.data_transmited_pub = rospy.Publisher('allocator_data_transmited',
                                 TransmittedData,
                                 queue_size=1)
+        
+        # Init periodic timers self.distance
+        rospy.Timer(rospy.Duration(0.1), self.plot_priority_objects)
+        rospy.Timer(rospy.Duration(0.1), self.plot_regular_objects)
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -247,8 +251,9 @@ class ASVAllocator:
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
         self.voronoi_offset_polygons = data['array5']
-        self.random_points = data['array6']
-    
+        self.regular_objects = data['array6']
+        self.priority_objects = data['array7']
+   
     #  --------------------- ELAPSED TIME---------------------------------
     def update_elapsed_time(self,msg,asv):
         self.times[asv] = msg.data
@@ -297,7 +302,7 @@ class ASVAllocator:
         # tranform from quaternion to euler angles
         rpy = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
         # fill the robots_information array with the robots information received from the PoseWithCovariance 
-        self.robots_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2]]
+        self.robots_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2], msg.pose.covariance[0]]
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
@@ -457,21 +462,32 @@ class ASVAllocator:
         if(self.robots_information[robot_id][0] != 0):
             self.robot_initialization[robot_id] = True
         
-        if((self.robot_initialization == True).all()):
-            self.system_init = True
-            self.plot_random_points()
-
-    def plot_random_points(self):
-        while not rospy.is_shutdown():
-            for element in range(len(self.random_points)):
-                object = PointStamped()
-                object.header.stamp = rospy.Time.now()
-                object.header.frame_id = "world_ned"
-                object.point.x = self.random_points[element].x
-                object.point.y = self.random_points[element].y
-                object.point.z = 0
+        # if((self.robot_initialization == True).all()):
+        #     self.system_init = True
+        #     self.plot_priority_objects()
+        #     self.plot_regular_points()
+            
+    def plot_regular_objects(self,event):
+            for element in range(len(self.regular_objects)):
+                regular_object = PointStamped()
+                regular_object.header.stamp = rospy.Time.now()
+                regular_object.header.frame_id = "world_ned"
+                regular_object.point.x = self.regular_objects[element].x
+                regular_object.point.y = self.regular_objects[element].y
+                regular_object.point.z = 0
                 # Publish
-                self.pub_object.publish(object)
+                self.pub_regular_object.publish(regular_object)
+
+    def plot_priority_objects(self,event):
+            for element in range(len(self.priority_objects)):
+                priority_object = PointStamped()
+                priority_object.header.stamp = rospy.Time.now()
+                priority_object.header.frame_id = "world_ned"
+                priority_object.point.x = self.priority_objects[element].x
+                priority_object.point.y = self.priority_objects[element].y
+                priority_object.point.z = 0
+                # Publish
+                self.pub_priority_object.publish(priority_object)
     
     def OWA(self):
         self.number_of_stimulus = 4 #Set to 4 in order to take into account the comm signal RSSI 

@@ -279,7 +279,8 @@ class ASVRobot:
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
         self.voronoi_offset_polygons = data['array5']
-        self.random_points = data['array6']   
+        self.regular_objects = data['array6']
+        self.priority_objects = data['array7']
     
     def update_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.

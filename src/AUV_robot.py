@@ -124,33 +124,22 @@ class MultiRobotSystem:
     
     def update_objects(self,msg):
         print("Updating object_points array")
-        self.random_points = msg.data
+        self.regular_objects = msg.data
     
     def object_exploration_flag(self,msg):
         self.object_exploration = msg.data
-    
-    def print_explored_object(self,element):
-        while not rospy.is_shutdown():
-            object = PointStamped()
-            object.header.stamp = rospy.Time.now()
-            object.header.frame_id = "world_ned"
-            object.point.x = self.random_points[element].x
-            object.point.y = self.random_points[element].y
-            object.point.z = 0
-            # Publish
-            self.pub_explored_object.publish(object)
-    
+        
     def object_detection(self,event):
         # check the distance from the AUV to the different objects
-        for element in range(len(self.random_points)):
-            x_distance = self.robot_position_north-self.random_points[element].x
-            y_distance = self.robot_position_east-self.random_points[element].y
+        for element in range(len(self.regular_objects)):
+            x_distance = self.robot_position_north-self.regular_objects[element].x
+            y_distance = self.robot_position_east-self.regular_objects[element].y
             distance_AUV_object = np.sqrt(x_distance**2+y_distance**2)
-            object_point = Point(self.random_points[element].x,self.random_points[element].y)
+            object_point = Point(self.regular_objects[element].x,self.regular_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
             if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_objects_index[self.robot_ID] != element) ):                
-                # print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.random_points[element].x)+" , "+str(self.random_points[element].y))
+                # print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 self.object_detections = self.object_detections+1
                 # add the object to the list of explored objects in order to avoid a reexploration
                 self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
@@ -162,20 +151,6 @@ class MultiRobotSystem:
                 msg.east = object_point.y
                 msg.detections = self.object_detections
                 self.object_info_pub.publish(msg)
-
-                # # go to the object position in order to explore the region
-                point_a = [self.robot_position_north,self.robot_position_east]
-                point_b = [self.random_points[element].x,self.random_points[element].y]
-
-                # self.robot_handler.send_goto_strategy(point_b[0],point_b[1],False)
-                # self.executing_dense_mission = True
-                # self.robot_handler.send_exploration_strategy(point_a,point_b,self.robot_ID)
-                # # self.wait_until_section_reached()
-                # # self.executing_dense_mission = False
-                # self.return_to_exploration_path()
-                # self.executing_dense_mission = False
-                # self.wait_until_section_reached()
-
 
     def return_to_exploration_path(self):
         point_a1 = [self.robot_position_north,self.robot_position_east]
@@ -224,7 +199,8 @@ class MultiRobotSystem:
         self.main_polygon = data['array3']
         self.main_polygon_centroid = data['array4']
         self.voronoi_offset_polygons = data['array5']
-        self.random_points = data['array6']
+        self.regular_objects = data['array6']
+        self.priority_objects = data['array7']
 
     def initialization(self): 
         # wait 7 seconds in order to initialize the different robot architectures

@@ -122,9 +122,9 @@
       <param name="navigation_depth" value="0"/>
       <remap from="/task_monitoring" to="$(arg robot_5)/task_monitoring"/>
     </node>
-    
+
     <!-- ACOUSTIC COMMUNICATIONS -->
-    <node name="acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true"/>
+    <node name="acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="log" respawn="true"/>
 
     <!-- ROBOT 6 ASV -->
     <node name="asv_$(arg robot_6)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">

@@ -108,8 +108,8 @@ class acoustic_communication:
         noise = np.random.normal(0, 0.1)
         freq_with_noise = communication_freq + noise
         # Create a rate
-        self.rate = rospy.Rate(communication_freq)
-        return(communication_freq)
+        self.rate = rospy.Rate(freq_with_noise)
+        return(freq_with_noise)
 
     
     def communication_process(self,asv,auv):
@@ -119,7 +119,7 @@ class acoustic_communication:
         # create PoseWithCovarianceStamped message
         msg = PoseWithCovarianceStamped()
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = '/robot'+str(auv)+'/base_link'
+        msg.header.frame_id = 'world_ned'
         msg.pose.pose.position.x = self.auv_position[auv][0]
         msg.pose.pose.position.y = self.auv_position[auv][1]
         msg.pose.pose.position.z = self.auv_position[auv][2]
