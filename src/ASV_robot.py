@@ -107,6 +107,7 @@ class ASVRobot:
         self.start_recording_time = []
         self.start_data_gathering = True
         self.set_transmission_init_time=False
+        self.process_time = 0
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
@@ -239,11 +240,7 @@ class ASVRobot:
         self.travelled_distance_pub = rospy.Publisher('asv_travelled_distance',
                                 TravelledDistance,
                                 queue_size=2)
-        
-        self.pose_covariance_pub = rospy.Publisher('pose_with_covariance',
-                                PoseWithCovarianceStamped,
-                                queue_size=2)
-        
+               
         # Services clients
         try:
             rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/enable_goto', 20)
@@ -266,6 +263,10 @@ class ASVRobot:
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
         rospy.Timer(rospy.Duration(1.0), self.send_elapsed_time)
+        rospy.Timer(rospy.Duration(1.0), self.update_process_time)
+    
+    def update_process_time(self,event):
+        self.process_time = self.process_time+1
 
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -348,7 +349,7 @@ class ASVRobot:
         self.asv_yaw = msg.orientation.yaw
         self.asv_init = True
 
-        if (self.robot_at_center == False and self.asv_init == True):
+        if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
             self.transit_to(self.main_polygon_centroid)
             self.robot_at_center = True
 

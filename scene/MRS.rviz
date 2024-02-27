@@ -5,8 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /tf1/Frames1
-        - /PointStamped8
-        - /PointStamped8/Status1
+        - /PoseWithCovariance1/Status1
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
       Splitter Ratio: 0.520588219165802
@@ -1322,7 +1321,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0adrift_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1330,7 +1329,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0repulsion_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1338,7 +1337,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0tracking_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -1347,7 +1346,7 @@ Visualization Manager:
       Enabled: true
       History Length: 500
       Name: PointStamped
-      Radius: 10
+      Radius: 2
       Topic: /mrs/priority_object_point
       Unreliable: false
       Value: true
@@ -1366,7 +1365,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv1adrift_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1374,7 +1373,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv1repulsion_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1382,7 +1381,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv1tracking_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -1405,7 +1404,7 @@ Visualization Manager:
           Scale: 6
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: PoseWithCovariance
@@ -1414,7 +1413,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /robot0/acoustic_communication
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -1435,7 +1434,7 @@ Visualization Manager:
           Scale: 6
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: PoseWithCovariance
@@ -1444,7 +1443,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /robot1/acoustic_communication
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -1465,7 +1464,7 @@ Visualization Manager:
           Scale: 6
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: PoseWithCovariance
@@ -1474,7 +1473,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /robot2/acoustic_communication
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -1495,7 +1494,7 @@ Visualization Manager:
           Scale: 6
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: PoseWithCovariance
@@ -1504,7 +1503,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /robot3/acoustic_communication
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -1525,7 +1524,7 @@ Visualization Manager:
           Scale: 6
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: PoseWithCovariance
@@ -1534,7 +1533,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /robot4/acoustic_communication
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -1555,7 +1554,7 @@ Visualization Manager:
           Scale: 6
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.30000001192092896
       Head Radius: 0.10000000149011612
       Name: PoseWithCovariance
@@ -1564,7 +1563,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /robot5/acoustic_communication
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 114; 159; 207
@@ -1580,16 +1579,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 256.1279296875
+      Distance: 289.2541198730469
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -92.19124603271484
-        Y: 5.461970806121826
-        Z: 6.233110616449267e-5
+        X: -88.02020263671875
+        Y: -32.425743103027344
+        Z: 9.272588795283809e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: true

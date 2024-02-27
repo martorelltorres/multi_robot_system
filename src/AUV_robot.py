@@ -52,7 +52,8 @@ class MultiRobotSystem:
         self.system_init = False
         self.object_detections = 0
         self.robot_initialization = np.array([])
-        self.explored_objects_index = []
+        self.explored_regular_objects_index = []
+        self.explored_priority_objects_index = []
         self.empty_array=np.array([])
         self.start = True
         self.first_section_points = []
@@ -60,12 +61,13 @@ class MultiRobotSystem:
         self.robot_data = [0,0]
         self.object_exploration = False
 
-         # initialize the robots variables
+        # initialize the robots variables
         for i in range(self.number_of_robots):
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.actual_sections.append([i,0])
             self.robots_information.append (self.robot_data)
-            self.explored_objects_index.append(np.array([]))
+            self.explored_regular_objects_index.append(np.array([]))
+            self.explored_priority_objects_index.append(np.array([]))
             self.coverage_start.append(False)
 
         # Show initialization message
@@ -118,7 +120,8 @@ class MultiRobotSystem:
         self.read_area_info()   
 
         rospy.Timer(rospy.Duration(1), self.print_polygon)
-        rospy.Timer(rospy.Duration(0.1), self.object_detection)
+        rospy.Timer(rospy.Duration(0.1), self.regular_object_detection)
+        rospy.Timer(rospy.Duration(0.1), self.priority_object_detection)
 
         self.initialization()
     
@@ -128,8 +131,31 @@ class MultiRobotSystem:
     
     def object_exploration_flag(self,msg):
         self.object_exploration = msg.data
+    
+    def priority_object_detection(self,event):
+        # check the distance from the AUV to the different objects
+        for element in range(len(self.priority_objects)):
+            x_distance = self.robot_position_north-self.priority_objects[element].x
+            y_distance = self.robot_position_east-self.priority_objects[element].y
+            distance_AUV_object = np.sqrt(x_distance**2+y_distance**2)
+            object_point = Point(self.priority_objects[element].x,self.priority_objects[element].y)
+
+            # check if the object is in the AUV assigned sub-area
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element) ):                
+                # print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
+                self.object_detections = self.object_detections+1
+                # add the object to the list of explored objects in order to avoid a reexploration
+                self.explored_priority_objects_index[self.robot_ID] = np.append(self.explored_priority_objects_index[self.robot_ID],element)
+
+                # advise the object information
+                msg = ObjectInformation()
+                msg.header.stamp = rospy.Time.now()
+                msg.north = object_point.x
+                msg.east = object_point.y
+                msg.detections = self.object_detections
+                self.object_info_pub.publish(msg)
         
-    def object_detection(self,event):
+    def regular_object_detection(self,event):
         # check the distance from the AUV to the different objects
         for element in range(len(self.regular_objects)):
             x_distance = self.robot_position_north-self.regular_objects[element].x
@@ -138,11 +164,11 @@ class MultiRobotSystem:
             object_point = Point(self.regular_objects[element].x,self.regular_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_objects_index[self.robot_ID] != element) ):                
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) ):                
                 # print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 self.object_detections = self.object_detections+1
                 # add the object to the list of explored objects in order to avoid a reexploration
-                self.explored_objects_index[self.robot_ID] = np.append(self.explored_objects_index[self.robot_ID],element)
+                self.explored_regular_objects_index[self.robot_ID] = np.append(self.explored_regular_objects_index[self.robot_ID],element)
 
                 # advise the object information
                 msg = ObjectInformation()

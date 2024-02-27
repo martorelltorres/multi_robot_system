@@ -114,12 +114,13 @@ class acoustic_communication:
     
     def communication_process(self,asv,auv):
         self.get_comm_freq(asv,auv)
+        self.distance = self.get_distance(self.auv_position[auv][0],self.auv_position[auv][1],self.auv_position[auv][2],self.asv_position[asv][0],self.asv_position[asv][1])
         # obtain the accuracy from the experimental characterization curve
         accuracy = (8.9157*10**-6*self.distance**2)+(0.0061121*self.distance)-0.06835
         # create PoseWithCovarianceStamped message
         msg = PoseWithCovarianceStamped()
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = 'world_ned'
+        msg.header.frame_id = 'robot'+str(auv)+'/odom'
         msg.pose.pose.position.x = self.auv_position[auv][0]
         msg.pose.pose.position.y = self.auv_position[auv][1]
         msg.pose.pose.position.z = self.auv_position[auv][2]
