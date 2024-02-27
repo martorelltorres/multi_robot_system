@@ -110,7 +110,11 @@ class MultiRobotSystem:
                                 Int16,
                                 queue_size=1)
         
-        self.object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_object_info",
+        self.regular_object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_regular_object_info",
+                        ObjectInformation,
+                        queue_size=1)
+        
+        self.priority_object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_priority_object_info",
                         ObjectInformation,
                         queue_size=1)
 
@@ -153,7 +157,7 @@ class MultiRobotSystem:
                 msg.north = object_point.x
                 msg.east = object_point.y
                 msg.detections = self.object_detections
-                self.object_info_pub.publish(msg)
+                self.priority_object_info_pub.publish(msg)
         
     def regular_object_detection(self,event):
         # check the distance from the AUV to the different objects
@@ -176,7 +180,7 @@ class MultiRobotSystem:
                 msg.north = object_point.x
                 msg.east = object_point.y
                 msg.detections = self.object_detections
-                self.object_info_pub.publish(msg)
+                self.regular_object_info_pub.publish(msg)
 
     def return_to_exploration_path(self):
         point_a1 = [self.robot_position_north,self.robot_position_east]

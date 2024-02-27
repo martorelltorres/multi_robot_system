@@ -70,6 +70,7 @@ class ASVAllocator:
         self.acquired_data = [0,0,0,0,0,0]
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
+        self.covariance = np.array([])
         self.bussy_auvs = [None,None]
         self.system_init = False
         self.robot_data = [0,0]
@@ -154,6 +155,7 @@ class ASVAllocator:
             self.transmission_init_time.append(0)    
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
+            self.covariance = np.append(self.covariance,0)
             self.communication_latency.append(0)
         
         for stimulus in range(4):
@@ -301,8 +303,11 @@ class ASVAllocator:
     def update_acoustic_info(self, msg, robot_agent):
         # tranform from quaternion to euler angles
         rpy = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
+        # normalize the position covariance
+        normalized_covariance = self.normalize(msg.pose.covariance[0],0,5,1,0)
+        self.covariance[robot_agent]= normalized_covariance
         # fill the robots_information array with the robots information received from the PoseWithCovariance 
-        self.robots_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2], msg.pose.covariance[0]]
+        self.robots_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2], normalized_covariance]
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
@@ -345,7 +350,9 @@ class ASVAllocator:
                 self.robots_sense[0] = self.sync_elapsed_time[robot]
                 # get the distance between ASV-AUV's
                 distance = self.get_distance(asv,self.robots_id[robot])
-                self.robots_sense[1] = distance
+                # multiply the distance by the covariance factor
+                weighted_distance = distance * self.covariance[self.robots_id[robot]]
+                self.robots_sense[1] = weighted_distance
                 # obtain the amount of data to be transferred
                 self.robots_sense[2] = self.acquired_data[self.robots_id[robot]]
                 #get the communication signal based on RSSI

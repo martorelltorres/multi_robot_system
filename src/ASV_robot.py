@@ -31,7 +31,7 @@ class ASVRobot:
   
     def __init__(self, name):
         """ Init the class """
-        rospy.sleep(3)
+        # rospy.sleep(3)
         self.name = name
         node_name = rospy.get_name()
 
@@ -160,9 +160,15 @@ class ASVRobot:
                             robot_id,
                             queue_size=1)
        
-            rospy.Subscriber("/mrs/robot"+str(robot_id)+"_object_info",
+            rospy.Subscriber("/mrs/robot"+str(robot_id)+"_regular_object_info",
                                 ObjectInformation,
-                                self.update_object_information,
+                                self.update_regular_object_information,
+                                robot_id,
+                                queue_size=1)
+            
+            rospy.Subscriber("/mrs/robot"+str(robot_id)+"_priority_object_info",
+                                ObjectInformation,
+                                self.update_priority_object_information,
                                 robot_id,
                                 queue_size=1)
             
@@ -283,12 +289,30 @@ class ASVRobot:
         self.regular_objects = data['array6']
         self.priority_objects = data['array7']
     
-    def update_object_information(self,msg,robot_id):
+    def update_regular_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
+        # Publish the stored data
+        msg = BufferedData()
+        msg.header.stamp = rospy.Time.now()
+        msg.storage = self.storage_disk
+        self.buffered_data_pub.publish(msg)
+
+        # Start the data gathering when the first robot detects an object
+        if(self.start_data_gathering == True):
+            self.start_data_gathering = False
+            self.process()
+
+    def update_priority_object_information(self,msg,robot_id):
+        # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + (70*1.5)
+        # set the time when the AUV detects an object
+        if (self.communication_latency[robot_id]==0):
+            self.data_gather_time[robot_id]= rospy.Time.now().secs 
+           
         # Publish the stored data
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
@@ -466,7 +490,7 @@ class ASVRobot:
                 self.set_transmission_init_time=False
 
             if(self.storage_disk[self.robot_goal_id]>0):
-                print("Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+                print("Robot"+str(self.robot_goal_id)+" Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
             
             if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
                 
