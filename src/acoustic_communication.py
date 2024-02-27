@@ -19,82 +19,131 @@ class acoustic_communication:
 
     def __init__(self, name):
         self.name = name
-        self.stored_data = 0
         self.asv_init = False
         node_name = rospy.get_name()
-        self.robot_ID = self.get_param('~robot_ID',0) 
-        self.ASV_ID = self.get_param("~ASV_ID",0)
+        self.number_of_robots = self.get_param('number_of_robots')
+        self.number_of_asvs= 2
+        self.auv_position = [[],[],[],[],[],[]]
+        self.asv_position = [[],[]]
+        self.auv_flag = np.array([False,False,False,False,False,False])
+        self.asv_auv_distance = 10000
+        self.closest_asv_indices = np.zeros(self.number_of_robots, dtype=int)
+        self.closest_asv = None
+        self.min_distance = np.inf
           
         #Publishers      
-        self.pose_covariance_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/acoustic_communication',
+        self.auv0_pose_covariance_pub = rospy.Publisher('/robot0/acoustic_communication',
                                 PoseWithCovarianceStamped,
                                 queue_size=2)
+        
+        self.auv1_pose_covariance_pub = rospy.Publisher('/robot1/acoustic_communication',
+                                PoseWithCovarianceStamped,
+                                queue_size=2)
+        
+        self.auv2_pose_covariance_pub = rospy.Publisher('/robot2/acoustic_communication',
+                                PoseWithCovarianceStamped,
+                                queue_size=2)
+        
+        self.auv3_pose_covariance_pub = rospy.Publisher('/robot3/acoustic_communication',
+                                PoseWithCovarianceStamped,
+                                queue_size=2)
+        
+        self.auv4_pose_covariance_pub = rospy.Publisher('/robot4/acoustic_communication',
+                                PoseWithCovarianceStamped,
+                                queue_size=2)
+        
+        self.auv5_pose_covariance_pub = rospy.Publisher('/robot5/acoustic_communication',
+                                PoseWithCovarianceStamped,
+                                queue_size=2)
+        
    
-        #Subscribers         
-        rospy.Subscriber('/robot'+str(self.robot_ID)+'/navigator/navigation',
-                        NavSts,
-                        self.update_robot_position,
-                        queue_size=1) 
+        #Subscribers 
+        for auv in range(self.number_of_robots):        
+            rospy.Subscriber('/robot'+str(auv)+'/navigator/navigation',
+                            NavSts,
+                            self.update_auv_position,
+                            auv,
+                            queue_size=1) 
         
-        rospy.Subscriber('/robot'+str(self.ASV_ID)+'/navigator/navigation',
-                NavSts,
-                self.update_asv_position,
-                queue_size=1) 
-        
-        rospy.Subscriber('/mrs/data_buffered',
-                BufferedData,
-                self.update_buffered_data,
-                queue_size=1) 
-
-    def update_buffered_data(self,msg):
-        self.stored_data = msg.storage[self.robot_ID]
-        
-    def update_asv_position(self,msg):
-        self.asv_north = msg.position.north
-        self.asv_east = msg.position.east
+        for asv in range(self.number_of_asvs):
+            rospy.Subscriber('/robot'+str(asv)+'/navigator/navigation',
+                    NavSts,
+                    self.update_asv_position,
+                    asv,
+                    queue_size=1) 
+                
+    def update_asv_position(self,msg,asv_id):
+        self.asv_position[asv_id]=[msg.position.north,msg.position.east]
         self.asv_init = True
     
-    def update_robot_position(self, msg):
-        self.auv_north = msg.position.north
-        self.auv_east = msg.position.east
-        self.auv_depth = msg.position.depth
-        self.auv_roll = msg.orientation.roll
-        self.auv_pitch = msg.orientation.pitch
-        self.auv_yaw = msg.orientation.yaw
-        # send data acoustically
-        if( self.asv_init == True):
-            self.communication_process()    
+    def update_auv_position(self, msg,robot_id):
+        self.auv_position[robot_id]= [msg.position.north,msg.position.east,msg.position.depth,msg.orientation.roll,msg.orientation.pitch,msg.orientation.yaw]
+        self.auv_flag[robot_id] = True
 
-    def get_comm_freq(self):
-        self.distance = np.sqrt((self.auv_north - self.asv_north)**2 + (self.auv_east - self.asv_east)**2 + (self.auv_depth)**2)
+        # get the closest ASV to each AUV
+        if( np.all(self.auv_flag) == True):
+            self.get_closest_ASV
+            self.communication_process(self.closest_asv_indices[robot_id],robot_id)    
+            
+    def get_closest_ASV(self):
+        for auv in range(self.number_of_robots):
+            min_distance = np.inf
+            for asv in range(self.number_of_asvs):
+                dist = self.get_distance(self.auv_position[auv][0],self.auv_position[auv][1],self.auv_position[auv][2],self.asv_position[asv][0],self.asv_position[asv][1])
+                
+                if(dist< min_distance):
+                    min_distance = dist
+                    self.closest_asv = asv
+
+            self.closest_asv_indices[auv] = self.closest_asv
+
+    def get_distance(self,auv_x,auv_y,auv_z,asv_x,asv_y):
+        distance = np.sqrt((auv_x - asv_x)**2 + (auv_y - asv_y)**2 + (auv_z)**2)
+        return(distance)
+
+    def get_comm_freq(self,asv,auv):
+        self.distance = self.get_distance(self.auv_position[auv][0],self.auv_position[auv][1],self.auv_position[auv][2],self.asv_position[asv][0],self.asv_position[asv][1])
         communication_freq = 0.848371 - 0.01412292*self.distance + 0.00007763495*self.distance**2
         # Add noise
         noise = np.random.normal(0, 0.1)
         freq_with_noise = communication_freq + noise
         # Create a rate
-        self.rate = rospy.Rate(freq_with_noise)
-        return(freq_with_noise)
+        self.rate = rospy.Rate(communication_freq)
+        return(communication_freq)
 
     
-    def communication_process(self):
-        self.get_comm_freq()
+    def communication_process(self,asv,auv):
+        self.get_comm_freq(asv,auv)
         # obtain the accuracy from the experimental characterization curve
-        accuracy = (+1.9400*10**-5*self.distance**3)+(0.009959*self.distance**2)+(0.896506*self.distance)+16.90
+        accuracy = (8.9157*10**-6*self.distance**2)+(0.0061121*self.distance)-0.06835
         # create PoseWithCovarianceStamped message
         msg = PoseWithCovarianceStamped()
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = '/robot'+str(self.robot_ID)+'/base_link'
-        msg.pose.pose.position.x = self.auv_north
-        msg.pose.pose.position.y = self.auv_east
-        msg.pose.pose.position.z = self.auv_depth
+        msg.header.frame_id = '/robot'+str(auv)+'/base_link'
+        msg.pose.pose.position.x = self.auv_position[auv][0]
+        msg.pose.pose.position.y = self.auv_position[auv][1]
+        msg.pose.pose.position.z = self.auv_position[auv][2]
         # convert Euler angles to Quaternion
-        quaternion_from_euler = tf.transformations.quaternion_from_euler(self.auv_roll, self.auv_pitch, self.auv_yaw)
+        quaternion_from_euler = tf.transformations.quaternion_from_euler(self.auv_position[auv][3], self.auv_position[auv][4], self.auv_position[auv][5])
         quaternion = Quaternion(*quaternion_from_euler)
         msg.pose.pose.orientation = quaternion
         msg.pose.covariance[0] = accuracy
         msg.pose.covariance[8] = accuracy
         msg.pose.covariance[16] = accuracy
-        self.pose_covariance_pub.publish(msg)
+
+        if(auv==0):
+            self.auv0_pose_covariance_pub.publish(msg)
+        elif(auv==1):
+            self.auv1_pose_covariance_pub.publish(msg)
+        elif(auv==2):
+            self.auv2_pose_covariance_pub.publish(msg)
+        elif(auv==3):
+            self.auv3_pose_covariance_pub.publish(msg)
+        elif(auv==4):
+            self.auv4_pose_covariance_pub.publish(msg)
+        elif(auv==5):
+            self.auv5_pose_covariance_pub.publish(msg)
+
         self.rate.sleep()
       
     def reset_values(self,msg):
