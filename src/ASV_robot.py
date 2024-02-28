@@ -65,6 +65,7 @@ class ASVRobot:
         self.qlearning_init = False
         self.pose = [0,0]
         self.data_transmited = []
+        self.in_process = False
         self.get_information = False
         self.start_to_publish = False
         self.robot_at_center = False
@@ -105,7 +106,7 @@ class ASVRobot:
         self.travelled_distance = 0
         self.data_gather_time = []
         self.start_recording_time = []
-        self.start_data_gathering = True
+        self.start_data_gathering = False
         self.set_transmission_init_time=False
         self.process_time = 0
 
@@ -302,8 +303,7 @@ class ASVRobot:
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
-        if(self.start_data_gathering == True):
-            self.start_data_gathering = False
+        if(self.in_process == False):
             self.process()
 
     def update_priority_object_information(self,msg,robot_id):
@@ -320,8 +320,7 @@ class ASVRobot:
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
-        if(self.start_data_gathering == True):
-            self.start_data_gathering = False
+        if(self.in_process == False):
             self.process()
 
     def set_coverage_start_time(self,msg,element):
@@ -387,10 +386,13 @@ class ASVRobot:
         self.auvs_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2]]
 
     def process(self):
+        print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id)+"there are NO data to transmit!")
+        # print("ASV"+str(self.asv_ID)+" IN PROCESS!!!!!!!!!!!!!!!!!")
+        self.in_process=True
         rospy.sleep(0.5)
         # obtain the goal_auv from the allocator
-        self.robot_goal_id = self.allocator.get_asv_goal_id(self.asv_ID)
-
+        self.robot_goal_id = self.allocator.get_auv_goal_id(self.asv_ID)
+        
         # advise the allocator that the received goal_auv has been assigned
         self.allocator.set_bussy_auvs(self.robot_goal_id,self.asv_ID)
 
@@ -402,7 +404,7 @@ class ASVRobot:
         msg.data = self.robot_goal_id
         self.goal_id_pub.publish(msg)
 
-        # set the flag to 
+        # set the flag to start to count the transmission time
         self.set_transmission_init_time=True        
     
     def kill_the_process(self,msg):
@@ -494,6 +496,7 @@ class ASVRobot:
             
             if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
                 
+                print("Communicating . . .")
                 # publish the amount of transmited data
                 msg = TransmittedData()
                 msg.header.stamp = rospy.Time.now()
@@ -506,7 +509,7 @@ class ASVRobot:
         if(self.radius <= self.repulsion_radius):
             self.extract_safety_position()
             self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
-
+      
     def communicate(self):
         # reset the storage values
         self.storage_disk[self.robot_goal_id] = 0
@@ -533,9 +536,9 @@ class ASVRobot:
         self.elapsed_time[self.robot_goal_id] = 0
         self.data_gather_time[self.robot_goal_id] = 0
         self.set_elapsed_time(self.robot_goal_id)
+        self.in_process = False
         self.process()
         
-        # self.dustbin_strategy()
 
     def set_elapsed_time(self,robot_id):
         self.start_recording_time[robot_id] = rospy.Time.now().secs

@@ -276,7 +276,6 @@ class ASVAllocator:
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.acquired_data
         self.buffered_data_pub.publish(msg)
-
         self.update_stimulus_matrix()
     
     def update_transmitted_data(self, msg, asv_id):
@@ -361,8 +360,8 @@ class ASVAllocator:
 
                 self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
 
-            print("------- VALUES FOR ASV"+str(asv)+"--------")
-            print(self.stimulus_variables)
+            # print("------- VALUES FOR ASV"+str(asv)+"--------")
+            # print(self.stimulus_variables)
 
             # normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
@@ -373,8 +372,8 @@ class ASVAllocator:
 
         self.asv0_goals = self.auv_goal_ids[0]
         self.asv1_goals = self.auv_goal_ids[1]
-        print("ASV0 goals are: "+str(self.asv0_goals))
-        print("ASV1 goals are: "+str(self.asv1_goals))
+        # print("ASV0 goals are: "+str(self.asv0_goals))
+        # print("ASV1 goals are: "+str(self.asv1_goals))
 
         # if both ASV has as first goal the same goal AUV 
         if(self.asv0_goals[0] == self.asv1_goals[0] and self.first==True):
@@ -407,13 +406,13 @@ class ASVAllocator:
     def set_goal_id(self,asv_id,id_data):
         if(asv_id==0):
             self.asv0_goal_id = id_data
-            print("ASV0 goal auv: "+str(self.asv0_goal_id))
+            # print("ASV0 goal auv: "+str(self.asv0_goal_id))
         elif(asv_id==1):
             self.asv1_goal_id = id_data
-            print("ASV1 goal auv: "+str(self.asv1_goal_id))
+            # print("ASV1 goal auv: "+str(self.asv1_goal_id))
         
 
-    def get_asv_goal_id(self,asv_id):
+    def get_auv_goal_id(self,asv_id):
         if(asv_id==0):
             return(self.asv0_goal_id)
         elif(asv_id==1):
@@ -469,10 +468,8 @@ class ASVAllocator:
         if(self.robots_information[robot_id][0] != 0):
             self.robot_initialization[robot_id] = True
         
-        # if((self.robot_initialization == True).all()):
-        #     self.system_init = True
-        #     self.plot_priority_objects()
-        #     self.plot_regular_points()
+        if((self.robot_initialization == True).all()):
+            self.system_init = True
             
     def plot_regular_objects(self,event):
             for element in range(len(self.regular_objects)):
