@@ -60,6 +60,8 @@ class ASVAllocator:
         self.optimization_strategy = self.get_param("optimization_strategy",1)
 
         # Initialize some variables
+        self.acoustic_time = [0,0,0,0,0,0]
+        self.first_acoustic_reception = True
         self.qlearning_init = False
         self.first=True
         self.pose = [0,0]
@@ -70,7 +72,7 @@ class ASVAllocator:
         self.acquired_data = [0,0,0,0,0,0]
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
-        self.covariance = np.array([])
+        self.penalty = np.array([])
         self.bussy_auvs = [None,None]
         self.system_init = False
         self.robot_data = [0,0]
@@ -155,7 +157,7 @@ class ASVAllocator:
             self.transmission_init_time.append(0)    
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
-            self.covariance = np.append(self.covariance,0)
+            self.penalty = np.append(self.penalty,0)
             self.communication_latency.append(0)
         
         for stimulus in range(4):
@@ -300,11 +302,17 @@ class ASVAllocator:
     
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     def update_acoustic_info(self, msg, robot_agent):
+        time_diff_normalized=1
+        if(self.acoustic_time[robot_agent]!=0):
+            time_diff = rospy.Time.now().secs - self.acoustic_time[robot_agent]
+            time_diff_normalized = self.normalize(time_diff,0,10,1,0)
+        self.acoustic_time[robot_agent]= rospy.Time.now().secs
+        
         # tranform from quaternion to euler angles
         rpy = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
         # normalize the position covariance
         normalized_covariance = self.normalize(msg.pose.covariance[0],0,5,1,0)
-        self.covariance[robot_agent]= normalized_covariance
+        self.penalty[robot_agent]= normalized_covariance*time_diff_normalized
         # fill the robots_information array with the robots information received from the PoseWithCovariance 
         self.robots_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2], normalized_covariance]
         # check the system initialization
@@ -350,7 +358,7 @@ class ASVAllocator:
                 # get the distance between ASV-AUV's
                 distance = self.get_distance(asv,self.robots_id[robot])
                 # multiply the distance by the covariance factor
-                weighted_distance = distance * self.covariance[self.robots_id[robot]]
+                weighted_distance = distance * self.penalty[self.robots_id[robot]]
                 self.robots_sense[1] = weighted_distance
                 # obtain the amount of data to be transferred
                 self.robots_sense[2] = self.acquired_data[self.robots_id[robot]]

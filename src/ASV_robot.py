@@ -62,6 +62,7 @@ class ASVRobot:
         self.allocator = ASVAllocator("asv_allocator")
 
         # Initialize some variables
+        self.transmission_time = 60
         self.qlearning_init = False
         self.pose = [0,0]
         self.data_transmited = []
@@ -100,7 +101,7 @@ class ASVRobot:
         self.robot_to_remove = 999
         self.removed_robots= []
         # self.communication=True
-        self.transmission_time = []
+        # self.transmission_time = []
         self.communication_latency = []
         self.first_time = True
         self.travelled_distance = 0
@@ -123,7 +124,7 @@ class ASVRobot:
 
         for i in range(self.active_robots):
             self.scaled_senses.append(self.senses)
-            self.transmission_time.append(0)
+            # self.transmission_time.append(0)
 
         # initialize the robots variables
         for robot_ in range(self.number_of_robots):
@@ -290,9 +291,18 @@ class ASVRobot:
         self.regular_objects = data['array6']
         self.priority_objects = data['array7']
     
+    def get_angle_btw_vehicles(self,auv):
+        angle = abs(self.asv_yaw - self.auvs_information[auv][2])
+        # Ensure the angle is between 0 and 180 degrees
+        angle = min(angle, 360-angle)
+        return angle
+
     def update_regular_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + 70
+        angle = self.get_angle_btw_vehicles(robot_id)
+        print(angle)
+        # transmission_time = 124 + (4.02 * angle) + (0.165 * angle**2) + ((1.7e-3) * angle**3) - ((4.96e-6) * angle**4)
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
@@ -308,7 +318,10 @@ class ASVRobot:
 
     def update_priority_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + (70*1.5)
+        angle = self.get_angle_btw_vehicles(robot_id)
+        print(angle)
+        # transmission_time = 124 + (4.02 * angle) + (0.165 * angle**2) + ((1.7e-3) * angle**3) - ((4.96e-6) * angle**4)
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + (self.transmission_time*1.5)
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
@@ -486,7 +499,7 @@ class ASVRobot:
             self.tracking_strategy()
 
         # Communication area
-        if(self.radius < (self.adrift_radius+5)):
+        if(self.radius < (self.adrift_radius+10)):
             if(self.set_transmission_init_time==True):
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
@@ -511,6 +524,7 @@ class ASVRobot:
             self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
       
     def communicate(self):
+        print(" INN COMMUNICATE!!")
         # reset the storage values
         self.storage_disk[self.robot_goal_id] = 0
         reset_id = self.robot_goal_id
