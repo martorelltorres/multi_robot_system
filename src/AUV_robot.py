@@ -146,7 +146,7 @@ class MultiRobotSystem:
 
             # check if the object is in the AUV assigned sub-area
             if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):                
-                # print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
+                print("Robot "+str(self.robot_ID)+ " has been detecting a PRIORITY OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 self.object_detections = self.object_detections+1
                 # add the object to the list of explored objects in order to avoid a reexploration
                 self.explored_priority_objects_index[self.robot_ID] = np.append(self.explored_priority_objects_index[self.robot_ID],element)
@@ -169,7 +169,7 @@ class MultiRobotSystem:
 
             # check if the object is in the AUV assigned sub-area
             if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):                
-                # print("Robot "+str(self.robot_ID)+ " has been detecting an object:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
+                print("Robot "+str(self.robot_ID)+ " has been detecting REGULAR OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 self.object_detections = self.object_detections+1
                 # add the object to the list of explored objects in order to avoid a reexploration
                 self.explored_regular_objects_index[self.robot_ID] = np.append(self.explored_regular_objects_index[self.robot_ID],element)

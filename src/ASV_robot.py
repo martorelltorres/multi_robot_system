@@ -101,7 +101,6 @@ class ASVRobot:
         self.robot_to_remove = 999
         self.removed_robots= []
         # self.communication=True
-        # self.transmission_time = []
         self.communication_latency = []
         self.first_time = True
         self.travelled_distance = 0
@@ -124,7 +123,6 @@ class ASVRobot:
 
         for i in range(self.active_robots):
             self.scaled_senses.append(self.senses)
-            # self.transmission_time.append(0)
 
         # initialize the robots variables
         for robot_ in range(self.number_of_robots):
@@ -299,9 +297,6 @@ class ASVRobot:
 
     def update_regular_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        angle = self.get_angle_btw_vehicles(robot_id)
-        print(angle)
-        # transmission_time = 124 + (4.02 * angle) + (0.165 * angle**2) + ((1.7e-3) * angle**3) - ((4.96e-6) * angle**4)
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
@@ -318,9 +313,6 @@ class ASVRobot:
 
     def update_priority_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        angle = self.get_angle_btw_vehicles(robot_id)
-        print(angle)
-        # transmission_time = 124 + (4.02 * angle) + (0.165 * angle**2) + ((1.7e-3) * angle**3) - ((4.96e-6) * angle**4)
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + (self.transmission_time*1.5)
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
@@ -399,16 +391,12 @@ class ASVRobot:
         self.auvs_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2]]
 
     def process(self):
-        print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id)+"there are NO data to transmit!")
-        # print("ASV"+str(self.asv_ID)+" IN PROCESS!!!!!!!!!!!!!!!!!")
         self.in_process=True
         rospy.sleep(0.5)
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator.get_auv_goal_id(self.asv_ID)
-        
-        # advise the allocator that the received goal_auv has been assigned
-        self.allocator.set_bussy_auvs(self.robot_goal_id,self.asv_ID)
-
+        print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
+        self.allocator.update_bussy_auvs(self.asv_ID,self.robot_goal_id)
         self.enable_tracking = True
 
         # publish the goal_id
@@ -509,7 +497,6 @@ class ASVRobot:
             
             if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
                 
-                print("Communicating . . .")
                 # publish the amount of transmited data
                 msg = TransmittedData()
                 msg.header.stamp = rospy.Time.now()
@@ -518,13 +505,14 @@ class ASVRobot:
                 self.data_transmited_pub.publish(msg)
                 self.communicate()
 
+                self.process()
+
         # Repulsion area
         if(self.radius <= self.repulsion_radius):
             self.extract_safety_position()
             self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
       
     def communicate(self):
-        print(" INN COMMUNICATE!!")
         # reset the storage values
         self.storage_disk[self.robot_goal_id] = 0
         reset_id = self.robot_goal_id
@@ -551,7 +539,7 @@ class ASVRobot:
         self.data_gather_time[self.robot_goal_id] = 0
         self.set_elapsed_time(self.robot_goal_id)
         self.in_process = False
-        self.process()
+        # self.process()
         
 
     def set_elapsed_time(self,robot_id):

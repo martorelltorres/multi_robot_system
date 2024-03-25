@@ -32,13 +32,16 @@ class DataExtraction:
         self.gamma = [0,1,2,3,4,5,6,7,8,9,10]
         self.n = [0,2,4,6,8,10]
 
-        # self.w1 = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
-        # self.w2 = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
-        # self.w3 = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
-        # self.w4 = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5]
+        self.w1 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+        self.w2 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+        self.w3 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+        self.w4 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+
+        # Define the range for w1, w2, and w3
+        self.w_range = [i / 10 for i in range(11)]
 
         self.simulation_count = -1
-        self.optimization_model = 1
+        self.optimization_model = 2
         self.combinations = []
 
         self.response_threshold_folder ='/mnt/storage_disk/extracted_results/response_threshold'
@@ -145,12 +148,12 @@ class DataExtraction:
             if (str.startswith('/record_')==False):
                 os.system('killall -9 rosmaster')
 
-                if(self.simulation_count<len(self.combinations) and self.optimization_model==1 ):
+                if(self.simulation_count<len(self.combinations) and self.optimization_model==2 ):
                     self.process()
-                else:
-                    self.simulation_count = -1
-                    self.optimization_model = self.optimization_model +1
-                    self.process()
+                # else:
+                #     self.simulation_count = -1
+                #     self.optimization_model = self.optimization_model +1
+                #     self.process()
 
     def set_parameters(self):  
         data = self.read_yaml()
@@ -173,11 +176,11 @@ class DataExtraction:
         self.write_yaml(data)
 
     def owas_combinations(self):
-        # Generate all possible combinations
-        values = product(self.w1, self.w2, self.w3, self.w4)
-        # Filter combinations where W1 + W2 + W3 + W4 equals 1
-        self.combinations = [combo for combo in values if sum(combo) == 1]
-        print("****************There are "+ str(len(self.combinations))+ " combinations.*********************")
+        # values = combinations_with_replacement(self.w1, 4)
+        values = product(self.w1,self.w2,self.w3,self.w4)
+        self.combinations= [combo for combo in values if (sum(combo)==1 and (combo[0]>=combo[1]>=combo[2]>=combo[3]))]
+        print("*********************There are "+ str(len(self.combinations))+ " combinations.*********************")
+        print(self.combinations)
 
     def response_threshold_combinations(self):
         for a in self.alpha:

@@ -73,7 +73,6 @@ class ASVAllocator:
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
         self.penalty = np.array([])
-        self.bussy_auvs = [None,None]
         self.system_init = False
         self.robot_data = [0,0]
         self.robots_information = [[],[],[],[],[],[],[]]
@@ -100,6 +99,7 @@ class ASVAllocator:
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
         self.removed_robots= []
+        self.bussy_auvs = [None,None]
         # self.communication=True
         self.transmission_time = []
         self.communication_latency = []
@@ -368,11 +368,13 @@ class ASVAllocator:
 
                 self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
 
-            # print("------- VALUES FOR ASV"+str(asv)+"--------")
-            # print(self.stimulus_variables)
+                # print("------- VALUES FOR ASV"+str(asv)+"--------")
+                # print(self.stimulus_variables)
 
             # normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
+            # print("NORMALIZED VALUES:"+str(normalized_values))
+
             # obtain the sorted goal id's for each ASV using ARTM
             sorted_ids = self.ARTM(normalized_values)
             self.auv_goal_ids[asv] = sorted_ids
@@ -380,46 +382,52 @@ class ASVAllocator:
 
         self.asv0_goals = self.auv_goal_ids[0]
         self.asv1_goals = self.auv_goal_ids[1]
-        # print("ASV0 goals are: "+str(self.asv0_goals))
-        # print("ASV1 goals are: "+str(self.asv1_goals))
+        print("ASV0 goals are: "+str(self.asv0_goals))
+        print("ASV1 goals are: "+str(self.asv1_goals))
 
-        # if both ASV has as first goal the same goal AUV 
-        if(self.asv0_goals[0] == self.asv1_goals[0] and self.first==True):
-            # set the first AUV to the first ASV and the second AUV to the second ASV
-            self.set_goal_id(0,self.asv0_goals[0])
-            self.set_goal_id(1,self.asv1_goals[1])
-            self.first=False
+        if(self.first==True):
+            # if both ASV has as first goal the same goal AUV 
+            if(self.asv0_goals[0] == self.asv1_goals[0]):
+                # set the first AUV to the first ASV and the second AUV to the second ASV
+                self.set_goal_id(0,self.asv0_goals[0])
+                self.set_goal_id(1,self.asv1_goals[1])
+                self.bussy_auvs = [self.asv0_goals[0],self.asv1_goals[1]]
+                self.first=False
 
-        # if ASVs has different goal AUV
-        elif(self.asv0_goals[0] != self.asv1_goals[0] and self.first==True):
-            self.set_goal_id(0,self.asv0_goals[0])
-            self.set_goal_id(1,self.asv0_goals[0])
-            self.first=False
+            # if ASVs has different goal AUV
+            elif(self.asv0_goals[0] != self.asv1_goals[0]):
+                self.set_goal_id(0,self.asv0_goals[0])
+                self.set_goal_id(1,self.asv1_goals[0])
+                self.bussy_auvs = [self.asv0_goals[0],self.asv1_goals[0]]
+                self.first=False
 
-        # if goal auv are equal
-        elif(self.asv0_goals[0] == self.asv1_goals[0] and (self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[1] not in self.bussy_auvs and self.first_time==False)):
-            self.set_goal_id(0,self.asv0_goals[0])
-            self.set_goal_id(1,self.asv1_goals[1])
+            print("Bussy AUVs are: "+str(self.bussy_auvs))
 
-        # if goal auv are different
-        elif(self.asv0_goals[0] != self.asv1_goals[0] and(self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[0] not in self.bussy_auvs and self.first_time==False)):
-            self.set_goal_id(0,self.asv0_goals[0])
-            self.set_goal_id(1,self.asv0_goals[0])
+        # self.first==False
+        else:
+            # if goal auv are equal
+            if(self.asv0_goals[0] == self.asv1_goals[0] and (self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[1] not in self.bussy_auvs)):
+                self.set_goal_id(0,self.asv0_goals[0])
+                self.set_goal_id(1,self.asv1_goals[1])
+
+            # if goal auv are different
+            elif(self.asv0_goals[0] != self.asv1_goals[0] and(self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[0] not in self.bussy_auvs)):
+                self.set_goal_id(0,self.asv0_goals[0])
+                self.set_goal_id(1,self.asv1_goals[0])
     
-    def set_bussy_auvs(self,auv_id, asv_id):
-        # This method handles the assigneds AUVs in order to avoid duplicities in the assignation process. 
-        # The same AUV can't be assigned to both ASVs
-        self.bussy_auvs[asv_id] = auv_id
-
+    def set_asv1_auv(self,bussy_auv):
+        self.bussy_auvs[1] = bussy_auv
+                    
+    def update_bussy_auvs(self,asv_id,bussy_auv):
+        self.bussy_auvs[asv_id] = bussy_auv
+        print("Bussy AUVs are: "+str(self.bussy_auvs))
+        
     def set_goal_id(self,asv_id,id_data):
         if(asv_id==0):
             self.asv0_goal_id = id_data
-            # print("ASV0 goal auv: "+str(self.asv0_goal_id))
         elif(asv_id==1):
-            self.asv1_goal_id = id_data
-            # print("ASV1 goal auv: "+str(self.asv1_goal_id))
-        
-
+            self.asv1_goal_id = id_data 
+ 
     def get_auv_goal_id(self,asv_id):
         if(asv_id==0):
             return(self.asv0_goal_id)
@@ -433,7 +441,7 @@ class ASVAllocator:
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
         # extract the sorted goal robot IDs
         sorted_goal_ids = np.array([])
-        sorted_goal_ids = np.argsort(self.stimulus)  
+        sorted_goal_ids = np.argsort(self.stimulus)[::-1]  
         return(sorted_goal_ids)
     # --------------------------------------------------------------------------------------
     def min_max_scale(self,values):
