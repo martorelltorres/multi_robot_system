@@ -148,7 +148,7 @@ class DataExtraction:
             if (str.startswith('/record_')==False):
                 os.system('killall -9 rosmaster')
 
-                if(self.simulation_count<len(self.combinations) and self.optimization_model==2 ):
+                if(self.simulation_count<len(self.combinations) and self.optimization_model==1 ):
                     self.process()
                 # else:
                 #     self.simulation_count = -1

@@ -26,7 +26,6 @@ import sys
 import subprocess
  
 class ASVAllocator:
-  
     def __init__(self, name):
         """ Init the class """
         rospy.sleep(5)
@@ -45,18 +44,15 @@ class ASVAllocator:
         self.adrift_radius = self.get_param("adrift_radius",30)
         self.tracking_radius = self.get_param("tracking_radius",50)
         self.dutsbin_timer = self.get_param("dutsbin_timer",1)
-
         self.alpha = self.get_param("alpha",1)
         self.beta = self.get_param("beta",1)
         self.gamma = self.get_param("gamma",1)
         self.n = self.get_param("n",1)
         self.optimization_model = self.get_param("optimization_model",1)
-
         self.w1 = self.get_param("w1",1)
         self.w2 = self.get_param("w2",1)
         self.w3 = self.get_param("w3",1)
         self.w4 = self.get_param("w4",1)
-
         self.optimization_strategy = self.get_param("optimization_strategy",1)
 
         # Initialize some variables
@@ -278,7 +274,8 @@ class ASVAllocator:
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.acquired_data
         self.buffered_data_pub.publish(msg)
-        self.update_stimulus_matrix()
+
+        # self.update_stimulus_matrix()
     
     def update_transmitted_data(self, msg, asv_id):
         self.transmited_data[asv_id]= msg.transmitted_data
@@ -312,7 +309,8 @@ class ASVAllocator:
         rpy = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
         # normalize the position covariance
         normalized_covariance = self.normalize(msg.pose.covariance[0],0,5,1,0)
-        self.penalty[robot_agent]= normalized_covariance*time_diff_normalized
+        # ASVAllocator.penalty[robot_agent]= normalized_covariance*time_diff_normalized
+        self.penalty[robot_agent]= normalized_covariance
         # fill the robots_information array with the robots information received from the PoseWithCovariance 
         self.robots_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2], normalized_covariance]
         # check the system initialization
@@ -358,8 +356,8 @@ class ASVAllocator:
                 # get the distance between ASV-AUV's
                 distance = self.get_distance(asv,self.robots_id[robot])
                 # multiply the distance by the covariance factor
-                weighted_distance = distance * self.penalty[self.robots_id[robot]]
-                self.robots_sense[1] = weighted_distance
+                penalty_distance = distance * self.penalty[self.robots_id[robot]]
+                self.robots_sense[1] = penalty_distance
                 # obtain the amount of data to be transferred
                 self.robots_sense[2] = self.acquired_data[self.robots_id[robot]]
                 #get the communication signal based on RSSI
@@ -367,14 +365,9 @@ class ASVAllocator:
                 self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
 
                 self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
-
-                # print("------- VALUES FOR ASV"+str(asv)+"--------")
-                # print(self.stimulus_variables)
-
+                
             # normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
-            # print("NORMALIZED VALUES:"+str(normalized_values))
-
             # obtain the sorted goal id's for each ASV using ARTM
             sorted_ids = self.ARTM(normalized_values)
             self.auv_goal_ids[asv] = sorted_ids
@@ -382,66 +375,36 @@ class ASVAllocator:
 
         self.asv0_goals = self.auv_goal_ids[0]
         self.asv1_goals = self.auv_goal_ids[1]
-        print("ASV0 goals are: "+str(self.asv0_goals))
-        print("ASV1 goals are: "+str(self.asv1_goals))
 
-        if(self.first==True):
-            # if both ASV has as first goal the same goal AUV 
-            if(self.asv0_goals[0] == self.asv1_goals[0]):
-                # set the first AUV to the first ASV and the second AUV to the second ASV
-                self.set_goal_id(0,self.asv0_goals[0])
-                self.set_goal_id(1,self.asv1_goals[1])
-                self.bussy_auvs = [self.asv0_goals[0],self.asv1_goals[1]]
-                self.first=False
+        # print("ASV0 goals are: "+str(self.asv0_goals))
+        # print("ASV1 goals are: "+str(self.asv1_goals))
 
-            # if ASVs has different goal AUV
-            elif(self.asv0_goals[0] != self.asv1_goals[0]):
-                self.set_goal_id(0,self.asv0_goals[0])
-                self.set_goal_id(1,self.asv1_goals[0])
-                self.bussy_auvs = [self.asv0_goals[0],self.asv1_goals[0]]
-                self.first=False
+        # if goal auv are equal
+        if(self.asv0_goals[0] == self.asv1_goals[0]):
+            self.asv0_goal_id = self.asv0_goals[0]
+            self.asv1_goal_id = self.asv1_goals[1]
 
-            print("Bussy AUVs are: "+str(self.bussy_auvs))
-
-        # self.first==False
+        # if goal auv are different
         else:
-            # if goal auv are equal
-            if(self.asv0_goals[0] == self.asv1_goals[0] and (self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[1] not in self.bussy_auvs)):
-                self.set_goal_id(0,self.asv0_goals[0])
-                self.set_goal_id(1,self.asv1_goals[1])
+            self.asv0_goal_id = self.asv0_goals[0]
+            self.asv1_goal_id = self.asv1_goals[0]
 
-            # if goal auv are different
-            elif(self.asv0_goals[0] != self.asv1_goals[0] and(self.asv0_goals[0] not in self.bussy_auvs) and (self.asv1_goals[0] not in self.bussy_auvs)):
-                self.set_goal_id(0,self.asv0_goals[0])
-                self.set_goal_id(1,self.asv1_goals[0])
-    
-    def set_asv1_auv(self,bussy_auv):
-        self.bussy_auvs[1] = bussy_auv
-                    
-    def update_bussy_auvs(self,asv_id,bussy_auv):
-        self.bussy_auvs[asv_id] = bussy_auv
-        print("Bussy AUVs are: "+str(self.bussy_auvs))
-        
-    def set_goal_id(self,asv_id,id_data):
-        if(asv_id==0):
-            self.asv0_goal_id = id_data
-        elif(asv_id==1):
-            self.asv1_goal_id = id_data 
- 
     def get_auv_goal_id(self,asv_id):
+        self.update_stimulus_matrix()
+        rospy.sleep(1)
         if(asv_id==0):
             return(self.asv0_goal_id)
         elif(asv_id==1):
             return(self.asv1_goal_id)
-
+    
     def ARTM(self,normalized_values):
         for robot in range(self.active_robots):
             scaled_values = normalized_values[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
-        # extract the sorted goal robot IDs
+        # extract the sorted goal robot IDs in descending order
         sorted_goal_ids = np.array([])
-        sorted_goal_ids = np.argsort(self.stimulus)[::-1]  
+        sorted_goal_ids = np.argsort(self.stimulus)[::-1] 
         return(sorted_goal_ids)
     # --------------------------------------------------------------------------------------
     def min_max_scale(self,values):

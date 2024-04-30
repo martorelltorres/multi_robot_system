@@ -31,7 +31,6 @@ class ASVRobot:
   
     def __init__(self, name):
         """ Init the class """
-        # rospy.sleep(3)
         self.name = name
         node_name = rospy.get_name()
 
@@ -309,6 +308,7 @@ class ASVRobot:
 
         # Start the data gathering when the first robot detects an object
         if(self.in_process == False):
+            rospy.sleep(1)
             self.process()
 
     def update_priority_object_information(self,msg,robot_id):
@@ -326,6 +326,7 @@ class ASVRobot:
 
         # Start the data gathering when the first robot detects an object
         if(self.in_process == False):
+            rospy.sleep(1)
             self.process()
 
     def set_coverage_start_time(self,msg,element):
@@ -392,11 +393,9 @@ class ASVRobot:
 
     def process(self):
         self.in_process=True
-        rospy.sleep(0.5)
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator.get_auv_goal_id(self.asv_ID)
         print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
-        self.allocator.update_bussy_auvs(self.asv_ID,self.robot_goal_id)
         self.enable_tracking = True
 
         # publish the goal_id
@@ -492,8 +491,8 @@ class ASVRobot:
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
 
-            if(self.storage_disk[self.robot_goal_id]>0):
-                print("Robot"+str(self.robot_goal_id)+" Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+            # if(self.storage_disk[self.robot_goal_id]>0):
+                # print("Robot"+str(self.robot_goal_id)+" Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
             
             if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
                 
@@ -504,7 +503,6 @@ class ASVRobot:
                 msg.transmitted_data = self.data_transmited
                 self.data_transmited_pub.publish(msg)
                 self.communicate()
-
                 self.process()
 
         # Repulsion area
@@ -539,7 +537,6 @@ class ASVRobot:
         self.data_gather_time[self.robot_goal_id] = 0
         self.set_elapsed_time(self.robot_goal_id)
         self.in_process = False
-        # self.process()
         
 
     def set_elapsed_time(self,robot_id):

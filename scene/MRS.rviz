@@ -5,10 +5,11 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /tf1/Frames1
+        - /Marker10
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
       Splitter Ratio: 0.5
-    Tree Height: 441
+    Tree Height: 872
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -1321,7 +1322,7 @@ Visualization Manager:
       Name: Marker
       Namespaces:
         {}
-      Queue Size: 100
+      Queue Size: 1
       Value: true
     - Class: rviz/Marker
       Enabled: true
@@ -1329,7 +1330,7 @@ Visualization Manager:
       Name: Marker
       Namespaces:
         {}
-      Queue Size: 100
+      Queue Size: 1
       Value: true
     - Class: rviz/Marker
       Enabled: true
@@ -1337,7 +1338,7 @@ Visualization Manager:
       Name: Marker
       Namespaces:
         {}
-      Queue Size: 100
+      Queue Size: 1
       Value: true
     - Alpha: 1
       Class: rviz/PointStamped
@@ -1365,7 +1366,7 @@ Visualization Manager:
       Name: Marker
       Namespaces:
         {}
-      Queue Size: 100
+      Queue Size: 1
       Value: true
     - Class: rviz/Marker
       Enabled: true
@@ -1373,7 +1374,7 @@ Visualization Manager:
       Name: Marker
       Namespaces:
         {}
-      Queue Size: 100
+      Queue Size: 1
       Value: true
     - Class: rviz/Marker
       Enabled: true
@@ -1381,7 +1382,7 @@ Visualization Manager:
       Name: Marker
       Namespaces:
         {}
-      Queue Size: 100
+      Queue Size: 1
       Value: true
     - Alpha: 1
       Axes Length: 1
@@ -1578,25 +1579,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 254.0989532470703
+      Distance: 271.0005798339844
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -103.4520263671875
-        Y: -47.328277587890625
-        Z: 0.00012170312402304262
+        X: -104.27803039550781
+        Y: -40.431854248046875
+        Z: 9.458608110435307e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: true
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5247963666915894
+      Pitch: 1.5597963333129883
       Target Frame: turbot/base_link
       Value: XYOrbit (rviz)
-      Yaw: 3.0172224044799805
+      Yaw: 3.04722261428833
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875
@@ -1624,7 +1625,7 @@ Window Geometry:
   Height: 1052
   Hide Left Dock: true
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000020000000000000156000003a7fc0200000003fc0000003d000003a70000000000fffffffaffffffff0100000002fb000000100044006900730070006c0061007900730000000000ffffffff0000015600fffffffb0000000a005600690065007700730000000000000001a90000010000fffffffb0000000c00430061006d0065007200610000000041000000160000000000000000fb00000012007300650067006d0065006e00740065006400000002af0000013500000000000000000000000100000244000003ccfc0200000003fb000000120069006d006100670065005f0072006100770000000016000003cc0000000000000000fb000000120069006d006100670065005f0072006100770000000206000001dc0000000000000000fb0000000a0049006d00610067006500000001f90000017f0000000000000000000003c0000003c200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000020000000000000156000003c2fc0200000003fc0000003d000003c20000000000fffffffaffffffff0100000002fb000000100044006900730070006c0061007900730000000000ffffffff0000015600fffffffb0000000a005600690065007700730000000000000001a90000010000fffffffb0000000c00430061006d0065007200610000000041000000160000000000000000fb00000012007300650067006d0065006e00740065006400000002af0000013500000000000000000000000100000244000003ccfc0200000003fb000000120069006d006100670065005f0072006100770000000016000003cc0000000000000000fb000000120069006d006100670065005f0072006100770000000206000001dc0000000000000000fb0000000a0049006d00610067006500000001f90000017f0000000000000000000003c0000003c200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: true
   Width: 960
