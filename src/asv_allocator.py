@@ -363,7 +363,6 @@ class ASVAllocator:
                 #get the communication signal based on RSSI
                 self.get_communication_signal(asv,self.robots_id[robot])
                 self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
-
                 self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
                 
             # normalize the stimulus values
@@ -376,25 +375,23 @@ class ASVAllocator:
         self.asv0_goals = self.auv_goal_ids[0]
         self.asv1_goals = self.auv_goal_ids[1]
 
+        self.asv0_goal_id = self.asv0_goals[0]
+
+        if(self.asv0_goals[0]==self.asv1_goals[0]):
+            # remove the asv=_goal from the ASV1 goals
+            self.asv1_goals = np.delete(self.asv1_goals, np.where(self.asv1_goals == self.asv0_goal_id))
+
+        self.asv1_goal_id = self.asv1_goals[0]
+
         # print("ASV0 goals are: "+str(self.asv0_goals))
         # print("ASV1 goals are: "+str(self.asv1_goals))
-
-        # if goal auv are equal
-        if(self.asv0_goals[0] == self.asv1_goals[0]):
-            self.asv0_goal_id = self.asv0_goals[0]
-            self.asv1_goal_id = self.asv1_goals[1]
-
-        # if goal auv are different
-        else:
-            self.asv0_goal_id = self.asv0_goals[0]
-            self.asv1_goal_id = self.asv1_goals[0]
 
     def get_auv_goal_id(self,asv_id):
         self.update_stimulus_matrix()
         rospy.sleep(1)
         if(asv_id==0):
             return(self.asv0_goal_id)
-        elif(asv_id==1):
+        else:
             return(self.asv1_goal_id)
     
     def ARTM(self,normalized_values):
@@ -436,8 +433,8 @@ class ASVAllocator:
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
                 if(self.optimization_model==1):
-                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0]
-                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0]
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
+                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
                 elif(self.optimization_model==2):
                     self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
                     self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]

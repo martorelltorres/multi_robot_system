@@ -225,7 +225,7 @@ class ASVRobot:
                                         Int16,
                                         queue_size=1)
                
-        # ---------------------------------------------------------------------------
+        # ------------------------- DATA EXTRACTION TOPICS--------------------------------------------------
         self.goal_id_pub = rospy.Publisher('goal_id',
                                         Data,
                                         queue_size=1)
