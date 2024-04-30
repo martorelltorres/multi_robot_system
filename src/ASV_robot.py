@@ -191,6 +191,12 @@ class ASVRobot:
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
                             queue_size=1)  
+        
+        rospy.Subscriber('/asv'+str(self.asv_ID)+'/tracking',
+                Bool,    
+                self.update_tracking_status,
+                queue_size=1)
+        
 
         #Publishers
         self.corrected_bvr = rospy.Publisher('/robot'+str(self.robot_ID)+'/controller/body_velocity_req',
@@ -270,6 +276,12 @@ class ASVRobot:
         rospy.Timer(rospy.Duration(1.0), self.send_elapsed_time)
         rospy.Timer(rospy.Duration(1.0), self.update_process_time)
     
+    def update_tracking_status(self,msg):
+        if(msg.data==False):
+            self.enable_tracking = False
+        elif(msg.data==True):
+            self.enable_tracking = True
+
     def update_process_time(self,event):
         self.process_time = self.process_time+1
 
