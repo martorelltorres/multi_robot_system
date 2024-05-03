@@ -55,7 +55,6 @@ class acoustic_communication:
         self.auv5_pose_covariance_pub = rospy.Publisher('/robot5/acoustic_communication',
                                 PoseWithCovarianceStamped,
                                 queue_size=2)
-        
    
         #Subscribers 
         for auv in range(self.number_of_robots):        

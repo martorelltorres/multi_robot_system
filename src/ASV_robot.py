@@ -61,7 +61,7 @@ class ASVRobot:
         self.allocator = ASVAllocator("asv_allocator")
 
         # Initialize some variables
-        self.transmission_time = 60
+        self.transmission_time = 10
         self.qlearning_init = False
         self.pose = [0,0]
         self.data_transmited = []
@@ -278,8 +278,10 @@ class ASVRobot:
     
     def update_tracking_status(self,msg):
         if(msg.data==False):
+            print("ASV"+str(self.asv_ID)+" STOPPED!")
             self.enable_tracking = False
         elif(msg.data==True):
+            print("ASV"+str(self.asv_ID)+" RUNNING!")
             self.enable_tracking = True
 
     def update_process_time(self,event):
@@ -407,6 +409,7 @@ class ASVRobot:
         self.in_process=True
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator.get_auv_goal_id(self.asv_ID)
+        # self.robot_goal_id = self.allocator.set_bussy_AUVs(self.asv_ID,self.robot_goal_id)
         print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
         self.enable_tracking = True
 

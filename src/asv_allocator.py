@@ -57,6 +57,7 @@ class ASVAllocator:
 
         # Initialize some variables
         self.acoustic_time = [0,0,0,0,0,0]
+        self.current_time = [0,0,0,0,0,0]
         self.first_acoustic_reception = True
         self.qlearning_init = False
         self.first=True
@@ -95,7 +96,7 @@ class ASVAllocator:
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
         self.removed_robots= []
-        self.bussy_auvs = [None,None]
+        self.bussy_auvs = np.array([999,999])
         # self.communication=True
         self.transmission_time = []
         self.communication_latency = []
@@ -223,6 +224,14 @@ class ASVAllocator:
                                 BufferedData,
                                 queue_size=1)
         
+        self.pub_tracking_control_asv0 = rospy.Publisher('/asv0/tracking',
+                                        Bool,
+                                        queue_size=2)
+        
+        self.pub_tracking_control_asv1 = rospy.Publisher('/asv1/tracking',
+                                        Bool,
+                                        queue_size=2)
+        
         self.pub_elapsed_time = rospy.Publisher('allocator_elapsed_time',
                                                  Int16MultiArray,
                                                 queue_size=2)
@@ -299,16 +308,20 @@ class ASVAllocator:
     
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     def update_acoustic_info(self, msg, robot_agent):
-        time_diff_normalized=1
-        if(self.acoustic_time[robot_agent]!=0):
-            time_diff = rospy.Time.now().secs - self.acoustic_time[robot_agent]
-            time_diff_normalized = self.normalize(time_diff,0,10,1,0)
-        self.acoustic_time[robot_agent]= rospy.Time.now().secs
+        self.current_time[robot_agent] = rospy.Time.now().nsecs
+
+        if self.acoustic_time[robot_agent] != 0:
+            time_diff = self.current_time[robot_agent] - self.acoustic_time[robot_agent]
+            self.time_diff_normalized = self.normalize(time_diff, 0, 10, 1, 0)
+
+        self.acoustic_time[robot_agent] = self.current_time[robot_agent]
+
+        # print("Time diff robot" +str(robot_agent)+": "+str(self.time_diff_normalized))
         
         # tranform from quaternion to euler angles
         rpy = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
         # normalize the position covariance
-        normalized_covariance = self.normalize(msg.pose.covariance[0],0,5,1,0)
+        normalized_covariance = self.normalize(msg.pose.covariance[0],0,4.5,1,0)
         # ASVAllocator.penalty[robot_agent]= normalized_covariance*time_diff_normalized
         self.penalty[robot_agent]= normalized_covariance
         # fill the robots_information array with the robots information received from the PoseWithCovariance 
@@ -363,28 +376,50 @@ class ASVAllocator:
                 #get the communication signal based on RSSI
                 self.get_communication_signal(asv,self.robots_id[robot])
                 self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
-                self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
-                
+
+                # if there are no data to transmit set to zero the aggregated stimulus
+                if(self.acquired_data[self.robots_id[robot]]==0):
+                    self.stimulus_variables[self.robots_id[robot]] = 0
+                else:
+                    self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
+
             # normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
+            
             # obtain the sorted goal id's for each ASV using ARTM
             sorted_ids = self.ARTM(normalized_values)
             self.auv_goal_ids[asv] = sorted_ids
         
-
         self.asv0_goals = self.auv_goal_ids[0]
         self.asv1_goals = self.auv_goal_ids[1]
 
         self.asv0_goal_id = self.asv0_goals[0]
 
+        current_element = 0
         if(self.asv0_goals[0]==self.asv1_goals[0]):
-            # remove the asv=_goal from the ASV1 goals
-            self.asv1_goals = np.delete(self.asv1_goals, np.where(self.asv1_goals == self.asv0_goal_id))
+            current_element += 1
+            self.asv1_goal_id = self.asv1_goals[current_element]
 
-        self.asv1_goal_id = self.asv1_goals[0]
-
-        # print("ASV0 goals are: "+str(self.asv0_goals))
-        # print("ASV1 goals are: "+str(self.asv1_goals))
+    def set_bussy_AUVs(self,asv_id,auv_id):
+        if(asv_id==0):
+            if(auv_id in self.bussy_auvs):
+                for auv in self.asv0_goals:
+                    if(self.asv0_goal_id[auv] not in self.bussy_auvs):
+                        self.bussy_auvs[asv_id] = auv_id
+                        return(self.bussy_auvs[asv_id])
+            else:
+                self.bussy_auvs[asv_id] = auv_id
+                return(self.bussy_auvs[asv_id])
+        
+        if(asv_id==1):
+            if(auv_id in self.bussy_auvs):
+                for auv in self.asv1_goals:
+                    if(self.asv1_goal_id[auv] not in self.bussy_auvs):
+                        self.bussy_auvs[asv_id] = auv_id
+                        return(self.bussy_auvs[asv_id])
+            else:
+                self.bussy_auvs[asv_id] = auv_id
+                return(self.bussy_auvs[asv_id])
 
     def get_auv_goal_id(self,asv_id):
         self.update_stimulus_matrix()
@@ -393,7 +428,7 @@ class ASVAllocator:
             return(self.asv0_goal_id)
         else:
             return(self.asv1_goal_id)
-    
+           
     def ARTM(self,normalized_values):
         for robot in range(self.active_robots):
             scaled_values = normalized_values[robot]
