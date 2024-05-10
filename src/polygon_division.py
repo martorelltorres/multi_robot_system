@@ -100,16 +100,16 @@ class polygon_division:
 
     def clustering(self):
         print("************************ CLUSTERIIIING *********************************")
-        reduced_data = self.points
+        self.reduced_data = self.points
         kmeans = KMeans(init="k-means++", n_clusters=self.number_of_robots, n_init=4)
-        kmeans.fit(reduced_data)
+        kmeans.fit(self.reduced_data)
 
         # Step size of the mesh. Decrease to increase the quality of the VQ.
         h = 0.02  # point in the mesh [x_min, x_max]x[y_min, y_max].
 
         # Plot the decision boundary. For that, we will assign a color to each
-        x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1
-        y_min, y_max = reduced_data[:, 1].min() - 1, reduced_data[:, 1].max() + 1
+        x_min, x_max = self.reduced_data[:, 0].min() - 1, self.reduced_data[:, 0].max() + 1
+        y_min, y_max = self.reduced_data[:, 1].min() - 1, self.reduced_data[:, 1].max() + 1
         xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
         # Obtain labels for each point in mesh. Use last trained model.
@@ -129,9 +129,8 @@ class polygon_division:
             origin="lower",
         )
 
-        plt.plot(reduced_data[:, 0], reduced_data[:, 1], "k.", markersize=2)
+        plt.plot(self.reduced_data[:, 0], self.reduced_data[:, 1], "k.", markersize=2)
         # Plot the centroids as a white X
-        
         plt.scatter(
             self.cluster_centroids[:, 0],
             self.cluster_centroids[:, 1],
@@ -144,11 +143,12 @@ class polygon_division:
 
         plt.xlim(x_min, x_max)
         plt.ylim(y_min, y_max)
+        plt.plot(*zip(*self.polygon_points))
         plt.xlabel("Eje X")
         plt.ylabel("Eje Y")
         plt.xticks(())
         plt.yticks(())
-        plt.show()
+        # plt.show()
 
     def divide_polygon(self):
             #obtain the global_points (lat,long) of the polygon
@@ -218,9 +218,24 @@ class polygon_division:
         self.voronoy_polygons_settled = True
         
         plt.plot(*zip(*self.polygon_points))
+        # Discfretization points
+        plt.plot(self.reduced_data[:, 0], self.reduced_data[:, 1], "k.", markersize=2)
+        # Plot the centroids as a red dot
+        plt.scatter(
+            self.cluster_centroids[:, 0],
+            self.cluster_centroids[:, 1],
+            marker=".",
+            s=169,
+            linewidths=3,
+            color="r",
+            zorder=10,
+        )
+
         plt.axis('equal')
-        # plt.xlim(-50,120)
-        # plt.ylim(-50,10)
+        plt.xlabel("X distance [m]")
+        plt.ylabel("Y distance [m]")
+        plt.xlim(-170,70)
+        plt.ylim(-170,70)
         plt.show()
     
     def define_voronoi_offset_polygons(self,offset):
