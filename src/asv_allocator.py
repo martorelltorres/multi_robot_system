@@ -334,8 +334,9 @@ class ASVAllocator:
         distance = self.get_distance(asv_id,auv_id)
         # set RSSI communication signal 
         rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
-        normalized_value = self.normalize(rssi, -85, -40, 0, 1)
-        self.comm_signal[auv_id] = abs(normalized_value-1)
+        # rssi_inverse = 0.0000016000*distance + -0.0006000000*distance**2 + 0.0800000000*distance**3 + -85.9370000000*distance**4
+        normalized_value = self.normalize(rssi, -85, -40, 1, 0)
+        self.comm_signal[auv_id] = normalized_value
         
     def normalize(self,value, min_val, max_val, new_min, new_max):
         normalized_value = new_min + (value - min_val) * (new_max - new_min) / (max_val - min_val)
