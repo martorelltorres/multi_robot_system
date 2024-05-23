@@ -125,7 +125,7 @@ class MultiRobotSystem:
 
         rospy.Timer(rospy.Duration(1), self.print_polygon)
         rospy.Timer(rospy.Duration(1), self.regular_object_detection)
-        rospy.Timer(rospy.Duration(1), self.priority_object_detection)
+        # rospy.Timer(rospy.Duration(1), self.priority_object_detection)
 
         self.initialization()
     

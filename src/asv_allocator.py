@@ -179,11 +179,11 @@ class ASVAllocator:
                         0,
                         queue_size=1)
         
-        rospy.Subscriber('/robot7/navigator/navigation',
-                        NavSts,    
-                        self.update_asv_position,
-                        1,
-                        queue_size=1)
+        # rospy.Subscriber('/robot7/navigator/navigation',
+        #                 NavSts,    
+        #                 self.update_asv_position,
+        #                 1,
+        #                 queue_size=1)
             
         for asv in range(self.number_of_asvs):
 

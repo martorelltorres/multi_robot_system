@@ -14,7 +14,6 @@
   <arg name="robot_4" default="robot4"/>  <!--AUV4-->
   <arg name="robot_5" default="robot5"/>  <!--AUV5-->
   <arg name="robot_6" default="robot6"/>  <!--ASV1-->
-  <arg name="robot_7" default="robot7"/>  <!--ASV2-->
   <arg name="ASV_ID" default="6"/>  <!--ASV acoustic communication link-->
   
   <!-- Launch the AUVs Simulation -->
@@ -35,12 +34,6 @@
     <arg name="robot_name" value="$(arg robot_6)"/>
   </include>
   
-  <include  file="$(find cola2_xiroi)/launch/simulation.launch">
-    <arg name="enableIqua" value="$(arg enableIquaASV)"/>
-    <arg name="place" value="$(arg place)"/>
-    <arg name="robot_name" value="$(arg robot_7)"/>
-  </include>
-
   <group ns="/mrs">
 
     <!-- load the multi_robot_system.yaml parameters file -->
@@ -131,12 +124,6 @@
       <param name="robot_ID" value="6"/>
       <param name="asv_ID" value="0"/>
       <remap from="/asv0/navigator/navigation" to="/robot6/navigator/navigation"/>
-    </node>
-    <!-- ROBOT 7 ASV -->
-    <node name="asv_$(arg robot_7)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
-      <param name="robot_ID" value="7"/>
-      <param name="asv_ID" value="1"/>
-      <remap from="/asv1/navigator/navigation" to="/robot7/navigator/navigation"/>
     </node>
   </group>
 

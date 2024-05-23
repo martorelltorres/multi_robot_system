@@ -22,7 +22,7 @@ class acoustic_communication:
         self.asv_init = False
         node_name = rospy.get_name()
         self.number_of_robots = self.get_param('number_of_robots')
-        self.number_of_asvs= 2
+        self.number_of_asvs= 1
         self.auv_position = [[],[],[],[],[],[]]
         self.asv_position = [[],[]]
         self.auv_flag = np.array([False,False,False,False,False,False])
