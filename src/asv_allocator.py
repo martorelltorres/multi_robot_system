@@ -105,7 +105,7 @@ class ASVAllocator:
         self.data_gather_time = []
         self.start_recording_time = []
         self.start_data_gathering = True
-        self.number_of_asvs= 2
+        self.number_of_asvs= 1
         self.asvs_positions= np.array([[0,0,0],[0,0,0]])
         self.asvs_init = np.array([])
         self.init=False
@@ -115,6 +115,8 @@ class ASVAllocator:
         self.data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
         self.latency_data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
         self.transmited_data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
+
+        self.zero_stimulus_variables = np.tile(np.zeros(4), (self.number_of_robots, 1))
         # -----------------------------------------------------------------
 
         for asv in range(self.number_of_asvs):
@@ -157,10 +159,9 @@ class ASVAllocator:
             self.penalty = np.append(self.penalty,0)
             self.communication_latency.append(0)
         
-        for stimulus in range(4):
-            self.robots_sense = np.append(self.robots_sense,0)
+        robots_sense = np.zeros(4)
+        self.stimulus_variables = np.tile(robots_sense, (self.number_of_robots, 1))
 
-        self.stimulus_variables= np.vstack((self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense,self.robots_sense))
         self.times = np.vstack((self.elapsed_time,self.elapsed_time))
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -179,12 +180,6 @@ class ASVAllocator:
                         0,
                         queue_size=1)
         
-        # rospy.Subscriber('/robot7/navigator/navigation',
-        #                 NavSts,    
-        #                 self.update_asv_position,
-        #                 1,
-        #                 queue_size=1)
-            
         for asv in range(self.number_of_asvs):
 
             rospy.Subscriber('/mrs/asv'+str(asv)+'_elapsed_time',
@@ -266,7 +261,8 @@ class ASVAllocator:
     #  --------------------- ELAPSED TIME---------------------------------
     def update_elapsed_time(self,msg,asv):
         self.times[asv] = msg.data
-        self.sync_elapsed_time = np.minimum(self.times[0],self.times[1])
+        # OJO self.sync_elapsed_time = np.minimum(self.times[0],self.times[1])
+        self.sync_elapsed_time = self.times[asv]
 
         # Publish information
         msg = Int16MultiArray()
@@ -275,20 +271,23 @@ class ASVAllocator:
 
     #  --------------------- ACQUIRED DATA ---------------------------------
     def update_acquired_data(self, msg, asv_id):
-        self.data[asv_id] = msg.storage
-        self.acquired_data = np.minimum(self.data[0],self.data[1])
+        # self.data[asv_id] = msg.storage
+        # OJO self.acquired_data = np.minimum(self.data[0],self.data[1])
+        self.acquired_data = msg.storage
 
+        print("UPDATE BUFFERED DATA")
         # Publish information
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.acquired_data
         self.buffered_data_pub.publish(msg)
 
-        # self.update_stimulus_matrix()
+        self.update_stimulus_matrix()
     
     def update_transmitted_data(self, msg, asv_id):
         self.transmited_data[asv_id]= msg.transmitted_data
-        data = np.maximum(self.transmited_data[0],self.transmited_data[1])
+        # OJO data = np.maximum(self.transmited_data[0],self.transmited_data[1])
+        data = self.transmited_data[0]
 
         # Publish information
         msg = TransmittedData()
@@ -298,7 +297,8 @@ class ASVAllocator:
     
     def update_communication_latency(self, msg, asv_id):
         self.latency_data[asv_id]= msg.comm_delay
-        latency = np.minimum(self.latency_data[0],self.latency_data[1])
+        # OJO latency = np.minimum(self.latency_data[0],self.latency_data[1])
+        latency = self.latency_data[0]
 
         # Publish information
         msg = CommunicationLatency()
@@ -364,71 +364,47 @@ class ASVAllocator:
     def update_stimulus_matrix(self):
         # get the information from the AUVs and create the matrix stimulus
         for asv in range(self.number_of_asvs):
-            for robot in range(self.active_robots):
+            for auv in range(self.active_robots):
                 # get the time elapsed between ASV visits
-                self.robots_sense[0] = self.sync_elapsed_time[robot]
+                self.stimulus_variables[auv][0]= self.sync_elapsed_time[auv]
+
                 # get the distance between ASV-AUV's
-                distance = self.get_distance(asv,self.robots_id[robot])
+                distance = self.get_distance(asv,auv)
                 # multiply the distance by the covariance factor
-                penalty_distance = distance * self.penalty[self.robots_id[robot]]
-                self.robots_sense[1] = penalty_distance
+                # penalty_distance = distance * self.penalty[auv]
+                self.stimulus_variables[auv][1] = distance
+
                 # obtain the amount of data to be transferred
-                self.robots_sense[2] = self.acquired_data[self.robots_id[robot]]
+                self.stimulus_variables[auv][2] = self.acquired_data[auv]
+
                 #get the communication signal based on RSSI
-                self.get_communication_signal(asv,self.robots_id[robot])
-                self.robots_sense[3] = self.comm_signal[self.robots_id[robot]]
+                self.get_communication_signal(asv,auv)
+                self.stimulus_variables[auv][3]= self.comm_signal[auv]
 
                 # if there are no data to transmit set to zero the aggregated stimulus
-                if(self.acquired_data[self.robots_id[robot]]==0):
-                    self.stimulus_variables[self.robots_id[robot]] = 0
-                else:
-                    self.stimulus_variables[self.robots_id[robot]] = self.robots_sense
+                if(self.stimulus_variables[auv][2]==0):
+                    self.stimulus_variables[auv] = [0,0,0,0]       
 
+            # check if there are data to transmit, if not stop the tracking
+            if(np.array_equal(self.stimulus_variables, self.zero_stimulus_variables)):
+                # send the order to stop the tracking process
+                msg = Bool()
+                msg.data = False
+                self.pub_tracking_control_asv0.publish(msg)
+                
             # normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
+
+            print("*******************************")
+            print(self.stimulus_variables)
+            print("__________________________________")
+            print(normalized_values)
             
-            # obtain the sorted goal id's for each ASV using ARTM
-            sorted_ids = self.ARTM(normalized_values)
-            self.auv_goal_ids[asv] = sorted_ids
-        
-        self.asv0_goals = self.auv_goal_ids[0]
-        self.asv1_goals = self.auv_goal_ids[1]
-
-        self.asv0_goal_id = self.asv0_goals[0]
-
-        current_element = 0
-        if(self.asv0_goals[0]==self.asv1_goals[0]):
-            current_element += 1
-            self.asv1_goal_id = self.asv1_goals[current_element]
-
-    def set_bussy_AUVs(self,asv_id,auv_id):
-        if(asv_id==0):
-            if(auv_id in self.bussy_auvs):
-                for auv in self.asv0_goals:
-                    if(self.asv0_goal_id[auv] not in self.bussy_auvs):
-                        self.bussy_auvs[asv_id] = auv_id
-                        return(self.bussy_auvs[asv_id])
-            else:
-                self.bussy_auvs[asv_id] = auv_id
-                return(self.bussy_auvs[asv_id])
-        
-        if(asv_id==1):
-            if(auv_id in self.bussy_auvs):
-                for auv in self.asv1_goals:
-                    if(self.asv1_goal_id[auv] not in self.bussy_auvs):
-                        self.bussy_auvs[asv_id] = auv_id
-                        return(self.bussy_auvs[asv_id])
-            else:
-                self.bussy_auvs[asv_id] = auv_id
-                return(self.bussy_auvs[asv_id])
-
-    def get_auv_goal_id(self,asv_id):
-        self.update_stimulus_matrix()
-        rospy.sleep(1)
-        if(asv_id==0):
-            return(self.asv0_goal_id)
-        else:
-            return(self.asv1_goal_id)
+        # obtain the sorted goal id's for each ASV using ARTM
+        self.sorted_ids = self.ARTM(normalized_values)
+          
+    def get_goal_AUV(self):
+        return(self.sorted_ids[0])
            
     def ARTM(self,normalized_values):
         for robot in range(self.active_robots):
@@ -439,6 +415,7 @@ class ASVAllocator:
         sorted_goal_ids = np.array([])
         sorted_goal_ids = np.argsort(self.stimulus)[::-1] 
         return(sorted_goal_ids)
+    
     # --------------------------------------------------------------------------------------
     def min_max_scale(self,values):
         # get the minimum and maximum values
@@ -469,8 +446,8 @@ class ASVAllocator:
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
                 if(self.optimization_model==1):
-                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
-                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0] #number of stimulus
+                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0] 
                 elif(self.optimization_model==2):
                     self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
                     self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]

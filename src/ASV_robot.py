@@ -58,11 +58,10 @@ class ASVRobot:
 
         self.optimization_strategy = self.get_param("optimization_strategy",1)
         self.area_handler =  area_partition("area_partition")
-        self.allocator = ASVAllocator("asv_allocator")
+        self.allocator_handler = ASVAllocator("asv_allocator")
 
         # Initialize some variables
         self.transmission_time = 10
-        self.qlearning_init = False
         self.pose = [0,0]
         self.data_transmited = []
         self.in_process = False
@@ -108,6 +107,7 @@ class ASVRobot:
         self.start_data_gathering = False
         self.set_transmission_init_time=False
         self.process_time = 0
+        self.process_flag=True
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
@@ -321,8 +321,9 @@ class ASVRobot:
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
-        if(self.in_process == False):
-            rospy.sleep(1)
+        if(self.in_process == False and self.process_flag==True):
+            self.process_flag=False
+            rospy.sleep(2)
             self.process()
 
     def update_priority_object_information(self,msg,robot_id):
@@ -339,8 +340,9 @@ class ASVRobot:
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
-        if(self.in_process == False):
-            rospy.sleep(1)
+        if(self.in_process == False and self.process_flag==True):
+            self.process_flag=False
+            rospy.sleep(2)
             self.process()
 
     def set_coverage_start_time(self,msg,element):
@@ -408,8 +410,7 @@ class ASVRobot:
     def process(self):
         self.in_process=True
         # obtain the goal_auv from the allocator
-        self.robot_goal_id = self.allocator.get_auv_goal_id(self.asv_ID)
-        # self.robot_goal_id = self.allocator.set_bussy_AUVs(self.asv_ID,self.robot_goal_id)
+        self.robot_goal_id = self.allocator_handler.get_goal_AUV()
         print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
         self.enable_tracking = True
 
@@ -439,7 +440,7 @@ class ASVRobot:
                     os.system("rosnode kill " + str)
 
     def remove_robot_from_dustbin_goals(self,msg):
-        self.allocator.set_dustbin_robots(msg)
+        self.allocator_handler.set_dustbin_robots(msg)
         self.check_dustbin_robot()
     
     def check_dustbin_robot(self):
@@ -506,8 +507,8 @@ class ASVRobot:
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
 
-            # if(self.storage_disk[self.robot_goal_id]>0):
-                # print("Robot"+str(self.robot_goal_id)+" Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+            if(self.storage_disk[self.robot_goal_id]>0):
+                print("Robot"+str(self.robot_goal_id)+" Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
             
             if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
                 
@@ -552,7 +553,7 @@ class ASVRobot:
         self.data_gather_time[self.robot_goal_id] = 0
         self.set_elapsed_time(self.robot_goal_id)
         self.in_process = False
-        
+
 
     def set_elapsed_time(self,robot_id):
         self.start_recording_time[robot_id] = rospy.Time.now().secs
