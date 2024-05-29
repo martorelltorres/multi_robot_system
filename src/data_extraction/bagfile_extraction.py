@@ -41,7 +41,7 @@ class DataExtraction:
         self.w_range = [i / 10 for i in range(11)]
 
         self.simulation_count = -1
-        self.optimization_model = 2
+        self.optimization_model = 1
         self.combinations = []
 
         self.response_threshold_folder ='/mnt/storage_disk/extracted_results/response_threshold'
@@ -67,17 +67,41 @@ class DataExtraction:
         self.launchfile = 'roslaunch multi_robot_system MRS.launch'
         # self.yaml_file_path = "/mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
         self.yaml_file_path = "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
+
+        self.topics = [
+                '/mrs/allocator_communication_latency',
+                '/mrs/asv0_communication_latency',
+                '/mrs/asv1_communication_latency',
+                '/mrs/allocator_data_buffered',
+                '/mrs/asv0_data_buffered',
+                '/mrs/asv1_data_buffered',
+                '/mrs/allocator_data_transmited',
+                '/mrs/asv0_data_transmited',
+                '/mrs/asv1_data_transmited',
+                '/mrs/asv_travelled_distance',
+                '/robot0/travelled_distance',
+                '/robot1/travelled_distance',
+                '/robot2/travelled_distance',
+                '/robot3/travelled_distance',
+                '/robot4/travelled_distance',
+                '/robot5/travelled_distance',
+                '/mrs/allocator_elapsed_time',
+                '/mrs/asv0_elapsed_time',
+                '/mrs/asv1_elapsed_time'
+            ]
+
         self.process()
     
     def process(self):
         self.create_data_folders()
         self.simulation_count = self.simulation_count+1
+
         # define the different combinations optimization_model and parameters
         if(self.optimization_model == 1):
             self.bagfiles_folder = self.RTM_bagfiles
             self.params_folder = self.RTM_params
             self.csv_folder = self.RTM_csv
-            self. response_threshold_combinations()
+            self.response_threshold_combinations()
 
         elif(self.optimization_model == 2):
             self.bagfiles_folder = self.owa_bagfiles
@@ -92,7 +116,11 @@ class DataExtraction:
 
         # Start recording the data 
         os.chdir(self.bagfiles_folder)
-        launch_process = subprocess.Popen(['rosbag', 'record', '-a', '-O', 'results_'+ str(self.simulation_count)+'.bag'])
+        # launch_process = subprocess.Popen(['rosbag', 'record'+ self.topics + '-O', 'results_'+ str(self.simulation_count)+'.bag'])
+        # Flatten the topics list into individual arguments
+        rosbag_command = ['rosbag', 'record'] + self.topics + ['-O', 'results_' + str(self.simulation_count) + '.bag']
+        # Launch the subprocess
+        launch_process = subprocess.Popen(rosbag_command)
         launch_process.wait()
 
         param_filename = "params_"+ str(self.simulation_count)+".yaml"
@@ -146,8 +174,12 @@ class DataExtraction:
         assert retcode == 0, "List command returned %d" % retcode
         for str in list_output.split("\n"):
             if (str.startswith('/record_')==False):
-                os.system('killall -9 rosmaster')
-
+                # os.system('killall -9 rosmaster')
+                nodes = subprocess.check_output(['rosnode', 'list']).split('\n')
+                for node in nodes:
+                    if node:
+                        subprocess.call(['rosnode', 'kill', node])
+                        
                 if(self.simulation_count<len(self.combinations) and self.optimization_model==1 ):
                     self.process()
                 # else:
@@ -175,6 +207,15 @@ class DataExtraction:
 
         self.write_yaml(data)
 
+    def read_yaml(self):
+        with open(self.yaml_file_path, 'r') as yaml_file:
+            data = yaml.safe_load(yaml_file)
+            return data
+        
+    def write_yaml(self, data):
+        with open(self.yaml_file_path, 'w') as yaml_file:
+            yaml.dump(data, yaml_file)
+
     def owas_combinations(self):
         # values = combinations_with_replacement(self.w1, 4)
         values = product(self.w1,self.w2,self.w3,self.w4)
@@ -190,14 +231,6 @@ class DataExtraction:
                         self.combinations.append([a, b, g])
         print("*********************There are "+ str(len(self.combinations))+ " combinations.*********************")
         print(self.combinations)
-    def read_yaml(self):
-        with open(self.yaml_file_path, 'r') as yaml_file:
-            data = yaml.safe_load(yaml_file)
-            return data
-
-    def write_yaml(self, data):
-        with open(self.yaml_file_path, 'w') as yaml_file:
-            yaml.dump(data, yaml_file)
 
 if __name__ == "__main__":
     my_object = DataExtraction()

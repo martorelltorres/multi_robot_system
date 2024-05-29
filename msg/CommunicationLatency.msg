@@ -1,2 +1,2 @@
 Header header 
-int32[] comm_delay        
+int32[] comm_latency        

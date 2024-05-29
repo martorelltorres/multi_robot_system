@@ -75,7 +75,6 @@ class ASVAllocator:
         self.robots_information = [[],[],[],[],[],[],[]]
         self.robots = []
         self.robot_initialization = np.array([])
-        self.enable_tracking = False
         self.set_end_time = False
         self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
         self.exploration_tasks_update = np.array([])
@@ -181,7 +180,6 @@ class ASVAllocator:
                         queue_size=1)
         
         for asv in range(self.number_of_asvs):
-
             rospy.Subscriber('/mrs/asv'+str(asv)+'_elapsed_time',
                             Int16MultiArray,    
                             self.update_elapsed_time,
@@ -275,12 +273,17 @@ class ASVAllocator:
         # OJO self.acquired_data = np.minimum(self.data[0],self.data[1])
         self.acquired_data = msg.storage
 
-        print("UPDATE BUFFERED DATA")
+        # print("UPDATE BUFFERED DATA")
         # Publish information
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.acquired_data
         self.buffered_data_pub.publish(msg)
+
+        # enable tracking
+        msg = Bool()
+        msg.data = True
+        self.pub_tracking_control_asv0.publish(msg)
 
         self.update_stimulus_matrix()
     
@@ -296,14 +299,14 @@ class ASVAllocator:
         self.data_transmited_pub.publish(msg)
     
     def update_communication_latency(self, msg, asv_id):
-        self.latency_data[asv_id]= msg.comm_delay
+        self.latency_data[asv_id]= msg.comm_latency
         # OJO latency = np.minimum(self.latency_data[0],self.latency_data[1])
         latency = self.latency_data[0]
 
         # Publish information
         msg = CommunicationLatency()
         msg.header.stamp = rospy.Time.now()
-        msg.comm_delay = latency
+        msg.comm_latency = latency
         self.communication_latency_pub.publish(msg)
     
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
@@ -394,12 +397,7 @@ class ASVAllocator:
                 
             # normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
-
-            print("*******************************")
-            print(self.stimulus_variables)
-            print("__________________________________")
-            print(normalized_values)
-            
+           
         # obtain the sorted goal id's for each ASV using ARTM
         self.sorted_ids = self.ARTM(normalized_values)
           

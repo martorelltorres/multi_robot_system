@@ -60,7 +60,7 @@ for bag_file in range(len(bag_files)):
 
     for topic, msg, t in bag.read_messages(topics=topics_of_interest):
         if "/mrs/communication_latency" in topic:
-            latency_R1, latency_R2, latency_R3,latency_R4, latency_R5, latency_R6 = getattr(msg, 'comm_delay', (0, 0, 0, 0, 0, 0))
+            latency_R1, latency_R2, latency_R3,latency_R4, latency_R5, latency_R6 = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
             latency_R1_values = np.append(latency_R1_values,latency_R1)
             latency_R2_values= np.append(latency_R2_values,latency_R2)
             latency_R3_values= np.append(latency_R3_values,latency_R3)
