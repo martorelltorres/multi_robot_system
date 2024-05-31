@@ -10,10 +10,10 @@ import time
 # Parameters to set
 bagfile_path = "/mnt/storage_disk/ARTM"
 extracted_data_path = "/mnt/storage_disk/ARTM"
-topics_of_interest = [  "/mrs/communication_latency",
+topics_of_interest = [  "/mrs/allocator_communication_latency",
                         "/mrs/asv_travelled_distance",
-                        "/mrs/data_transmited",
-                        "/mrs/data_buffered"]
+                        "/mrs/allocator_data_transmited",
+                        "/mrs/allocator_data_buffered"]
 
 all_files = os.listdir(bagfile_path)
 # Get a list of all bag files in the folder
@@ -59,23 +59,31 @@ for bag_file in range(len(bag_files)):
     all_buffered_data=[]
 
     for topic, msg, t in bag.read_messages(topics=topics_of_interest):
-        if "/mrs/communication_latency" in topic:
+        if "/mrs/allocator_communication_latency" in topic:
             latency_R1, latency_R2, latency_R3,latency_R4, latency_R5, latency_R6 = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
-            latency_R1_values = np.append(latency_R1_values,latency_R1)
-            latency_R2_values= np.append(latency_R2_values,latency_R2)
-            latency_R3_values= np.append(latency_R3_values,latency_R3)
-            latency_R4_values= np.append(latency_R4_values,latency_R4)
-            latency_R5_values= np.append(latency_R5_values,latency_R5)
-            latency_R6_values= np.append(latency_R6_values,latency_R6)
-            latency_mean = np.append(latency_mean,((latency_R1+latency_R2+latency_R3+latency_R4+latency_R5+latency_R6)/6))
-            time_latency = np.append(time_latency,msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 -start_time)  
+            if(latency_R1!=0):
+                latency_R1_values = np.append(latency_R1_values,latency_R1)
+            if(latency_R2!=0):
+                latency_R2_values= np.append(latency_R2_values,latency_R2)
+            if(latency_R3!=0):
+                latency_R3_values= np.append(latency_R3_values,latency_R3)
+            if(latency_R4!=0):
+                latency_R4_values= np.append(latency_R4_values,latency_R4)
+            if(latency_R5!=0):
+                latency_R5_values= np.append(latency_R5_values,latency_R5)
+            if(latency_R6!=0):
+                latency_R6_values= np.append(latency_R6_values,latency_R6)
+            
+
+            # latency_mean = np.append(latency_mean,((latency_R1+latency_R2+latency_R3+latency_R4+latency_R5+latency_R6)/6))
+            # time_latency = np.append(time_latency,msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 -start_time)  
             
 
         if "/mrs/asv_travelled_distance" in topic:
             time_distance.append(msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 - start_time)
             travelled_distance = msg.travelled_distance
 
-        if "/mrs/data_transmited" in topic:
+        if "/mrs/allocator_data_transmited" in topic:
             data_R1, data_R2, data_R3,data_R4, data_R5, data_R6 = getattr(msg, 'transmitted_data', (0, 0, 0, 0, 0, 0))
             transmitted_data_R1_values.append(data_R1)
             transmitted_data_R2_values.append(data_R2)
@@ -87,7 +95,7 @@ for bag_file in range(len(bag_files)):
             transmitted_data_time_values.append(transmitted_data_time)
             all_transmitted_data.append(data_R1+data_R2+data_R3+data_R4+data_R5+data_R6)
 
-        if "/mrs/data_buffered " in topic:
+        if "/mrs/allocator_data_buffered" in topic:
             buffer_R1, buffer_R2, buffer_R3,buffer_R4, buffer_R5, buffer_R6 = getattr(msg, 'storage', (0, 0, 0, 0, 0, 0))
             buffered_data_R1_values.append(buffer_R1)
             buffered_data_R2_values.append(buffer_R2)
@@ -103,15 +111,23 @@ for bag_file in range(len(bag_files)):
     # Close the bag file after extraction
     bag.close()
 
+    # handle latency values
+    latency_1_mean = latency_R1_values/len(latency_R1_values)
+    latency_2_mean = latency_R2_values/len(latency_R2_values)
+    latency_3_mean = latency_R3_values/len(latency_R3_values)
+    latency_4_mean = latency_R4_values/len(latency_R4_values)
+    latency_5_mean = latency_R5_values/len(latency_R5_values)
+    latency_6_mean = latency_R6_values/len(latency_R6_values)
 
     # Calculate the mean latency
-    mean_latency = np.mean(latency_mean)
+    mean_latency = (latency_1_mean+latency_2_mean+latency_3_mean+latency_4_mean+latency_5_mean+latency_6_mean)/ 6
+
     # Calculate the standard deviation
     std_latency = np.std(latency_mean)
 
     print("MEAN LATENCY:"+str(mean_latency))
     print("STD: "+str(std_latency))
-    transmitted_data = all_transmitted_data[-1]/70
+    transmitted_data = all_transmitted_data[-1]/50
     print("data transmitted: "+ str(transmitted_data))
     print("distance: "+str(travelled_distance))
 
@@ -131,7 +147,6 @@ for bag_file in range(len(bag_files)):
     df = pd.DataFrame(data)
     df.to_csv(output_csv_path, mode='a', index=False, header=False)
     
-    # Wait for five minutes before processing the next bag file
     print("   ")
 print("DATA EXTRACTION PROCESS FINISHED")
 

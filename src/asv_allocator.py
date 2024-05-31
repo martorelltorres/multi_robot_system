@@ -243,7 +243,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -393,20 +393,25 @@ class ASVAllocator:
                 # send the order to stop the tracking process
                 msg = Bool()
                 msg.data = False
-                self.pub_tracking_control_asv0.publish(msg)
-                
+
+            else:
+                msg = Bool()
+                msg.data = True
+
+            self.pub_tracking_control_asv0.publish(msg)
+
             # normalize the stimulus values
-            normalized_values = self.min_max_scale(self.stimulus_variables)
+            self.normalized_values = self.min_max_scale(self.stimulus_variables)
            
         # obtain the sorted goal id's for each ASV using ARTM
-        self.sorted_ids = self.ARTM(normalized_values)
+        self.sorted_ids = self.ARTM()
           
     def get_goal_AUV(self):
         return(self.sorted_ids[0])
            
-    def ARTM(self,normalized_values):
+    def ARTM(self):
         for robot in range(self.active_robots):
-            scaled_values = normalized_values[robot]
+            scaled_values = self.normalized_values[robot]
             s = self.alpha*abs(scaled_values[0])+ self.beta*abs(scaled_values[1])+ self.gamma* abs(scaled_values[2])
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
         # extract the sorted goal robot IDs in descending order
@@ -445,10 +450,10 @@ class ASVAllocator:
             for element in range(len(self.removed_robots)):
                 if(self.optimization_model==1):
                     self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0] #number of stimulus
-                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0] 
+                    self.normalized_values[self.removed_robots[element]] = [0,0,0,0,0,0] 
                 elif(self.optimization_model==2):
                     self.stimulus_variables[self.removed_robots[element]] = [0,0,0,0]
-                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
+                    self.normalized_values[self.removed_robots[element]] = [0,0,0,0,0,0]
             self.remove_robot=False  
         
     def initialization(self,robot_id):

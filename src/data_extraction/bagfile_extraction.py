@@ -19,7 +19,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,TravelledDistance,ExplorationUpdate,CommunicationDelay,ObjectInformation,Communication,Distances, Data
+from multi_robot_system.msg import CoverageStartTime,TravelledDistance,ExplorationUpdate,ObjectInformation,Communication,Distances, Data
 import os
 import sys
 import subprocess
@@ -42,31 +42,30 @@ class DataExtraction:
 
         self.simulation_count = -1
         self.optimization_model = 1
-        self.combinations = []
+        self.data_path = '/home/tintin/MRS_data/'
 
-        self.response_threshold_folder ='/mnt/storage_disk/extracted_results/response_threshold'
-        self.RTM_bagfiles = '/mnt/storage_disk/extracted_results/response_threshold/data'
-        self.RTM_params = '/mnt/storage_disk/extracted_results/response_threshold/params'
-        self.RTM_csv = '/mnt/storage_disk/extracted_results/response_threshold/csv'
+        self.response_threshold_folder = self.data_path+'response_threshold'
+        self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
+        self.RTM_params = self.data_path+'response_threshold/params'
+        self.RTM_csv = self.data_path+'response_threshold/csv'
 
-        self.owa_folder ='/mnt/storage_disk/extracted_results/owa'
-        self.owa_bagfiles = '/mnt/storage_disk/extracted_results/owa/bagfiles'
-        self.owa_params = '/mnt/storage_disk/extracted_results/owa/params'
-        self.owa_csv = '/mnt/storage_disk/extracted_results/owa/csv'
+        self.owa_folder = self.data_path+'owa'
+        self.owa_bagfiles = self.data_path+'owa/bagfiles'
+        self.owa_params = self.data_path+'owa/params'
+        self.owa_csv = self.data_path+'owa/csv'
 
-        self.max_folder ='/mnt/storage_disk/extracted_results/max_stimulus'
-        self.max_bagfiles = '/mnt/storage_disk/extracted_results/max_stimulus/bagfiles'
-        self.max_params = '/mnt/storage_disk/extracted_results/max_stimulus/params'
-        self.max_csv = '/mnt/storage_disk/extracted_results/max_stimulus/csv'
+        self.max_folder = self.data_path+'max_stimulus'
+        self.max_bagfiles = self.data_path+'/max_stimulus/bagfiles'
+        self.max_params = self.data_path+'max_stimulus/params'
+        self.max_csv = self.data_path+'max_stimulus/csv'
 
-        self.rr_folder ='/mnt/storage_disk/extracted_results/round_robin'
-        self.rr_bagfiles = '/mnt/storage_disk/extracted_results/round_robin/bagfiles'
-        self.rr_params = '/mnt/storage_disk/extracted_results/round_robin/params'
-        self.rr_csv = '/mnt/storage_disk/extracted_results/round_robin/csv'
+        self.rr_folder = self.data_path+'round_robin'
+        self.rr_bagfiles = self.data_path+'round_robin/bagfiles'
+        self.rr_params = self.data_path+'round_robin/params'
+        self.rr_csv = self.data_path+'round_robin/csv'
 
         self.launchfile = 'roslaunch multi_robot_system MRS.launch'
-        # self.yaml_file_path = "/mnt/storage_disk/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
-        self.yaml_file_path = "/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
+        self.yaml_file_path = "/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
 
         self.topics = [
                 '/mrs/allocator_communication_latency',
@@ -89,10 +88,14 @@ class DataExtraction:
                 '/mrs/asv0_elapsed_time',
                 '/mrs/asv1_elapsed_time'
             ]
+        self.package_name = "multi_robot_system"
+        self.launch_file = "MRS.launch"
+        self.run = None
 
         self.process()
     
     def process(self):
+        self.combinations = []
         self.create_data_folders()
         self.simulation_count = self.simulation_count+1
 
@@ -116,7 +119,6 @@ class DataExtraction:
 
         # Start recording the data 
         os.chdir(self.bagfiles_folder)
-        # launch_process = subprocess.Popen(['rosbag', 'record'+ self.topics + '-O', 'results_'+ str(self.simulation_count)+'.bag'])
         # Flatten the topics list into individual arguments
         rosbag_command = ['rosbag', 'record'] + self.topics + ['-O', 'results_' + str(self.simulation_count) + '.bag']
         # Launch the subprocess
@@ -167,6 +169,20 @@ class DataExtraction:
         if not os.path.exists(self.rr_csv):
             os.makedirs(self.rr_csv)
 
+
+    def start_launch_file(self):
+        # print("Starting launch file: {self.launch_file}")
+        self.run = subprocess.Popen(['roslaunch', self.package_name, self.launch_file])
+
+    def stop_launch_file(self):
+        if self.run:
+            print("Sending SIGINT to stop the launch file...")
+            self.run.send_signal(signal.SIGINT)
+            self.run.wait()
+            os.system('sudo killall roscore')
+            time.sleep(5)
+            print("Launch file stopped.")
+
     def check_if_proces_end(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
         list_output = list_cmd.stdout.read()
@@ -174,18 +190,18 @@ class DataExtraction:
         assert retcode == 0, "List command returned %d" % retcode
         for str in list_output.split("\n"):
             if (str.startswith('/record_')==False):
-                # os.system('killall -9 rosmaster')
-                nodes = subprocess.check_output(['rosnode', 'list']).split('\n')
-                for node in nodes:
-                    if node:
-                        subprocess.call(['rosnode', 'kill', node])
-                        
-                if(self.simulation_count<len(self.combinations) and self.optimization_model==1 ):
-                    self.process()
-                # else:
-                #     self.simulation_count = -1
-                #     self.optimization_model = self.optimization_model +1
-                #     self.process()
+                print("_____________________________")
+                print("PROCESS KILLED CORRECTLY!!!!")
+                print("_____________________________")
+                os.system('killall rosmaster')
+                os.system('killall roscore')
+                time.sleep(10)
+
+            if(self.simulation_count<len(self.combinations)):
+                self.process()
+            else:
+                print(" SIMULATION FINISHED!!!!!!!!!!!!!!!!!!!")
+
 
     def set_parameters(self):  
         data = self.read_yaml()
