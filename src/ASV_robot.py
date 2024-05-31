@@ -108,6 +108,7 @@ class ASVRobot:
         self.start_data_gathering = False
         self.set_transmission_init_time=False
         self.process_time = 0
+        self.goal_settled=False
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
@@ -280,7 +281,7 @@ class ASVRobot:
         if(msg.data==False):
             print("ASV"+str(self.asv_ID)+" STOPPED!")
             self.enable_tracking = False
-        elif(msg.data==True):
+        elif(msg.data==True and self.goal_settled==True):
             print("ASV"+str(self.asv_ID)+" RUNNING!")
             self.enable_tracking = True
 
@@ -407,11 +408,12 @@ class ASVRobot:
 
     def process(self):
         self.in_process=True
+
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator.get_auv_goal_id(self.asv_ID)
-        # self.robot_goal_id = self.allocator.set_bussy_AUVs(self.asv_ID,self.robot_goal_id)
+        self.goal_settled=True
         print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
-        self.enable_tracking = True
+        # self.enable_tracking = True
 
         # publish the goal_id
         msg = Data()
