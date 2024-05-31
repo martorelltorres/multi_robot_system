@@ -61,7 +61,7 @@ class ASVRobot:
         self.allocator_handler = ASVAllocator("asv_allocator")
 
         # Initialize some variables
-        self.transmission_time = 50
+        self.transmission_time = 30
         self.pose = [0,0]
         self.data_transmited = []
         self.in_process = False
@@ -289,7 +289,7 @@ class ASVRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -326,7 +326,7 @@ class ASVRobot:
         # Start the data gathering when the first robot detects an object
         if(self.in_process == False and self.process_flag==True):
             self.process_flag=False
-            rospy.sleep(3)
+            # rospy.sleep(3)
             self.process()
 
     def update_priority_object_information(self,msg,robot_id):
@@ -419,7 +419,7 @@ class ASVRobot:
         self.robot_goal_id = self.allocator_handler.get_goal_AUV()
         self.goal_settled = True
         print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
-        # self.enable_tracking = True
+        self.enable_tracking = True
 
         # publish the goal_id
         msg = Data()
