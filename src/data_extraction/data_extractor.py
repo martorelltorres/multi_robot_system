@@ -132,8 +132,6 @@ for bag_file in range(len(bag_files)):
     std_latency_6 = np.std(latency_R6_values)
     std_latency = (std_latency_1+std_latency_2+std_latency_3+std_latency_4+std_latency_5+std_latency_6)/6
 
-
-
     print("MEAN LATENCY:"+str(mean_latency))
     print("STD: "+str(std_latency))
     transmitted_data = all_transmitted_data[-1]/50
