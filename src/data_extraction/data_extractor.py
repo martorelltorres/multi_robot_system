@@ -112,18 +112,27 @@ for bag_file in range(len(bag_files)):
     bag.close()
 
     # handle latency values
-    latency_1_mean = latency_R1_values/len(latency_R1_values)
-    latency_2_mean = latency_R2_values/len(latency_R2_values)
-    latency_3_mean = latency_R3_values/len(latency_R3_values)
-    latency_4_mean = latency_R4_values/len(latency_R4_values)
-    latency_5_mean = latency_R5_values/len(latency_R5_values)
-    latency_6_mean = latency_R6_values/len(latency_R6_values)
+    latency_1_mean = sum(latency_R1_values)/len(latency_R1_values)
+    latency_2_mean = sum(latency_R2_values)/len(latency_R2_values)
+    latency_3_mean = sum(latency_R3_values)/len(latency_R3_values)
+    latency_4_mean = sum(latency_R4_values)/len(latency_R4_values)
+    latency_5_mean = sum(latency_R5_values)/len(latency_R5_values)
+    latency_6_mean = sum(latency_R6_values)/len(latency_R6_values)
+
 
     # Calculate the mean latency
-    mean_latency = (latency_1_mean+latency_2_mean+latency_3_mean+latency_4_mean+latency_5_mean+latency_6_mean)/ 6
+    mean_latency = (latency_1_mean + latency_2_mean + latency_3_mean + latency_4_mean + latency_5_mean + latency_6_mean)/ 6
 
     # Calculate the standard deviation
-    std_latency = np.std(latency_mean)
+    std_latency_1 = np.std(latency_R1_values)
+    std_latency_2 = np.std(latency_R2_values)
+    std_latency_3 = np.std(latency_R3_values)
+    std_latency_4 = np.std(latency_R4_values)
+    std_latency_5 = np.std(latency_R5_values)
+    std_latency_6 = np.std(latency_R6_values)
+    std_latency = (std_latency_1+std_latency_2+std_latency_3+std_latency_4+std_latency_5+std_latency_6)/6
+
+
 
     print("MEAN LATENCY:"+str(mean_latency))
     print("STD: "+str(std_latency))
