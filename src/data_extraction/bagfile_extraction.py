@@ -37,12 +37,14 @@ class DataExtraction:
         self.w3 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
         self.w4 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
 
+        # self.combinations = [[10,0,0],[0,0,10],[5,0,5],[7,0,3],[3,0,7],[8,0,2],[2,0,8],[6,0,4],[4,0,6]]
+
         # Define the range for w1, w2, and w3
         self.w_range = [i / 10 for i in range(11)]
 
         self.simulation_count = -1
         self.optimization_model = 1
-        self.data_path = '/home/tintin/MRS_data/'
+        self.data_path = '/home/tintin/MRS_data/test_6/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
@@ -110,7 +112,7 @@ class DataExtraction:
             self.bagfiles_folder = self.owa_bagfiles
             self.params_folder = self.owa_params
             self.csv_folder = self.owa_csv
-            self.owas_combinations()
+            # self.owas_combinations()
 
         # Set the simulation parameters
         self.set_parameters()
@@ -206,11 +208,11 @@ class DataExtraction:
     def set_parameters(self):  
         data = self.read_yaml()
         if(self.optimization_model==1):
-            if all(key in data for key in ['optimization_model','alpha', 'beta', 'gamma']):
+            if all(key in data for key in ['optimization_model','alpha', 'gamma']):
                 data['optimization_model'] = 1
                 data['alpha'] = self.combinations[self.simulation_count][0]  
-                data['beta'] = self.combinations[self.simulation_count][1]  
-                data['gamma'] = self.combinations[self.simulation_count][2]  
+                # data['beta'] = self.combinations[self.simulation_count][1]  
+                data['gamma'] = self.combinations[self.simulation_count][1]  
 
         if(self.optimization_model==2):
             if all(key in data for key in ['optimization_model','w1','w2','w3','w4']):
@@ -241,10 +243,10 @@ class DataExtraction:
 
     def response_threshold_combinations(self):
         for a in self.alpha:
-            for b in self.beta:
-                for g in self.gamma:
-                    if a + b + g == 10:
-                        self.combinations.append([a, b, g])
+            for g in self.gamma:
+                # for g in self.gamma:
+                if a + g  == 10:
+                    self.combinations.append([a, g])
         print("*********************There are "+ str(len(self.combinations))+ " combinations.*********************")
         print(self.combinations)
 

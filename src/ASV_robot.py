@@ -61,7 +61,7 @@ class ASVRobot:
         self.allocator_handler = ASVAllocator("asv_allocator")
 
         # Initialize some variables
-        self.transmission_time = 30
+        self.transmission_time = 60
         self.pose = [0,0]
         self.data_transmited = []
         self.in_process = False

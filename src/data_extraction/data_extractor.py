@@ -8,12 +8,25 @@ import argparse
 import time
 
 # Parameters to set
-bagfile_path = "/mnt/storage_disk/ARTM"
-extracted_data_path = "/mnt/storage_disk/ARTM"
+bagfile_path = "/home/tintin/MRS_data/test_6/response_threshold/bagfiles"
+# extracted_data_path = "/home/tintin/MRS_data/response_threshold/bagfiles"
 topics_of_interest = [  "/mrs/allocator_communication_latency",
                         "/mrs/asv_travelled_distance",
                         "/mrs/allocator_data_transmited",
                         "/mrs/allocator_data_buffered"]
+latency_1_mean = 0
+latency_2_mean = 0
+latency_3_mean = 0
+latency_4_mean = 0
+latency_5_mean = 0
+latency_6_mean = 0
+
+std_latency_1 =0
+std_latency_2 =0
+std_latency_3 =0
+std_latency_4 =0
+std_latency_5 =0
+std_latency_6 =0
 
 all_files = os.listdir(bagfile_path)
 # Get a list of all bag files in the folder
@@ -112,30 +125,44 @@ for bag_file in range(len(bag_files)):
     bag.close()
 
     # handle latency values
-    latency_1_mean = sum(latency_R1_values)/len(latency_R1_values)
-    latency_2_mean = sum(latency_R2_values)/len(latency_R2_values)
-    latency_3_mean = sum(latency_R3_values)/len(latency_R3_values)
-    latency_4_mean = sum(latency_R4_values)/len(latency_R4_values)
-    latency_5_mean = sum(latency_R5_values)/len(latency_R5_values)
-    latency_6_mean = sum(latency_R6_values)/len(latency_R6_values)
+    if(len(latency_R1_values)!=0):
+        latency_1_mean = sum(latency_R1_values)/len(latency_R1_values)
+    if(len(latency_R2_values)!=0):    
+        latency_2_mean = sum(latency_R2_values)/len(latency_R2_values)
+    if(len(latency_R3_values)!=0):    
+        latency_3_mean = sum(latency_R3_values)/len(latency_R3_values)
+    if(len(latency_R4_values)!=0):    
+        latency_4_mean = sum(latency_R4_values)/len(latency_R4_values)
+    if(len(latency_R5_values)!=0):    
+        latency_5_mean = sum(latency_R5_values)/len(latency_R5_values)
+    if(len(latency_R6_values)!=0):    
+        latency_6_mean = sum(latency_R6_values)/len(latency_R6_values)
 
 
     # Calculate the mean latency
     mean_latency = (latency_1_mean + latency_2_mean + latency_3_mean + latency_4_mean + latency_5_mean + latency_6_mean)/ 6
 
     # Calculate the standard deviation
-    std_latency_1 = np.std(latency_R1_values)
-    std_latency_2 = np.std(latency_R2_values)
-    std_latency_3 = np.std(latency_R3_values)
-    std_latency_4 = np.std(latency_R4_values)
-    std_latency_5 = np.std(latency_R5_values)
-    std_latency_6 = np.std(latency_R6_values)
+    if(len(latency_R1_values)!=0):
+        std_latency_1 = np.std(latency_R1_values)
+    if(len(latency_R2_values)!=0):    
+        std_latency_2 = np.std(latency_R2_values)
+    if(len(latency_R3_values)!=0):    
+        std_latency_3 = np.std(latency_R3_values)
+    if(len(latency_R4_values)!=0):    
+        std_latency_4 = np.std(latency_R4_values)
+    if(len(latency_R5_values)!=0):    
+        std_latency_5 = np.std(latency_R5_values)
+    if(len(latency_R6_values)!=0):    
+        std_latency_6 = np.std(latency_R6_values) 
+    
+    
     std_latency = (std_latency_1+std_latency_2+std_latency_3+std_latency_4+std_latency_5+std_latency_6)/6
 
     print("MEAN LATENCY:"+str(mean_latency))
     print("STD: "+str(std_latency))
-    transmitted_data = all_transmitted_data[-1]/50
-    print("data transmitted: "+ str(transmitted_data))
+    # transmitted_data = all_transmitted_data[-1]/60
+    # print("data transmitted: "+ str(transmitted_data))
     print("distance: "+str(travelled_distance))
 
     # SAVE THE DATA INTO A CSV
@@ -147,7 +174,7 @@ for bag_file in range(len(bag_files)):
     # Create a DataFrame with the new data
     data = {'mean latency': [mean_latency],
             'std_latency': [std_latency],
-            'transmitted_data': [transmitted_data],
+            # 'transmitted_data': [transmitted_data],
             'travelled_distance':[travelled_distance]
     }
 

@@ -19,11 +19,12 @@ class polygon_division:
     def __init__(self, name):
         # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
         # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230622123222_andratx_middle.xml") 
+        self.exploration_area = get_param(self,'exploration_area',"/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/missions/230622123222_andratx_middle.xml") 
         self.number_of_robots = get_param(self,'number_of_robots',6)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = 39.543330
         self.ned_origin_lon = 2.377940
+        self.objects_number = 70
 
         self.points = np.array([])
         self.local_points=[]
@@ -50,7 +51,7 @@ class polygon_division:
             'array7': self.priority_objects
         }
 
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'wb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data_70.pickle', 'wb') as file:
             pickle.dump(data, file)
         print("...process finished")
  
@@ -166,7 +167,7 @@ class polygon_division:
             self.main_polygon = Polygon(self.local_points)
             self.main_polygon_centroid = self.main_polygon.centroid
             self.polygon_points = self.local_points
-            self.regular_objects = self.generate_random_points_within_polygon(self.main_polygon,35)
+            self.regular_objects = self.generate_random_points_within_polygon(self.main_polygon,self.objects_number)
             # .........................................................................
             # Generate random points within the polygon
             num_points = 500
