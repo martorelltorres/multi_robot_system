@@ -108,6 +108,7 @@ class ASVRobot:
         self.start_data_gathering = False
         self.set_transmission_init_time=False
         self.process_time = 0
+        self.process_flag=True
         self.goal_settled=False
 
         # Set the number of stimulus depending of the optimization strategy
@@ -322,8 +323,9 @@ class ASVRobot:
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
-        if(self.in_process == False):
-            rospy.sleep(1)
+        if(self.in_process == False and self.process_flag==True):
+            self.process_flag=False
+            # rospy.sleep(3)
             self.process()
 
     def update_priority_object_information(self,msg,robot_id):
@@ -340,8 +342,9 @@ class ASVRobot:
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
-        if(self.in_process == False):
-            rospy.sleep(1)
+        if(self.in_process == False and self.process_flag==True):
+            self.process_flag=False
+            # rospy.sleep(1)
             self.process()
 
     def set_coverage_start_time(self,msg,element):
@@ -407,8 +410,8 @@ class ASVRobot:
         self.auvs_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2]]
 
     def process(self):
+        rospy.sleep(1)
         self.in_process=True
-
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator.get_auv_goal_id(self.asv_ID)
         self.goal_settled=True

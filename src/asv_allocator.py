@@ -291,6 +291,8 @@ class ASVAllocator:
             self.pub_tracking_control_asv0.publish(msg)
         else:
             self.pub_tracking_control_asv1.publish(msg)
+        
+        self.update_stimulus_matrix()
 
     def update_transmitted_data(self, msg, asv_id):
         self.transmited_data[asv_id]= msg.transmitted_data
@@ -391,14 +393,11 @@ class ASVAllocator:
             if(np.array_equal(self.stimulus_variables, self.zero_stimulus_variables)):
                 msg = Bool()
                 msg.data = False
-            else:
-                msg = Bool()
-                msg.data = True
 
-            if(asv==0):
-                self.pub_tracking_control_asv0.publish(msg)
-            else:
-                self.pub_tracking_control_asv1.publish(msg)
+                if(asv==0):
+                    self.pub_tracking_control_asv0.publish(msg)
+                else:
+                    self.pub_tracking_control_asv1.publish(msg)
 
 
             # normalize the stimulus values
@@ -424,7 +423,6 @@ class ASVAllocator:
                     self.asv1_goal_id = self.asv0_goals[element]     
 
     def get_auv_goal_id(self,asv_id):
-        self.update_stimulus_matrix
         if(asv_id==0):
             return(self.asv0_goal_id)
         else:
@@ -447,7 +445,7 @@ class ASVAllocator:
         for robot in range(self.active_robots):
             scaled_values = np.array([])
             for value in range(self.number_of_stimulus):
-                if(value==1): #distance stimulus: the minor the distance the greater the stimulus value
+                if(value==1 and self.stimulus_variables[robot][2]!=0): #distance stimulus: the minor the distance the greater the stimulus value
                     calc =(values[robot][value]- self.min_value)/(self.max_value-self.min_value)
                     dist = abs(calc-1)
                     scaled_values = np.append(scaled_values,dist)
