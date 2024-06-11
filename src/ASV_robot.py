@@ -309,8 +309,10 @@ class ASVRobot:
         return angle
 
     def update_regular_object_information(self,msg,robot_id):
+        RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,robot_id)
+        normalized_value = (RSSI - (-85)) / ((-45) - (-85))
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + (self.transmission_time*normalized_value + 20)
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
