@@ -8,8 +8,9 @@ import argparse
 import time
 
 # Parameters to set
-bagfile_path = "/home/tintin/MRS_data/test_6/response_threshold/bagfiles"
-# extracted_data_path = "/home/tintin/MRS_data/response_threshold/bagfiles"
+bagfile_path = "/mnt/storage_disk/ARTM/70_objects/ctt"
+# /mnt/storage_disk/ARTM/ctt
+# extracted_data_path = "/home/uib/MRS_data/response_threshold/bagfiles"
 topics_of_interest = [  "/mrs/allocator_communication_latency",
                         "/mrs/asv_travelled_distance",
                         "/mrs/allocator_data_transmited",
@@ -161,8 +162,8 @@ for bag_file in range(len(bag_files)):
 
     print("MEAN LATENCY:"+str(mean_latency))
     print("STD: "+str(std_latency))
-    # transmitted_data = all_transmitted_data[-1]/60
-    # print("data transmitted: "+ str(transmitted_data))
+    transmitted_data = all_transmitted_data[-1]/60
+    print("data transmitted: "+ str(transmitted_data))
     print("distance: "+str(travelled_distance))
 
     # SAVE THE DATA INTO A CSV
@@ -174,7 +175,7 @@ for bag_file in range(len(bag_files)):
     # Create a DataFrame with the new data
     data = {'mean latency': [mean_latency],
             'std_latency': [std_latency],
-            # 'transmitted_data': [transmitted_data],
+            'transmitted_data': [transmitted_data],
             'travelled_distance':[travelled_distance]
     }
 

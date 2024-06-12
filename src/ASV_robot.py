@@ -61,6 +61,7 @@ class ASVRobot:
         self.allocator_handler = ASVAllocator("asv_allocator")
 
         # Initialize some variables
+        self.communication_time = 0
         self.transmission_time = 60
         self.pose = [0,0]
         self.data_transmited = []
@@ -275,6 +276,11 @@ class ASVRobot:
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
         rospy.Timer(rospy.Duration(1.0), self.send_elapsed_time)
         rospy.Timer(rospy.Duration(1.0), self.update_process_time)
+        rospy.Timer(rospy.Duration(1.0), self.AUV_tracking)
+    
+    def AUV_tracking(self,event):
+        if(self.enable_tracking == True):
+            self.tracking()
     
     def update_tracking_status(self,msg):
         if(msg.data==False):
@@ -289,7 +295,7 @@ class ASVRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data_objects.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -309,10 +315,11 @@ class ASVRobot:
         return angle
 
     def update_regular_object_information(self,msg,robot_id):
-        RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,robot_id)
-        normalized_value = (RSSI - (-85)) / ((-45) - (-85))
+        # RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,robot_id)
+        # -57.3 is the RSSI obtained value at 30m (adrift radius)
+        normalized_value = (-57.3 - (-45)) / ((-85) - (-45))
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + (self.transmission_time*normalized_value + 20)
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
@@ -405,8 +412,7 @@ class ASVRobot:
             self.transit_to(self.main_polygon_centroid)
             self.robot_at_center = True
 
-        if(self.enable_tracking == True):
-            self.tracking()
+
     
     def update_acoustic_info(self, msg, robot_agent):
         # tranform from quaternion to euler angles
@@ -509,17 +515,22 @@ class ASVRobot:
         # Tracking area
         if(self.radius > self.adrift_radius):
             self.tracking_strategy()
+            # self.data_transmission()
 
         # Communication area
-        if(self.radius < (self.adrift_radius+2)):
+        # if(self.radius < (self.adrift_radius+2)):
             if(self.set_transmission_init_time==True):
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
-
-            # if(self.storage_disk[self.robot_goal_id]>0):
-            #     print("Robot"+str(self.robot_goal_id)+" Time: "+str(rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id])+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
             
-            if((rospy.Time.now().secs-self.transmission_init_time[self.robot_goal_id]) > self.storage_disk[self.robot_goal_id]):
+            normalized_RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,self.robot_goal_id)
+            self.communication_time = ((rospy.Time.now().secs - self.transmission_init_time [self.robot_goal_id])*normalized_RSSI)
+
+            if(self.storage_disk[self.robot_goal_id]>0):
+                print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+            
+
+            if(self.communication_time > self.storage_disk[self.robot_goal_id]):
                 
                 # publish the amount of transmited data
                 msg = TransmittedData()
@@ -528,13 +539,15 @@ class ASVRobot:
                 msg.transmitted_data = self.data_transmited
                 self.data_transmited_pub.publish(msg)
                 self.communicate()
+                self.communication_time = 0
                 self.process()
 
         # Repulsion area
         if(self.radius <= self.repulsion_radius):
             self.extract_safety_position()
             self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
-      
+    
+       
     def communicate(self):
         # Reset the stored data
         self.storage_disk[self.robot_goal_id] = 0

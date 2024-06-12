@@ -243,7 +243,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data_objects.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -335,10 +335,13 @@ class ASVAllocator:
     
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
-        # set RSSI communication signal 
+        # set RSSI communication signal  
         rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
-        normalized_value = self.normalize(rssi,-85,-40,-40,1,0)
+        # normalized_value = (rssi - (-45)) / ((-85) - (-45))
+        normalized_value = (rssi - (-85)) / ((-45) - (-85)) #inverse
+        # normalized_value=1
         self.comm_signal[auv_id] = normalized_value
+        return(normalized_value)
         
     def normalize(self,value, min_val, max_val, new_min, new_max):
         normalized_value = new_min + (value - min_val) * (new_max - new_min) / (max_val - min_val)
