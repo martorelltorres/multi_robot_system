@@ -8,7 +8,7 @@ import argparse
 import time
 
 # Parameters to set
-bagfile_path = "/mnt/storage_disk/ARTM/70_objects/ctt"
+bagfile_path = "/mnt/storage_disk/ARTM/35_objects/2/RSSI_1"
 # /mnt/storage_disk/ARTM/ctt
 # extracted_data_path = "/home/uib/MRS_data/response_threshold/bagfiles"
 topics_of_interest = [  "/mrs/allocator_communication_latency",
@@ -162,7 +162,7 @@ for bag_file in range(len(bag_files)):
 
     print("MEAN LATENCY:"+str(mean_latency))
     print("STD: "+str(std_latency))
-    transmitted_data = all_transmitted_data[-1]/60
+    transmitted_data = all_transmitted_data[-1]/30
     print("data transmitted: "+ str(transmitted_data))
     print("distance: "+str(travelled_distance))
 

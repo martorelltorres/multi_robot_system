@@ -243,7 +243,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data_objects.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -336,10 +336,10 @@ class ASVAllocator:
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
         # set RSSI communication signal  
-        rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
-        # normalized_value = (rssi - (-45)) / ((-85) - (-45))
-        normalized_value = (rssi - (-85)) / ((-45) - (-85)) #inverse
-        # normalized_value=1
+        rssi = -51,6 -(0.551*distance) -(0.108*distance**2) + (5.01E-03*distance**3) -(6.16E-05*distance**4)
+        # normalized_value = (rssi - (-51.5)) / ((-83) - (-51.5)) #bona comunicacio threshold=0
+        # normalized_value = (rssi - (-83)) / ((-51.5) - (-83)) #bona comunicacio threshold=1
+        normalized_value= 0.1
         self.comm_signal[auv_id] = normalized_value
         return(normalized_value)
         
@@ -374,8 +374,9 @@ class ASVAllocator:
                 self.stimulus_variables[auv][0] = self.acquired_data[auv]
 
             # check if there are data to transmit, if not stop the tracking
-            if(np.array_equal(self.stimulus_variables, self.zero_stimulus_variables)):
+            if(np.array_equal(self.stimulus_variables, [[0],[0],[0],[0],[0],[0]])):
                 # send the order to stop the tracking process
+                print("INNNN")
                 msg = Bool()
                 msg.data = False
                 self.pub_tracking_control_asv0.publish(msg)
@@ -434,11 +435,11 @@ class ASVAllocator:
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
                 if(self.optimization_model==1):
-                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0] #number of stimulus
-                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0] 
+                    self.stimulus_variables[self.removed_robots[element]] = [0] #number of stimulus
+                    self.scaled_senses[self.removed_robots[element]] = [0] 
                 elif(self.optimization_model==2):
-                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0]
-                    self.min_max_scaled[self.removed_robots[element]] = [0,0,0,0]
+                    self.stimulus_variables[self.removed_robots[element]] = [0]
+                    self.scaled_senses[self.removed_robots[element]] = [0]
             self.remove_robot=False  
         
     def initialization(self,robot_id):

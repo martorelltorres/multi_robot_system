@@ -51,7 +51,7 @@ class polygon_division:
             'array7': self.priority_objects
         }
 
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data_objects_70.pickle', 'wb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data_70.pickle', 'wb') as file:
             pickle.dump(data, file)
         print("...process finished")
  
