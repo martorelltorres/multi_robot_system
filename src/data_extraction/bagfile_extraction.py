@@ -208,11 +208,11 @@ class DataExtraction:
     def set_parameters(self):  
         data = self.read_yaml()
         if(self.optimization_model==1):
-            if all(key in data for key in ['optimization_model','alpha', 'gamma']):
+            if all(key in data for key in ['optimization_model','alpha', 'beta']):
                 data['optimization_model'] = 1
                 data['alpha'] = self.combinations[self.simulation_count][0]  
                 # data['beta'] = self.combinations[self.simulation_count][1]  
-                data['gamma'] = self.combinations[self.simulation_count][1]  
+                data['beta'] = self.combinations[self.simulation_count][1]  
 
         if(self.optimization_model==2):
             if all(key in data for key in ['optimization_model','w1','w2','w3','w4']):
@@ -243,10 +243,10 @@ class DataExtraction:
 
     def response_threshold_combinations(self):
         for a in self.alpha:
-            for g in self.gamma:
+            for b in self.beta:
                 # for g in self.gamma:
-                if a + g  == 10:
-                    self.combinations.append([a, g])
+                if a + b  == 10:
+                    self.combinations.append([a, b])
         print("*********************There are "+ str(len(self.combinations))+ " combinations.*********************")
         print(self.combinations)
 

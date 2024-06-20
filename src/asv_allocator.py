@@ -123,7 +123,7 @@ class ASVAllocator:
  
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
-            self.number_of_stimulus=3
+            self.number_of_stimulus=2
         else:
             self.number_of_stimulus=4
 
@@ -158,9 +158,8 @@ class ASVAllocator:
             self.penalty = np.append(self.penalty,0)
             self.communication_latency.append(0)
         
-        robots_sense = np.zeros(1)
+        robots_sense = np.zeros(2)
         self.stimulus_variables = np.tile(robots_sense, (self.number_of_robots, 1))
-
         self.times = np.vstack((self.elapsed_time,self.elapsed_time))
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -335,11 +334,9 @@ class ASVAllocator:
     
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
-        # set RSSI communication signal  
-        rssi = -51,6 -(0.551*distance) -(0.108*distance**2) + (5.01E-03*distance**3) -(6.16E-05*distance**4)
-        # normalized_value = (rssi - (-51.5)) / ((-83) - (-51.5)) #bona comunicacio threshold=0
-        # normalized_value = (rssi - (-83)) / ((-51.5) - (-83)) #bona comunicacio threshold=1
-        normalized_value= 0.1
+        # get RSSI communication signal  
+        rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
+        normalized_value = (rssi +45) / (-85 + 45) 
         self.comm_signal[auv_id] = normalized_value
         return(normalized_value)
         
@@ -372,15 +369,23 @@ class ASVAllocator:
             for auv in range(self.active_robots):
                 # obtain the amount of data to be transferred
                 self.stimulus_variables[auv][0] = self.acquired_data[auv]
+                
+                # get the distance
+                distance = self.get_distance(asv,auv)
+                self.stimulus_variables[auv][1] = distance
+
+                # set the stimulus to 0 if there are no data to transmit
+                if(self.stimulus_variables[auv][0] == 0):
+                    self.stimulus_variables[auv]=[0,0]
 
             # check if there are data to transmit, if not stop the tracking
-            if(np.array_equal(self.stimulus_variables, [[0],[0],[0],[0],[0],[0]])):
+            if(np.array_equal(self.stimulus_variables, [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]])):
                 # send the order to stop the tracking process
                 print("INNNN")
                 msg = Bool()
                 msg.data = False
                 self.pub_tracking_control_asv0.publish(msg)
-                
+                           
             # normalize the stimulus values
             normalized_values = self.min_max_scale()
 
@@ -402,7 +407,7 @@ class ASVAllocator:
         for robot in range(self.active_robots):
             self.get_communication_signal(0,robot)
             scaled_values = normalized_values[robot]
-            s = scaled_values[0]
+            s = self.alpha*scaled_values[0]+self.beta*scaled_values[1]
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
 
         # extract the sorted goal robot IDs in descending order
@@ -415,12 +420,23 @@ class ASVAllocator:
         # get the minimum and maximum values
         self.min_value = np.min(self.stimulus_variables)
         self.max_value = np.max(self.stimulus_variables)
+        for robot in range(self.active_robots):
+            scaled_values = np.array([])
 
-        for auv in range(self.active_robots):
-            scaled_values=[]
-            calc =(self.stimulus_variables[auv][0]- self.min_value)/(self.max_value-self.min_value)
-            scaled_values.append(calc)
-            self.scaled_senses[auv] = scaled_values
+            for value in range(self.number_of_stimulus):
+
+                if(value==1): 
+                    if(self.stimulus_variables[robot][value]==0):
+                        scaled_values = np.append(scaled_values,0)
+                    else: #distance stimulus: the minor the distance the greater the stimulus value
+                        calc =(self.stimulus_variables[robot][value]- self.min_value)/(self.max_value-self.min_value)
+                        dist_value = 1-calc
+                        scaled_values = np.append(scaled_values,dist_value)
+                else:
+                    calc =(self.stimulus_variables[robot][value]- self.min_value)/(self.max_value-self.min_value)
+                    scaled_values = np.append(scaled_values,calc)
+            self.scaled_senses[robot] = scaled_values
+
         return(self.scaled_senses)
     
     def set_dustbin_robots(self,msg):
