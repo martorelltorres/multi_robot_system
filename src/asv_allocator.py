@@ -385,12 +385,13 @@ class ASVAllocator:
                 msg = Bool()
                 msg.data = False
                 self.pub_tracking_control_asv0.publish(msg)
-                           
-            # normalize the stimulus values
-            normalized_values = self.min_max_scale()
 
             print("____________ STIMULUS_________")
             print(self.stimulus_variables)
+
+            # normalize the stimulus values
+            normalized_values = self.min_max_scale(self.stimulus_variables)
+
             print("NORMALIZED VALUES")
             print(normalized_values)
 
@@ -409,6 +410,8 @@ class ASVAllocator:
             scaled_values = normalized_values[robot]
             s = self.alpha*scaled_values[0]+self.beta*scaled_values[1]
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
+        
+        print(self.stimulus)
 
         # extract the sorted goal robot IDs in descending order
         sorted_goal_ids = np.array([])
@@ -416,28 +419,21 @@ class ASVAllocator:
         return(sorted_goal_ids)
     
     # --------------------------------------------------------------------------------------
-    def min_max_scale(self):
-        # get the minimum and maximum values
-        self.min_value = np.min(self.stimulus_variables)
-        self.max_value = np.max(self.stimulus_variables)
-        for robot in range(self.active_robots):
-            scaled_values = np.array([])
+    def min_max_scale(self,values):
 
-            for value in range(self.number_of_stimulus):
+        self.normalized_values = values
+        self.min_value = np.min(values)
+        self.max_value = np.max(values)
 
-                if(value==1): 
-                    if(self.stimulus_variables[robot][value]==0):
-                        scaled_values = np.append(scaled_values,0)
-                    else: #distance stimulus: the minor the distance the greater the stimulus value
-                        calc =(self.stimulus_variables[robot][value]- self.min_value)/(self.max_value-self.min_value)
-                        dist_value = 1-calc
-                        scaled_values = np.append(scaled_values,dist_value)
-                else:
-                    calc =(self.stimulus_variables[robot][value]- self.min_value)/(self.max_value-self.min_value)
-                    scaled_values = np.append(scaled_values,calc)
-            self.scaled_senses[robot] = scaled_values
+        data_column = self.normalized_values[:, 0]
+        self.normalized_values[:, 0] = (data_column - self.min_value) / (self.max_value - self.min_value)
+        self.normalized_values[:, 0] = np.where(data_column == 0, 0, self.normalized_values[:, 0])
 
-        return(self.scaled_senses)
+        distance_column = self.normalized_values[:, 1]
+        self.normalized_values[:, 1] = (self.max_value - distance_column) / (self.max_value - self.min_value)
+        self.normalized_values[:, 1] = np.where(data_column == 0, 0, self.normalized_values[:, 1])
+
+        return(self.normalized_values)
     
     def set_dustbin_robots(self,msg):
          # remove the robot from the dustbin goals
@@ -451,11 +447,11 @@ class ASVAllocator:
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
                 if(self.optimization_model==1):
-                    self.stimulus_variables[self.removed_robots[element]] = [0] #number of stimulus
-                    self.scaled_senses[self.removed_robots[element]] = [0] 
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0] #number of stimulus
+                    self.normalized_values[self.removed_robots[element]] = [0,0] 
                 elif(self.optimization_model==2):
-                    self.stimulus_variables[self.removed_robots[element]] = [0]
-                    self.scaled_senses[self.removed_robots[element]] = [0]
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0]
+                    self.normalized_values[self.removed_robots[element]] = [0,0]
             self.remove_robot=False  
         
     def initialization(self,robot_id):

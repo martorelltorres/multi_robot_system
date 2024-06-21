@@ -170,8 +170,8 @@ class MultiRobotSystem:
             object_point = Point(self.regular_objects[element].x,self.regular_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
-            # if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) ):                             
+            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
+            if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) ):                             
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting REGULAR OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")

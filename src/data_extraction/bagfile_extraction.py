@@ -44,7 +44,7 @@ class DataExtraction:
 
         self.simulation_count = -1
         self.optimization_model = 1
-        self.data_path = '/home/uib/MRS_data/test_6/'
+        self.data_path = '/mnt/storage_disk/ARTM/ARTM_2_stimulis/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
