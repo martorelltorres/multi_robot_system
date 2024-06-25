@@ -8,9 +8,9 @@ import argparse
 import time
 
 # Parameters to set
-bagfile_path = "/mnt/storage_disk/ARTM/35_objects/2/RSSI_1"
+bagfile_path = "/home/tintin/MRS_data/ARTM_2_stimulus/response_threshold/data_stimulus_test"
 # /mnt/storage_disk/ARTM/ctt
-# extracted_data_path = "/home/uib/MRS_data/response_threshold/bagfiles"
+# extracted_data_path = "/home/tintin/MRS_data/response_threshold/bagfiles"
 topics_of_interest = [  "/mrs/allocator_communication_latency",
                         "/mrs/asv_travelled_distance",
                         "/mrs/allocator_data_transmited",
