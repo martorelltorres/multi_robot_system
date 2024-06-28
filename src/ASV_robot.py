@@ -317,7 +317,7 @@ class ASVRobot:
     def update_regular_object_information(self,msg,robot_id):
         # RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,robot_id)
         # -57.3 is the RSSI obtained value at 30m (adrift radius)
-        normalized_value = (-57.3 - (-45)) / ((-85) - (-45))
+        normalized_value = 1-(-57.3 - (-45)) / ((-85) - (-45))
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
         # set the time when the AUV detects an object
@@ -523,7 +523,7 @@ class ASVRobot:
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
             
-            normalized_RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,self.robot_goal_id)
+            normalized_RSSI = self.get_real_RSSI()
             self.communication_time = ((rospy.Time.now().secs - self.transmission_init_time [self.robot_goal_id])*(1-normalized_RSSI))
 
             if(self.storage_disk[self.robot_goal_id]>0):
@@ -545,7 +545,13 @@ class ASVRobot:
                 self.extract_safety_position()
                 self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
     
-       
+    def get_real_RSSI(self):
+        distance = self.allocator_handler.get_distance(self.asv_ID,self.robot_goal_id)
+        # get RSSI communication signal  
+        rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
+        RSSI_value = (rssi +45) / (-85 + 45) 
+        return(RSSI_value)
+
     def communicate(self):
         # Reset the stored data
         self.storage_disk[self.robot_goal_id] = 0
