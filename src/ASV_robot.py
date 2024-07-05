@@ -295,7 +295,7 @@ class ASVRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -318,13 +318,10 @@ class ASVRobot:
         # RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,robot_id)
         # -57.3 is the RSSI obtained value at 30m (adrift radius)
         normalized_value = (-57.3 - (-45)) / ((-85) - (-45))
-        # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
-        # else:
-        #     self.data_gather_time[robot_id]= self.data_gather_time[robot_id]+ rospy.Time.now().secs
 
         # Publish the stored data
         msg = BufferedData()
@@ -335,7 +332,6 @@ class ASVRobot:
         # Start the data gathering when the first robot detects an object
         if(self.in_process == False and self.process_flag==True):
             self.process_flag=False
-            # rospy.sleep(3)
             self.process()
 
     def update_priority_object_information(self,msg,robot_id):
@@ -344,8 +340,6 @@ class ASVRobot:
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
-        # else:
-        #     self.data_gather_time[robot_id]= self.data_gather_time[robot_id]+ rospy.Time.now().secs
            
         # Publish the stored data
         msg = BufferedData()
@@ -356,7 +350,6 @@ class ASVRobot:
         # Start the data gathering when the first robot detects an object
         if(self.in_process == False and self.process_flag==True):
             self.process_flag=False
-            rospy.sleep(3)
             self.process()
 
     def set_coverage_start_time(self,msg,element):
@@ -518,14 +511,21 @@ class ASVRobot:
             self.tracking_strategy()
 
         # Communication area
-
             if(self.set_transmission_init_time==True):
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
             
-            normalized_RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,self.robot_goal_id)
-            self.communication_time = ((rospy.Time.now().secs - self.transmission_init_time [self.robot_goal_id])*(1-normalized_RSSI))
+            # normalized_RSSI = self.get_real_RSSI()
+            distance =  sqrt(self.x_distance**2 + self.y_distance**2 )
+            # get RSSI communication signal  
+            # rssi = -51.6 -(0.551*distance) -(0.108*distance**2) + (5.01E-03*distance**3) -(6.16E-05*distance**4)
+            rssi= -44.5 -0.497*distance + 2.7E-03*distance**2 -6.79E-06*distance**3 + 6.37E-09*distance**4
 
+            normalized_RSSI = (rssi - (-83)) / ((-44.5) - (-83)) #bona comunicacio threshold=1
+            print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
+
+            self.communication_time = ((rospy.Time.now().secs - self.transmission_init_time [self.robot_goal_id])*(normalized_RSSI))
+            
             if(self.storage_disk[self.robot_goal_id]>0):
                 print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
             
@@ -544,7 +544,13 @@ class ASVRobot:
             if(self.radius <= self.repulsion_radius):
                 self.extract_safety_position()
                 self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
-    
+
+    def get_real_RSSI(self):
+        distance = self.allocator_handler.get_distance(0,self.robot_goal_id)
+        # get RSSI communication signal  
+        rssi = -51.6 -(0.551*distance) -(0.108*distance**2) + (5.01E-03*distance**3) -(6.16E-05*distance**4)
+        RSSI_value = (rssi - (-51.5)) / ((-83) - (-51.5)) #bona comunicacio threshold=1
+        return(RSSI_value)
        
     def communicate(self):
         # Reset the stored data

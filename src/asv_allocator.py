@@ -243,7 +243,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/area_partition_data.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -332,16 +332,23 @@ class ASVAllocator:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
-    
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
-        # set RSSI communication signal  
-        rssi = -51,6 -(0.551*distance) -(0.108*distance**2) + (5.01E-03*distance**3) -(6.16E-05*distance**4)
-        # normalized_value = (rssi - (-51.5)) / ((-83) - (-51.5)) #bona comunicacio threshold=0
-        # normalized_value = (rssi - (-83)) / ((-51.5) - (-83)) #bona comunicacio threshold=1
-        normalized_value= 0.1
+        # set RSSI communication signal
+        rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
+        normalized_value = (rssi - (-85)) / ((-52) - (-85)) #bona comunicacio threshold=0 [-55,-85]-->[0,1] (REGULAR)
         self.comm_signal[auv_id] = normalized_value
         return(normalized_value)
+
+    # def get_communication_signal(self,asv_id,auv_id):
+    #     distance = self.get_distance(asv_id,auv_id)
+    #     # set RSSI communication signal  
+    #     rssi= -44.5 -0.497*distance + 2.7E-03*distance**2 -6.79E-06*distance**3 + 6.37E-09*distance**4
+    #     # normalized_value = (rssi - (-44.5)) / ((-83) - (-44.5)) #bona comunicacio threshold=1 [-55,-85]-->[1,0] (INVERSE)
+    #     # normalized_value = (rssi - (-83)) / ((-44.5) - (-83)) #bona comunicacio threshold=0 [-55,-85]-->[0,1] (REGULAR)
+    #     normalized_value= 0.1
+    #     self.comm_signal[auv_id] = normalized_value
+    #     return(normalized_value)
         
     def normalize(self,value, min_val, max_val, new_min, new_max):
         normalized_value = new_min + (value - min_val) * (new_max - new_min) / (max_val - min_val)
@@ -405,6 +412,7 @@ class ASVAllocator:
             s = scaled_values[0]
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
 
+        print("ARTM output: "+str(self.stimulus))
         # extract the sorted goal robot IDs in descending order
         sorted_goal_ids = np.array([])
         sorted_goal_ids = np.argsort(self.stimulus)[::-1] 
