@@ -8,7 +8,7 @@ import argparse
 import time
 
 # Parameters to set
-bagfile_path = "/home/tintin/MRS_data/threshold_analysis/ctt_1"
+bagfile_path = "/home/tintin/MRS_data/threshold_analysis/RSSI"
 # /mnt/storage_disk/ARTM/ctt
 # extracted_data_path = "/home/tintin/MRS_data/response_threshold/bagfiles"
 topics_of_interest = [  "/mrs/allocator_communication_latency",
@@ -109,17 +109,17 @@ for bag_file in range(len(bag_files)):
             transmitted_data_time_values.append(transmitted_data_time)
             all_transmitted_data.append(data_R1+data_R2+data_R3+data_R4+data_R5+data_R6)
 
-        if "/mrs/allocator_data_buffered" in topic:
-            buffer_R1, buffer_R2, buffer_R3,buffer_R4, buffer_R5, buffer_R6 = getattr(msg, 'storage', (0, 0, 0, 0, 0, 0))
-            buffered_data_R1_values.append(buffer_R1)
-            buffered_data_R2_values.append(buffer_R2)
-            buffered_data_R3_values.append(buffer_R3)
-            buffered_data_R4_values.append(buffer_R4)
-            buffered_data_R5_values.append(buffer_R5)
-            buffered_data_R6_values.append(buffer_R6)
-            all_buffered_data.append(buffer_R1+buffer_R2+buffer_R3+buffer_R4+buffer_R5+buffer_R6)
-            buffered_data_time = msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 - start_time
-            buffered_data_time_values.append(buffered_data_time)
+        # if "/mrs/allocator_data_buffered" in topic:
+        #     buffer_R1, buffer_R2, buffer_R3,buffer_R4, buffer_R5, buffer_R6 = getattr(msg, 'storage', (0, 0, 0, 0, 0, 0))
+        #     buffered_data_R1_values.append(buffer_R1)
+        #     buffered_data_R2_values.append(buffer_R2)
+        #     buffered_data_R3_values.append(buffer_R3)
+        #     buffered_data_R4_values.append(buffer_R4)
+        #     buffered_data_R5_values.append(buffer_R5)
+        #     buffered_data_R6_values.append(buffer_R6)
+        #     all_buffered_data.append(buffer_R1+buffer_R2+buffer_R3+buffer_R4+buffer_R5+buffer_R6)
+        #     buffered_data_time = msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 - start_time
+        #     buffered_data_time_values.append(buffered_data_time)
             
 
     # Close the bag file after extraction

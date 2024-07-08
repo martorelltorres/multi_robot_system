@@ -271,13 +271,13 @@ class ASVAllocator:
     def update_acquired_data(self, msg, asv_id):
         # self.data[asv_id] = msg.storage
         # OJO self.acquired_data = np.minimum(self.data[0],self.data[1])
-        self.acquired_data = msg.storage
+        self.acquired_data = msg.data_stimulus
 
         # print("UPDATE BUFFERED DATA")
         # Publish information
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
-        msg.storage = self.acquired_data
+        msg.data_stimulus = self.acquired_data
         self.buffered_data_pub.publish(msg)
 
         # enable tracking
@@ -332,12 +332,19 @@ class ASVAllocator:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
+
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
         # set RSSI communication signal
-        rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
-        normalized_value = (rssi - (-85)) / ((-52) - (-85)) #bona comunicacio threshold=0 [-55,-85]-->[0,1] (REGULAR)
-        self.comm_signal[auv_id] = normalized_value
+        # rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
+        rssi = -9.18 -3.95*distance + 0.0845*distance**2 -8.25E-04*distance**3 + 3E-06*distance**4
+        if (rssi>-50):
+            normalized_value = 0.3
+        else:
+            # normalized_value = (rssi - (-85)) / ((-52) - (-85)) #bona comunicacio threshold=1 [-55,-85]-->[1,0] (INVERSE)
+            normalized_value = (rssi - (-52)) / ((-85) - (-52)) #bona comunicacio threshold=0 [-55,-85]-->[1,0] (REGULAR)
+
+            self.comm_signal[auv_id] = normalized_value
         return(normalized_value)
 
     # def get_communication_signal(self,asv_id,auv_id):

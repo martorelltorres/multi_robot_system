@@ -40,9 +40,9 @@ class ASVRobot:
         self.asv_ID = self.get_param('~asv_ID',0)
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
-        self.repulsion_radius = self.get_param("repulsion_radius",20)
-        self.adrift_radius = self.get_param("adrift_radius",30)
-        self.tracking_radius = self.get_param("tracking_radius",50)
+        self.repulsion_radius = self.get_param("repulsion_radius",10)
+        self.adrift_radius = self.get_param("adrift_radius",20)
+        self.tracking_radius = self.get_param("tracking_radius",40)
         self.dutsbin_timer = self.get_param("dutsbin_timer",1)
 
         self.alpha = self.get_param("alpha",1)
@@ -87,6 +87,7 @@ class ASVRobot:
         self.transmission_init_time = []
         self.time_init = []
         self.storage_disk =[]
+        self.data_stimulus =[]
         self.max_value = 1
         self.min_value = 0
         self.comm_signal = []
@@ -133,6 +134,7 @@ class ASVRobot:
             self.robots_id = self.robots_id.astype(int) #convert float to int type
             self.comm_signal.append(0)
             self.storage_disk.append(0)
+            self.data_stimulus.append(0)
             self.data_transmited.append(0)
             self.time_init.append(0)
             self.distance.append(0)
@@ -319,6 +321,7 @@ class ASVRobot:
         # -57.3 is the RSSI obtained value at 30m (adrift radius)
         normalized_value = (-57.3 - (-45)) / ((-85) - (-45))
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
+        self.data_stimulus[robot_id] = self.data_stimulus[robot_id] + self.transmission_time
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
@@ -327,6 +330,7 @@ class ASVRobot:
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
+        msg.data_stimulus = self.data_stimulus
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
@@ -336,7 +340,8 @@ class ASVRobot:
 
     def update_priority_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
-        self.storage_disk[robot_id] = self.storage_disk[robot_id] + (self.transmission_time*1.5)
+        self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
+        self.data_stimulus[robot_id] = self.data_stimulus[robot_id] + (self.transmission_time*1.5)
         # set the time when the AUV detects an object
         if (self.communication_latency[robot_id]==0):
             self.data_gather_time[robot_id]= rospy.Time.now().secs 
@@ -345,6 +350,7 @@ class ASVRobot:
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
+        msg.data_stimulus = self.data_stimulus
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
@@ -518,13 +524,17 @@ class ASVRobot:
             # normalized_RSSI = self.get_real_RSSI()
             distance =  sqrt(self.x_distance**2 + self.y_distance**2 )
             # get RSSI communication signal  
-            # rssi = -51.6 -(0.551*distance) -(0.108*distance**2) + (5.01E-03*distance**3) -(6.16E-05*distance**4)
-            rssi= -44.5 -0.497*distance + 2.7E-03*distance**2 -6.79E-06*distance**3 + 6.37E-09*distance**4
+            # rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
+            rssi = -9.18 -3.95*distance + 0.0845*distance**2 -8.25E-04*distance**3 + 3E-06*distance**4
+            if (rssi>-50):
+                normalized_RSSI = 0.3
+            else:
+                normalized_RSSI = (rssi - (-85)) / ((-52) - (-85))
+                # print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
 
-            normalized_RSSI = (rssi - (-83)) / ((-44.5) - (-83)) #bona comunicacio threshold=1
-            print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
+            self.communication_time =  self.communication_time + normalized_RSSI   
 
-            self.communication_time = ((rospy.Time.now().secs - self.transmission_init_time [self.robot_goal_id])*(normalized_RSSI))
+            # self.communication_time = ((rospy.Time.now().secs - self.transmission_init_time [self.robot_goal_id])*(normalized_RSSI))
             
             if(self.storage_disk[self.robot_goal_id]>0):
                 print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
@@ -555,6 +565,7 @@ class ASVRobot:
     def communicate(self):
         # Reset the stored data
         self.storage_disk[self.robot_goal_id] = 0
+        self.data_stimulus[self.robot_goal_id] = 0
         reset_id = self.robot_goal_id
         msg = Int16()
         msg.data = reset_id 
@@ -563,6 +574,7 @@ class ASVRobot:
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
+        msg.data_stimulus = self.data_stimulus
         self.buffered_data_pub.publish(msg)
 
         # for auv in range(self.number_of_robots):

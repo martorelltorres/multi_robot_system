@@ -50,7 +50,8 @@ class MultiRobotSystem:
         self.coverage_start = []
         self.final_status = 99999
         self.system_init = False
-        self.object_detections = 0
+        self.regular_object_detections = 0
+        self.priority_object_detections = 0
         self.robot_initialization = np.array([])
         self.explored_regular_objects_index = []
         self.explored_priority_objects_index = []
@@ -125,7 +126,7 @@ class MultiRobotSystem:
 
         rospy.Timer(rospy.Duration(1), self.print_polygon)
         rospy.Timer(rospy.Duration(1), self.regular_object_detection)
-        # rospy.Timer(rospy.Duration(1), self.priority_object_detection)
+        rospy.Timer(rospy.Duration(1), self.priority_object_detection)
 
         self.initialization()
     
@@ -149,7 +150,7 @@ class MultiRobotSystem:
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting a PRIORITY OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")
-                self.object_detections = self.object_detections+1
+                self.priority_object_detections = self.priority_object_detections+1
                 # add the object to the list of explored objects in order to avoid a reexploration
                 self.explored_priority_objects_index[self.robot_ID] = np.append(self.explored_priority_objects_index[self.robot_ID],element)
 
@@ -158,7 +159,8 @@ class MultiRobotSystem:
                 msg.header.stamp = rospy.Time.now()
                 msg.north = object_point.x
                 msg.east = object_point.y
-                msg.detections = self.object_detections
+                msg.priority_detections = self.priority_object_detections
+                msg.regular_detections = self.regular_object_detections
                 self.priority_object_info_pub.publish(msg)
         
     def regular_object_detection(self,event):
@@ -170,12 +172,12 @@ class MultiRobotSystem:
             object_point = Point(self.regular_objects[element].x,self.regular_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
-            if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element)):                             
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
+            # if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element)):                             
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting REGULAR OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")
-                self.object_detections = self.object_detections+1
+                self.regular_object_detections = self.regular_object_detections+1
                 # add the object to the list of explored objects in order to avoid a reexploration
                 self.explored_regular_objects_index[self.robot_ID] = np.append(self.explored_regular_objects_index[self.robot_ID],element)
 
@@ -184,7 +186,8 @@ class MultiRobotSystem:
                 msg.header.stamp = rospy.Time.now()
                 msg.north = object_point.x
                 msg.east = object_point.y
-                msg.detections = self.object_detections
+                msg.regular_detections = self.regular_object_detections
+                msg.priority_detections = self.priority_object_detections
                 self.regular_object_info_pub.publish(msg)
 
     def return_to_exploration_path(self):
