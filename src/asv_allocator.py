@@ -47,6 +47,7 @@ class ASVAllocator:
         self.alpha = self.get_param("alpha",1)
         self.beta = self.get_param("beta",1)
         self.gamma = self.get_param("gamma",1)
+        self.test = self.get_param("test",0)
         self.n = self.get_param("n",1)
         self.optimization_model = self.get_param("optimization_model",1)
         self.w1 = self.get_param("w1",1)
@@ -280,12 +281,14 @@ class ASVAllocator:
         msg.data_stimulus = self.acquired_data
         self.buffered_data_pub.publish(msg)
 
+        self.update_stimulus_matrix()
+        
         # enable tracking
         msg = Bool()
         msg.data = True
         self.pub_tracking_control_asv0.publish(msg)
 
-        self.update_stimulus_matrix()
+        
     
     def update_transmitted_data(self, msg, asv_id):
         self.transmited_data[asv_id]= msg.transmitted_data
@@ -336,26 +339,21 @@ class ASVAllocator:
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
         # set RSSI communication signal
-        # rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
         rssi = -9.18 -3.95*distance + 0.0845*distance**2 -8.25E-04*distance**3 + 3E-06*distance**4
         if (rssi>-50):
-            normalized_value = 0.3
+            normalized_value = 0.2
         else:
-            # normalized_value = (rssi - (-85)) / ((-52) - (-85)) #bona comunicacio threshold=1 [-55,-85]-->[1,0] (INVERSE)
-            normalized_value = (rssi - (-52)) / ((-85) - (-52)) #bona comunicacio threshold=0 [-55,-85]-->[1,0] (REGULAR)
+            if(self.test==0):   #RSSI
+                normalized_value = (rssi - (-85)) / ((-52) - (-85)) #bona comunicacio threshold=1 [-55,-85]-->[1,0] (INVERSE)
+            elif(self.test==1): #RSSI_inv
+                normalized_value = (rssi - (-52)) / ((-85) - (-52)) #bona comunicacio threshold=0 [-55,-85]-->[1,0] (REGULAR)
+            elif(self.test==2): # RSSI=0.1
+                normalized_value = 0.1
+            else:               #RSSI=1
+                normalized_value = 1
 
             self.comm_signal[auv_id] = normalized_value
         return(normalized_value)
-
-    # def get_communication_signal(self,asv_id,auv_id):
-    #     distance = self.get_distance(asv_id,auv_id)
-    #     # set RSSI communication signal  
-    #     rssi= -44.5 -0.497*distance + 2.7E-03*distance**2 -6.79E-06*distance**3 + 6.37E-09*distance**4
-    #     # normalized_value = (rssi - (-44.5)) / ((-83) - (-44.5)) #bona comunicacio threshold=1 [-55,-85]-->[1,0] (INVERSE)
-    #     # normalized_value = (rssi - (-83)) / ((-44.5) - (-83)) #bona comunicacio threshold=0 [-55,-85]-->[0,1] (REGULAR)
-    #     normalized_value= 0.1
-    #     self.comm_signal[auv_id] = normalized_value
-    #     return(normalized_value)
         
     def normalize(self,value, min_val, max_val, new_min, new_max):
         normalized_value = new_min + (value - min_val) * (new_max - new_min) / (max_val - min_val)
@@ -386,22 +384,21 @@ class ASVAllocator:
             for auv in range(self.active_robots):
                 # obtain the amount of data to be transferred
                 self.stimulus_variables[auv][0] = self.acquired_data[auv]
-
-            # check if there are data to transmit, if not stop the tracking
-            if(np.array_equal(self.stimulus_variables, [[0],[0],[0],[0],[0],[0]])):
-                # send the order to stop the tracking process
-                print("INNNN")
-                msg = Bool()
-                msg.data = False
-                self.pub_tracking_control_asv0.publish(msg)
-                
+               
             # normalize the stimulus values
             normalized_values = self.min_max_scale()
 
-            print("____________ STIMULUS_________")
-            print(self.stimulus_variables)
-            print("NORMALIZED VALUES")
-            print(normalized_values)
+        # check if there are data to transmit, if not stop the tracking
+        if(np.array_equal(self.stimulus_variables, [[0],[0],[0],[0],[0],[0]])):
+            # send the order to stop the tracking process
+            msg = Bool()
+            msg.data = False
+            self.pub_tracking_control_asv0.publish(msg)
+
+        print("____________ STIMULUS_________")
+        print(self.stimulus_variables)
+        print("NORMALIZED VALUES")
+        print(normalized_values)
 
         # obtain the sorted goal id's for each ASV using ARTM
         self.sorted_ids = self.ARTM(normalized_values)

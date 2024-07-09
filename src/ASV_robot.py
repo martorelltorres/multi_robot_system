@@ -317,9 +317,6 @@ class ASVRobot:
         return angle
 
     def update_regular_object_information(self,msg,robot_id):
-        # RSSI = self.allocator_handler.get_communication_signal(self.asv_ID,robot_id)
-        # -57.3 is the RSSI obtained value at 30m (adrift radius)
-        normalized_value = (-57.3 - (-45)) / ((-85) - (-45))
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
         self.data_stimulus[robot_id] = self.data_stimulus[robot_id] + self.transmission_time
         # set the time when the AUV detects an object
@@ -426,7 +423,7 @@ class ASVRobot:
         self.robot_goal_id = self.allocator_handler.get_goal_AUV()
         self.goal_settled = True
         print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
-        self.enable_tracking = True
+        # self.enable_tracking = True
 
         # publish the goal_id
         msg = Data()

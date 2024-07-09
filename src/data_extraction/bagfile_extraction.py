@@ -36,6 +36,7 @@ class DataExtraction:
         self.w2 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
         self.w3 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
         self.w4 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+        self.combinations = [0,1,2,3]
 
         # self.combinations = [[10,0,0],[0,0,10],[5,0,5],[7,0,3],[3,0,7],[8,0,2],[2,0,8],[6,0,4],[4,0,6]]
 
@@ -44,7 +45,7 @@ class DataExtraction:
 
         self.simulation_count = -1
         self.optimization_model = 1
-        self.data_path = '/home/tintin/MRS_data/test_6/'
+        self.data_path = '/home/tintin/MRS_data/threshold_analysis/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
@@ -97,7 +98,7 @@ class DataExtraction:
         self.process()
     
     def process(self):
-        self.combinations = []
+        # self.combinations = []
         self.create_data_folders()
         self.simulation_count = self.simulation_count+1
 
@@ -106,7 +107,7 @@ class DataExtraction:
             self.bagfiles_folder = self.RTM_bagfiles
             self.params_folder = self.RTM_params
             self.csv_folder = self.RTM_csv
-            self.response_threshold_combinations()
+            # self.response_threshold_combinations()
 
         elif(self.optimization_model == 2):
             self.bagfiles_folder = self.owa_bagfiles
@@ -208,11 +209,14 @@ class DataExtraction:
     def set_parameters(self):  
         data = self.read_yaml()
         if(self.optimization_model==1):
-            if all(key in data for key in ['optimization_model','alpha', 'gamma']):
+            # if all(key in data for key in ['optimization_model','alpha', 'gamma']):
+            #     data['optimization_model'] = 1
+            #     data['alpha'] = self.combinations[self.simulation_count][0]  
+            #     # data['beta'] = self.combinations[self.simulation_count][1]  
+            #     data['gamma'] = self.combinations[self.simulation_count][1]  
+            if all(key in data for key in ['optimization_model','test']):
                 data['optimization_model'] = 1
-                data['alpha'] = self.combinations[self.simulation_count][0]  
-                # data['beta'] = self.combinations[self.simulation_count][1]  
-                data['gamma'] = self.combinations[self.simulation_count][1]  
+                data['test'] = self.combinations[self.simulation_count]  
 
         if(self.optimization_model==2):
             if all(key in data for key in ['optimization_model','w1','w2','w3','w4']):

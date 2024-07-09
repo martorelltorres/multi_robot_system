@@ -14,7 +14,8 @@ bagfile_path = "/home/tintin/MRS_data/threshold_analysis/RSSI"
 topics_of_interest = [  "/mrs/allocator_communication_latency",
                         "/mrs/asv_travelled_distance",
                         "/mrs/allocator_data_transmited",
-                        "/mrs/allocator_data_buffered"]
+                        "/mrs/allocator_data_buffered",
+                        ]
 latency_1_mean = 0
 latency_2_mean = 0
 latency_3_mean = 0

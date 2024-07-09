@@ -129,11 +129,7 @@ class MultiRobotSystem:
         rospy.Timer(rospy.Duration(1), self.priority_object_detection)
 
         self.initialization()
-    
-    def update_objects(self,msg):
-        print("Updating object_points array")
-        self.regular_objects = msg.data
-    
+        
     def object_exploration_flag(self,msg):
         self.object_exploration = msg.data
     
