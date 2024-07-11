@@ -41,8 +41,8 @@ class ASVRobot:
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.repulsion_radius = self.get_param("repulsion_radius",10)
-        self.adrift_radius = self.get_param("adrift_radius",15)
-        self.tracking_radius = self.get_param("tracking_radius",60)
+        self.adrift_radius = self.get_param("adrift_radius",17)
+        self.tracking_radius = self.get_param("tracking_radius",20)
         self.dutsbin_timer = self.get_param("dutsbin_timer",1)
 
         self.alpha = self.get_param("alpha",1)
@@ -330,9 +330,6 @@ class ASVRobot:
         self.regular_objects_info[robot_id]= self.regular_objects_info[robot_id]+1
         # set the time when the AUV detects a regular object
         self.regular_data_gather_time[robot_id].append(rospy.Time.now().secs)
-        # if (self.regular_communication_latency[robot_id]==0):
-        #     self.regular_data_gather_time[robot_id]= rospy.Time.now().secs 
-        #     print("REGULAR COMM LATENCY: "+str(self.regular_data_gather_time))
 
         # Publish the buffered data
         msg = BufferedData()
@@ -530,9 +527,14 @@ class ASVRobot:
             
             distance =  sqrt(self.x_distance**2 + self.y_distance**2 )
             # get RSSI communication signal  
-            rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
-            normalized_RSSI = (rssi - (-85)) / ((-52) - (-85))
-            # print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
+            rssi=-44.5 + -0.497*distance + 2.7E-03*distance**2 + -6.79E-06*distance**3 + 6.37E-09*distance**4
+            
+            if (rssi>-50):
+                normalized_RSSI = 0.2
+            else:
+                normalized_RSSI = (rssi - (-85)) / ((-52) - (-85))
+                
+            print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
             self.communication_time =  self.communication_time + normalized_RSSI        
 
             if(self.storage_disk[self.robot_goal_id]>0):
@@ -596,23 +598,17 @@ class ASVRobot:
                     msg.transmitted_regular_objects = self.regular_objects_transmitted
                     msg.transmitted_priority_objects = self.priority_objects_transmitted
                     self.data_transmited_pub.publish(msg)
-
-                    # update the gather time if ther are more object to transmit from the same goal_AUV
-                    # if(self.priority_objects_info[self.robot_goal_id]>0):
-                    #     self.priority_data_gather_time[self.robot_goal_id]= rospy.Time.now().secs
-                    # elif(self.regular_objects_info[self.robot_goal_id]>0):
-                    #     self.regular_data_gather_time[self.robot_goal_id]= rospy.Time.now().secs
-
                     self.communicate()
+                    self.process()
 
-            if(self.communication_time > self.storage_disk[self.robot_goal_id]):
-                self.communication_time = 0
-                self.process()
+            # if(self.communication_time > self.storage_disk[self.robot_goal_id]):
+            #     self.communication_time = 0
+                
 
-            # Repulsion area
-            if(self.radius <= self.repulsion_radius):
-                self.extract_safety_position()
-                self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
+        # Repulsion area
+        if(self.radius <= self.repulsion_radius):
+            self.extract_safety_position()
+            self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
       
     def communicate(self):
         if(self.priority_objects_info[self.robot_goal_id]==0 and self.regular_objects_info[self.robot_goal_id]==0 ):

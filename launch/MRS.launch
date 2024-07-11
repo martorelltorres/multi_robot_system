@@ -52,7 +52,7 @@
       <param name="section_action" value="/$(arg robot_0)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_0)/pilot/world_section_req/result"/>
       <param name="robot_bvr_topic" value="/$(arg robot_0)/controller/body_velocity_req"/>
-      <param name="navigation_depth" value="0"/>
+      <param name="navigation_depth" value="5"/>
       <remap from="/task_monitoring" to="$(arg robot_0)/task_monitoring"/>
     </node>
 
@@ -64,7 +64,7 @@
       <param name="section_action" value="/$(arg robot_1)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_1)/pilot/world_section_req/result"/>
       <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
-      <param name="navigation_depth" value="0"/>
+      <param name="navigation_depth" value="7"/>
       <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
     </node>
 
@@ -76,7 +76,7 @@
       <param name="section_action" value="/$(arg robot_2)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_2)/pilot/world_section_req/result"/>
       <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
-      <param name="navigation_depth" value="0"/>
+      <param name="navigation_depth" value="9"/>
       <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/>
     </node>
 
@@ -88,7 +88,7 @@
       <param name="section_action" value="/$(arg robot_3)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_3)/pilot/world_section_req/result"/>
       <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
-      <param name="navigation_depth" value="0"/>
+      <param name="navigation_depth" value="11"/>
       <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
     </node>
 
@@ -100,7 +100,7 @@
       <param name="section_action" value="/$(arg robot_4)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_4)/pilot/world_section_req/result"/>
       <param name="robot_bvr_topic" value="/$(arg robot_4)/controller/body_velocity_req"/>
-      <param name="navigation_depth" value="0"/>
+      <param name="navigation_depth" value="13"/>
       <remap from="/task_monitoring" to="$(arg robot_4)/task_monitoring"/>
     </node>
 
@@ -112,7 +112,7 @@
       <param name="section_action" value="/$(arg robot_5)/pilot/world_section_req"/>
       <param name="section_result" value="/$(arg robot_5)/pilot/world_section_req/result"/>
       <param name="robot_bvr_topic" value="/$(arg robot_5)/controller/body_velocity_req"/>
-      <param name="navigation_depth" value="0"/>
+      <param name="navigation_depth" value="15"/>
       <remap from="/task_monitoring" to="$(arg robot_5)/task_monitoring"/>
     </node>
 

@@ -343,7 +343,7 @@ class ASVAllocator:
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
         # set RSSI communication signal
-        rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
+        rssi=-44.5 + -0.497*distance + 2.7E-03*distance**2 + -6.79E-06*distance**3 + 6.37E-09*distance**4
         if (rssi>-50):
             normalized_value = 0.2
         else:
