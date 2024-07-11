@@ -16,7 +16,7 @@ from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
 from cola2_msgs.msg import  NavSts
-from multi_robot_system.msg import CoverageStartTime, ExplorationUpdate, ObjectInformation
+from multi_robot_system.msg import CoverageStartTime, ExplorationUpdate, RegularObjectInformation,PriorityObjectInformation,BufferedData    
 from std_msgs.msg import Int16, Bool
 
 #import classes
@@ -112,15 +112,15 @@ class MultiRobotSystem:
                                 queue_size=1)
         
         self.regular_object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_regular_object_info",
-                        ObjectInformation,
+                        RegularObjectInformation,
                         queue_size=1)
         
         self.priority_object_info_pub = rospy.Publisher("robot"+str(self.robot_ID)+"_priority_object_info",
-                        ObjectInformation,
+                        PriorityObjectInformation,
                         queue_size=1)
 
         self.pub_explored_object = rospy.Publisher('explored_object', PointStamped, queue_size=2)
-        
+       
         
         self.read_area_info()   
 
@@ -142,7 +142,8 @@ class MultiRobotSystem:
             object_point = Point(self.priority_objects[element].x,self.priority_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):                
+            if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element)):                             
+            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):                
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting a PRIORITY OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")
@@ -151,14 +152,13 @@ class MultiRobotSystem:
                 self.explored_priority_objects_index[self.robot_ID] = np.append(self.explored_priority_objects_index[self.robot_ID],element)
 
                 # advise the object information
-                msg = ObjectInformation()
+                msg = PriorityObjectInformation()
                 msg.header.stamp = rospy.Time.now()
                 msg.north = object_point.x
                 msg.east = object_point.y
                 msg.priority_detections = self.priority_object_detections
-                msg.regular_detections = self.regular_object_detections
                 self.priority_object_info_pub.publish(msg)
-        
+      
     def regular_object_detection(self,event):
         # check the distance from the AUV to the different objects
         for element in range(len(self.regular_objects)):
@@ -168,8 +168,8 @@ class MultiRobotSystem:
             object_point = Point(self.regular_objects[element].x,self.regular_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
-            # if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element)):                             
+            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
+            if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element)):                             
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting REGULAR OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")
@@ -178,12 +178,11 @@ class MultiRobotSystem:
                 self.explored_regular_objects_index[self.robot_ID] = np.append(self.explored_regular_objects_index[self.robot_ID],element)
 
                 # advise the object information
-                msg = ObjectInformation()
+                msg = RegularObjectInformation()
                 msg.header.stamp = rospy.Time.now()
                 msg.north = object_point.x
                 msg.east = object_point.y
                 msg.regular_detections = self.regular_object_detections
-                msg.priority_detections = self.priority_object_detections
                 self.regular_object_info_pub.publish(msg)
 
     def return_to_exploration_path(self):
@@ -218,7 +217,7 @@ class MultiRobotSystem:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 

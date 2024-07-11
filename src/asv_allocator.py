@@ -244,7 +244,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -270,35 +270,39 @@ class ASVAllocator:
 
     #  --------------------- ACQUIRED DATA ---------------------------------
     def update_acquired_data(self, msg, asv_id):
-        # self.data[asv_id] = msg.storage
-        # OJO self.acquired_data = np.minimum(self.data[0],self.data[1])
         self.acquired_data = msg.data_stimulus
-
-        # print("UPDATE BUFFERED DATA")
+        regular = msg.buffered_regular_objects
+        priority = msg.buffered_priority_objects
+        storage = msg.storage
         # Publish information
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
+        msg.storage = storage
         msg.data_stimulus = self.acquired_data
+        msg.buffered_regular_objects = regular
+        msg.buffered_priority_objects = priority
         self.buffered_data_pub.publish(msg)
-
         self.update_stimulus_matrix()
         
         # enable tracking
         msg = Bool()
         msg.data = True
         self.pub_tracking_control_asv0.publish(msg)
-
-        
+      
     
     def update_transmitted_data(self, msg, asv_id):
         self.transmited_data[asv_id]= msg.transmitted_data
         # OJO data = np.maximum(self.transmited_data[0],self.transmited_data[1])
         data = self.transmited_data[0]
+        regular= msg.transmitted_regular_objects
+        priority=msg.transmitted_priority_objects
 
         # Publish information
         msg = TransmittedData()
         msg.header.stamp = rospy.Time.now()
         msg.transmitted_data = data
+        msg.transmitted_regular_objects = regular
+        msg.transmitted_priority_objects = priority
         self.data_transmited_pub.publish(msg)
     
     def update_communication_latency(self, msg, asv_id):
@@ -339,7 +343,7 @@ class ASVAllocator:
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
         # set RSSI communication signal
-        rssi = -9.18 -3.95*distance + 0.0845*distance**2 -8.25E-04*distance**3 + 3E-06*distance**4
+        rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
         if (rssi>-50):
             normalized_value = 0.2
         else:
@@ -414,7 +418,16 @@ class ASVAllocator:
             self.get_communication_signal(0,robot)
             scaled_values = normalized_values[robot]
             s = scaled_values[0]
-            self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
+
+            # handle special cases
+            if np.isnan(s) or np.isinf(s) or np.isnan(self.comm_signal[robot]) or np.isinf(self.comm_signal[robot]):
+                self.stimulus[robot] = 0  
+            else:
+                denominator = s**self.n + self.comm_signal[robot]**self.n
+                if denominator == 0:
+                    self.stimulus[robot] = 0  
+                else:
+                    self.stimulus[robot] = s**self.n / denominator
 
         print("ARTM output: "+str(self.stimulus))
         # extract the sorted goal robot IDs in descending order

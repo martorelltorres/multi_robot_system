@@ -62,7 +62,8 @@ add_message_files(
   TravelledDistance.msg
   ExplorationUpdate.msg
   PartitionedPolygonInfo.msg
-  ObjectInformation.msg
+  RegularObjectInformation.msg
+  PriorityObjectInformation.msg
   BufferedData.msg
   TransmittedData.msg
   NED.msg

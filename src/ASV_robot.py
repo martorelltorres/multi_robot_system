@@ -16,7 +16,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,AcousticData,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,ObjectInformation,Communication,Distances, Data
+from multi_robot_system.msg import CoverageStartTime,AcousticData,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,RegularObjectInformation,PriorityObjectInformation,Communication,Distances, Data
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Quaternion,PointStamped
 
@@ -41,8 +41,8 @@ class ASVRobot:
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.repulsion_radius = self.get_param("repulsion_radius",10)
-        self.adrift_radius = self.get_param("adrift_radius",20)
-        self.tracking_radius = self.get_param("tracking_radius",40)
+        self.adrift_radius = self.get_param("adrift_radius",15)
+        self.tracking_radius = self.get_param("tracking_radius",60)
         self.dutsbin_timer = self.get_param("dutsbin_timer",1)
 
         self.alpha = self.get_param("alpha",1)
@@ -65,6 +65,10 @@ class ASVRobot:
         self.transmission_time = 30
         self.pose = [0,0]
         self.data_transmited = []
+        self.regular_objects_info = np.array([[0],[0],[0],[0],[0],[0]])
+        self.priority_objects_info = np.array([[0],[0],[0],[0],[0],[0]])
+        self.regular_objects_transmitted = np.array([[0],[0],[0],[0],[0],[0]])
+        self.priority_objects_transmitted = np.array([[0],[0],[0],[0],[0],[0]])
         self.in_process = False
         self.get_information = False
         self.start_to_publish = False
@@ -100,10 +104,12 @@ class ASVRobot:
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
         self.removed_robots= []
-        self.communication_latency = []
+        self.regular_communication_latency = []
+        self.priority_communication_latency = []
         self.first_time = True
         self.travelled_distance = 0
-        self.data_gather_time = []
+        self.regular_data_gather_time = []
+        self.priority_data_gather_time = []
         self.start_recording_time = []
         self.start_data_gathering = False
         self.set_transmission_init_time=False
@@ -139,12 +145,14 @@ class ASVRobot:
             self.time_init.append(0)
             self.distance.append(0)
             self.start_recording_time.append(0)
-            self.data_gather_time.append(0)
+            self.regular_data_gather_time.append([])
+            self.priority_data_gather_time.append([])
             self.elapsed_time.append(0)
             self.transmission_init_time.append(0)    
             self.battery_charge.append(0)
             self.stimulus = np.append(self.stimulus,0)
-            self.communication_latency.append(0)
+            self.regular_communication_latency.append(0)
+            self.priority_communication_latency.append(0)
         
         for stimulus in range(4):
             self.robots_sense = np.append(self.robots_sense,0)
@@ -163,13 +171,13 @@ class ASVRobot:
                             queue_size=1)
        
             rospy.Subscriber("/mrs/robot"+str(robot_id)+"_regular_object_info",
-                                ObjectInformation,
+                                RegularObjectInformation,
                                 self.update_regular_object_information,
                                 robot_id,
                                 queue_size=1)
             
             rospy.Subscriber("/mrs/robot"+str(robot_id)+"_priority_object_info",
-                                ObjectInformation,
+                                PriorityObjectInformation,
                                 self.update_priority_object_information,
                                 robot_id,
                                 queue_size=1)
@@ -229,11 +237,7 @@ class ASVRobot:
         self.coverage_init_pub = rospy.Publisher('coverage_init',
                                             Bool,
                                             queue_size=1)
-               
-        self.reset_storage_pub = rospy.Publisher('reset_storage_disk',
-                                        Int16,
-                                        queue_size=1)
-               
+                            
         # ------------------------- DATA EXTRACTION TOPICS--------------------------------------------------
         self.goal_id_pub = rospy.Publisher('goal_id',
                                         Data,
@@ -247,9 +251,13 @@ class ASVRobot:
                                 TransmittedData,
                                 queue_size=1)
                
-        self.communication_latency_pub = rospy.Publisher('asv'+str(self.asv_ID)+'_communication_latency',
+        self.regular_communication_latency_pub = rospy.Publisher('asv'+str(self.asv_ID)+'_regular_communication_latency',
                                 CommunicationLatency,
                                 queue_size=2)
+        
+        self.priority_communication_latency_pub = rospy.Publisher('asv'+str(self.asv_ID)+'_priority_communication_latency',
+                        CommunicationLatency,
+                        queue_size=2)
         
         self.travelled_distance_pub = rospy.Publisher('asv_travelled_distance',
                                 TravelledDistance,
@@ -297,7 +305,7 @@ class ASVRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -319,15 +327,20 @@ class ASVRobot:
     def update_regular_object_information(self,msg,robot_id):
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
         self.data_stimulus[robot_id] = self.data_stimulus[robot_id] + self.transmission_time
-        # set the time when the AUV detects an object
-        if (self.communication_latency[robot_id]==0):
-            self.data_gather_time[robot_id]= rospy.Time.now().secs 
+        self.regular_objects_info[robot_id]= self.regular_objects_info[robot_id]+1
+        # set the time when the AUV detects a regular object
+        self.regular_data_gather_time[robot_id].append(rospy.Time.now().secs)
+        # if (self.regular_communication_latency[robot_id]==0):
+        #     self.regular_data_gather_time[robot_id]= rospy.Time.now().secs 
+        #     print("REGULAR COMM LATENCY: "+str(self.regular_data_gather_time))
 
-        # Publish the stored data
+        # Publish the buffered data
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
         msg.data_stimulus = self.data_stimulus
+        msg.buffered_regular_objects = self.regular_objects_info
+        msg.buffered_priority_objects = self.priority_objects_info
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
@@ -338,16 +351,18 @@ class ASVRobot:
     def update_priority_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
         self.storage_disk[robot_id] = self.storage_disk[robot_id] + self.transmission_time
-        self.data_stimulus[robot_id] = self.data_stimulus[robot_id] + (self.transmission_time*1.5)
-        # set the time when the AUV detects an object
-        if (self.communication_latency[robot_id]==0):
-            self.data_gather_time[robot_id]= rospy.Time.now().secs 
-           
-        # Publish the stored data
+        self.data_stimulus[robot_id] = self.data_stimulus[robot_id] + (self.transmission_time*10)
+        self.priority_objects_info[robot_id]= self.priority_objects_info[robot_id] +1
+        # set the time when the AUV detects a priority object
+        self.priority_data_gather_time[robot_id].append(rospy.Time.now().secs) 
+
+        # Publish the buffered data
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
         msg.data_stimulus = self.data_stimulus
+        msg.buffered_regular_objects = self.regular_objects_info
+        msg.buffered_priority_objects = self.priority_objects_info
         self.buffered_data_pub.publish(msg)
 
         # Start the data gathering when the first robot detects an object
@@ -404,11 +419,9 @@ class ASVRobot:
         self.asv_yaw = msg.orientation.yaw
         self.asv_init = True
 
-        if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
-            self.transit_to(self.main_polygon_centroid)
-            self.robot_at_center = True
-
-
+        # if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
+        #     self.transit_to(self.main_polygon_centroid)
+        #     self.robot_at_center = True
     
     def update_acoustic_info(self, msg, robot_agent):
         # tranform from quaternion to euler angles
@@ -422,8 +435,9 @@ class ASVRobot:
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator_handler.get_goal_AUV()
         self.goal_settled = True
+        rospy.sleep(1)
         print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
-        # self.enable_tracking = True
+        self.enable_tracking = True
 
         # publish the goal_id
         msg = Data()
@@ -457,8 +471,8 @@ class ASVRobot:
     def check_dustbin_robot(self):
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            if(self.asv_init == True):
-                self.goto_central_area()
+            # if(self.asv_init == True):
+            #     self.goto_central_area()
                   
     def goto_central_area(self):
         self.transit_to(self.main_polygon_centroid)
@@ -509,41 +523,89 @@ class ASVRobot:
             self.radius = sqrt((self.x_distance)**2 + (self.y_distance)**2)
             self.initialized = True
 
-            # Tracking area
-            # if(self.radius > self.adrift_radius):
             self.tracking_strategy()
-
-        # Communication area
             if(self.set_transmission_init_time==True):
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
             
-            # normalized_RSSI = self.get_real_RSSI()
             distance =  sqrt(self.x_distance**2 + self.y_distance**2 )
             # get RSSI communication signal  
-            # rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
-            rssi = -9.18 -3.95*distance + 0.0845*distance**2 -8.25E-04*distance**3 + 3E-06*distance**4
-            if (rssi>-50):
-                normalized_RSSI = 0.3
-            else:
-                normalized_RSSI = (rssi - (-85)) / ((-52) - (-85))
-                # print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
+            rssi=-52 -1.64*distance + 0.0372*distance**2 -3.96E-04*distance**3 + 1.57E-06*distance**4
+            normalized_RSSI = (rssi - (-85)) / ((-52) - (-85))
+            # print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
+            self.communication_time =  self.communication_time + normalized_RSSI        
 
-            self.communication_time =  self.communication_time + normalized_RSSI   
-
-            # self.communication_time = ((rospy.Time.now().secs - self.transmission_init_time [self.robot_goal_id])*(normalized_RSSI))
-            
             if(self.storage_disk[self.robot_goal_id]>0):
                 print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
-            
+                
+                if(self.communication_time > self.transmission_time):
+                    # ----------- update buffered data --------------
+                    msg = BufferedData()
+                    msg.header.stamp = rospy.Time.now()
+                    # Update the storage_disk and reset the communication_time
+                    self.storage_disk[self.robot_goal_id] = self.storage_disk[self.robot_goal_id]-self.transmission_time
+                    self.communication_time=0
+                    msg.storage = self.storage_disk
+                               
+                    # if there are priority objects to transmit
+                    # -----------------priority objects-----------------
+                    if(self.priority_objects_info[self.robot_goal_id]>0):
+                        self.priority_objects_info[self.robot_goal_id] = self.priority_objects_info[self.robot_goal_id]-1
+                        self.data_stimulus[self.robot_goal_id] = self.data_stimulus[self.robot_goal_id]-(self.transmission_time*10)
+                        msg.buffered_priority_objects = self.priority_objects_info
+                        msg.buffered_regular_objects = self.regular_objects_info
+                        self.priority_objects_transmitted[self.robot_goal_id] = self.priority_objects_transmitted[self.robot_goal_id]+1
+                        
+                        # publish the priority_communication_latency
+                        self.priority_communication_latency[self.robot_goal_id] =  rospy.Time.now().secs - self.priority_data_gather_time[self.robot_goal_id][0]  
+                        self.priority_data_gather_time[self.robot_goal_id].pop(0)
+                        comm_msg = CommunicationLatency()
+                        comm_msg.header.stamp = rospy.Time.now()
+                        comm_msg.comm_latency = self.priority_communication_latency 
+                        self.priority_communication_latency_pub.publish(comm_msg)
+                        # reset latency variables
+                        self.priority_communication_latency[self.robot_goal_id]= 0
+
+                    # -----------------regular objects-----------------    
+                    elif(self.regular_objects_info[self.robot_goal_id]>0):
+                        self.regular_objects_info[self.robot_goal_id] = self.regular_objects_info[self.robot_goal_id]-1
+                        self.data_stimulus[self.robot_goal_id] = self.data_stimulus[self.robot_goal_id]-self.transmission_time
+                        msg.buffered_regular_objects = self.regular_objects_info
+                        msg.buffered_priority_objects = self.priority_objects_info
+                        self.regular_objects_transmitted[self.robot_goal_id] = self.regular_objects_transmitted[self.robot_goal_id]+1
+                        
+                        # publish the regular communication latency
+                        self.regular_communication_latency[self.robot_goal_id] =  rospy.Time.now().secs - self.regular_data_gather_time[self.robot_goal_id][0]
+                        self.regular_data_gather_time[self.robot_goal_id].pop(0)
+                        comm_msg = CommunicationLatency()
+                        comm_msg.header.stamp = rospy.Time.now()
+                        comm_msg.comm_latency = self.regular_communication_latency 
+                        self.regular_communication_latency_pub.publish(comm_msg)  
+                        # reset latency variables
+                        self.regular_communication_latency[self.robot_goal_id]= 0
+
+
+                    msg.data_stimulus = self.data_stimulus
+                    self.buffered_data_pub.publish(msg)
+
+                    # -------------- update transmited data --------------
+                    msg = TransmittedData()
+                    msg.header.stamp = rospy.Time.now()
+                    self.data_transmited[self.robot_goal_id] = self.data_transmited[self.robot_goal_id] + self.transmission_time
+                    msg.transmitted_data = self.data_transmited                      
+                    msg.transmitted_regular_objects = self.regular_objects_transmitted
+                    msg.transmitted_priority_objects = self.priority_objects_transmitted
+                    self.data_transmited_pub.publish(msg)
+
+                    # update the gather time if ther are more object to transmit from the same goal_AUV
+                    # if(self.priority_objects_info[self.robot_goal_id]>0):
+                    #     self.priority_data_gather_time[self.robot_goal_id]= rospy.Time.now().secs
+                    # elif(self.regular_objects_info[self.robot_goal_id]>0):
+                    #     self.regular_data_gather_time[self.robot_goal_id]= rospy.Time.now().secs
+
+                    self.communicate()
+
             if(self.communication_time > self.storage_disk[self.robot_goal_id]):
-                # publish the amount of transmited data
-                msg = TransmittedData()
-                msg.header.stamp = rospy.Time.now()
-                self.data_transmited[self.robot_goal_id] = self.data_transmited[self.robot_goal_id] + self.storage_disk[self.robot_goal_id]
-                msg.transmitted_data = self.data_transmited
-                self.data_transmited_pub.publish(msg)
-                self.communicate()
                 self.communication_time = 0
                 self.process()
 
@@ -551,49 +613,13 @@ class ASVRobot:
             if(self.radius <= self.repulsion_radius):
                 self.extract_safety_position()
                 self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
-
-    def get_real_RSSI(self):
-        distance = self.allocator_handler.get_distance(0,self.robot_goal_id)
-        # get RSSI communication signal  
-        rssi = -51.6 -(0.551*distance) -(0.108*distance**2) + (5.01E-03*distance**3) -(6.16E-05*distance**4)
-        RSSI_value = (rssi - (-51.5)) / ((-83) - (-51.5)) #bona comunicacio threshold=1
-        return(RSSI_value)
-       
+      
     def communicate(self):
-        # Reset the stored data
-        self.storage_disk[self.robot_goal_id] = 0
-        self.data_stimulus[self.robot_goal_id] = 0
-        reset_id = self.robot_goal_id
-        msg = Int16()
-        msg.data = reset_id 
-        self.reset_storage_pub.publish(msg)
-
-        msg = BufferedData()
-        msg.header.stamp = rospy.Time.now()
-        msg.storage = self.storage_disk
-        msg.data_stimulus = self.data_stimulus
-        self.buffered_data_pub.publish(msg)
-
-        # for auv in range(self.number_of_robots):
-        # if the AUV has not detected an object
-        if(self.data_gather_time[self.robot_goal_id]==0):
-            self.communication_latency[self.robot_goal_id] = 0
-        else:
-            self.communication_latency[self.robot_goal_id] =  rospy.Time.now().secs - self.data_gather_time[self.robot_goal_id]
-        
-        # publish the communication latency
-        msg = CommunicationLatency()
-        msg.header.stamp = rospy.Time.now()
-        msg.comm_latency = self.communication_latency 
-        self.communication_latency_pub.publish(msg)
-
-        self.communication_latency[self.robot_goal_id]= 0
-        self.data_gather_time[self.robot_goal_id] = 0
-
-        # When the data transmission ends reset the elapsed_time
-        self.elapsed_time[self.robot_goal_id] = 0
-        self.set_elapsed_time(self.robot_goal_id)
-        self.in_process = False
+        if(self.priority_objects_info[self.robot_goal_id]==0 and self.regular_objects_info[self.robot_goal_id]==0 ):
+            # When the data transmission ends reset the elapsed_time
+            self.elapsed_time[self.robot_goal_id] = 0
+            self.set_elapsed_time(self.robot_goal_id)
+            self.in_process = False
 
     def set_elapsed_time(self,robot_id):
         self.start_recording_time[robot_id] = rospy.Time.now().secs
