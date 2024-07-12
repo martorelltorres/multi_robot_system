@@ -305,7 +305,7 @@ class ASVRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -416,9 +416,9 @@ class ASVRobot:
         self.asv_yaw = msg.orientation.yaw
         self.asv_init = True
 
-        # if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
-        #     self.transit_to(self.main_polygon_centroid)
-        #     self.robot_at_center = True
+        if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
+            self.transit_to(self.main_polygon_centroid)
+            self.robot_at_center = True
     
     def update_acoustic_info(self, msg, robot_agent):
         # tranform from quaternion to euler angles
@@ -468,8 +468,8 @@ class ASVRobot:
     def check_dustbin_robot(self):
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            # if(self.asv_init == True):
-            #     self.goto_central_area()
+            if(self.asv_init == True):
+                self.goto_central_area()
                   
     def goto_central_area(self):
         self.transit_to(self.main_polygon_centroid)
@@ -534,11 +534,11 @@ class ASVRobot:
             else:
                 normalized_RSSI = (rssi - (-85)) / ((-52) - (-85))
                 
-            print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
+            # print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
             self.communication_time =  self.communication_time + normalized_RSSI        
 
             if(self.storage_disk[self.robot_goal_id]>0):
-                print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+                # print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
                 
                 if(self.communication_time > self.transmission_time):
                     # ----------- update buffered data --------------

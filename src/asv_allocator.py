@@ -46,8 +46,8 @@ class ASVAllocator:
         self.dutsbin_timer = self.get_param("dutsbin_timer",1)
         self.alpha = self.get_param("alpha",1)
         self.beta = self.get_param("beta",1)
-        self.gamma = self.get_param("gamma",1)
-        self.test = self.get_param("test",0)
+        # self.gamma = self.get_param("gamma",1)
+        # self.test = self.get_param("test",0)
         self.n = self.get_param("n",1)
         self.optimization_model = self.get_param("optimization_model",1)
         self.w1 = self.get_param("w1",1)
@@ -92,7 +92,7 @@ class ASVAllocator:
         self.scaled_senses = []
         self.explorer_robots = []
         self.senses = []
-        self.number_of_stimulus = 4
+        self.number_of_stimulus = 2
         self.active_robots = self.number_of_robots
         self.robot_to_remove = 999
         self.removed_robots= []
@@ -124,7 +124,7 @@ class ASVAllocator:
  
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
-            self.number_of_stimulus=3
+            self.number_of_stimulus=2
         else:
             self.number_of_stimulus=4
 
@@ -159,7 +159,7 @@ class ASVAllocator:
             self.penalty = np.append(self.penalty,0)
             self.communication_latency.append(0)
         
-        robots_sense = np.zeros(1)
+        robots_sense = np.zeros(2)
         self.stimulus_variables = np.tile(robots_sense, (self.number_of_robots, 1))
 
         self.times = np.vstack((self.elapsed_time,self.elapsed_time))
@@ -244,7 +244,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -339,24 +339,13 @@ class ASVAllocator:
         # check the system initialization
         if(self.system_init == False):
             self.initialization(robot_agent) 
-
+    
     def get_communication_signal(self,asv_id,auv_id):
         distance = self.get_distance(asv_id,auv_id)
-        # set RSSI communication signal
-        rssi=-44.5 + -0.497*distance + 2.7E-03*distance**2 + -6.79E-06*distance**3 + 6.37E-09*distance**4
-        if (rssi>-50):
-            normalized_value = 0.2
-        else:
-            if(self.test==0):   #RSSI
-                normalized_value = (rssi - (-85)) / ((-52) - (-85)) #bona comunicacio threshold=1 [-55,-85]-->[1,0] (INVERSE)
-            elif(self.test==1): #RSSI_inv
-                normalized_value = (rssi - (-52)) / ((-85) - (-52)) #bona comunicacio threshold=0 [-55,-85]-->[1,0] (REGULAR)
-            elif(self.test==2): # RSSI=0.1
-                normalized_value = 0.1
-            else:               #RSSI=1
-                normalized_value = 1
-
-            self.comm_signal[auv_id] = normalized_value
+        # get RSSI communication signal  
+        rssi = -47.537 -(0.368*distance) + (0.00132*distance**2) - (0.0000016*distance**3)
+        normalized_value = (rssi +45) / (-85 + 45) 
+        self.comm_signal[auv_id] = normalized_value
         return(normalized_value)
         
     def normalize(self,value, min_val, max_val, new_min, new_max):
@@ -388,21 +377,31 @@ class ASVAllocator:
             for auv in range(self.active_robots):
                 # obtain the amount of data to be transferred
                 self.stimulus_variables[auv][0] = self.acquired_data[auv]
-               
+                
+                # get the distance
+                distance = self.get_distance(asv,auv)
+                self.stimulus_variables[auv][1] = distance
+
+                # set the stimulus to 0 if there are no data to transmit
+                if(self.stimulus_variables[auv][0] == 0):
+                    self.stimulus_variables[auv]=[0,0]
+
+            # check if there are data to transmit, if not stop the tracking
+            if(np.array_equal(self.stimulus_variables, [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]])):
+                # send the order to stop the tracking process
+                print("INNNN")
+                msg = Bool()
+                msg.data = False
+                self.pub_tracking_control_asv0.publish(msg)
+
+            print("____________ STIMULUS_________")
+            print(self.stimulus_variables)
+
             # normalize the stimulus values
-            normalized_values = self.min_max_scale()
+            normalized_values = self.min_max_scale(self.stimulus_variables)
 
-        # check if there are data to transmit, if not stop the tracking
-        if(np.array_equal(self.stimulus_variables, [[0],[0],[0],[0],[0],[0]])):
-            # send the order to stop the tracking process
-            msg = Bool()
-            msg.data = False
-            self.pub_tracking_control_asv0.publish(msg)
-
-        print("____________ STIMULUS_________")
-        print(self.stimulus_variables)
-        print("NORMALIZED VALUES")
-        print(normalized_values)
+            print("NORMALIZED VALUES")
+            print(normalized_values)
 
         # obtain the sorted goal id's for each ASV using ARTM
         self.sorted_ids = self.ARTM(normalized_values)
@@ -417,36 +416,32 @@ class ASVAllocator:
         for robot in range(self.active_robots):
             self.get_communication_signal(0,robot)
             scaled_values = normalized_values[robot]
-            s = scaled_values[0]
+            s = self.alpha*scaled_values[0]+self.beta*scaled_values[1]
+            self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
+        
+        print(self.stimulus)
 
-            # handle special cases
-            if np.isnan(s) or np.isinf(s) or np.isnan(self.comm_signal[robot]) or np.isinf(self.comm_signal[robot]):
-                self.stimulus[robot] = 0  
-            else:
-                denominator = s**self.n + self.comm_signal[robot]**self.n
-                if denominator == 0:
-                    self.stimulus[robot] = 0  
-                else:
-                    self.stimulus[robot] = s**self.n / denominator
-
-        print("ARTM output: "+str(self.stimulus))
         # extract the sorted goal robot IDs in descending order
         sorted_goal_ids = np.array([])
         sorted_goal_ids = np.argsort(self.stimulus)[::-1] 
         return(sorted_goal_ids)
     
     # --------------------------------------------------------------------------------------
-    def min_max_scale(self):
-        # get the minimum and maximum values
-        self.min_value = np.min(self.stimulus_variables)
-        self.max_value = np.max(self.stimulus_variables)
+    def min_max_scale(self,values):
 
-        for auv in range(self.active_robots):
-            scaled_values=[]
-            calc =(self.stimulus_variables[auv][0]- self.min_value)/(self.max_value-self.min_value)
-            scaled_values.append(calc)
-            self.scaled_senses[auv] = scaled_values
-        return(self.scaled_senses)
+        self.normalized_values = values
+        self.min_value = np.min(values)
+        self.max_value = np.max(values)
+
+        data_column = self.normalized_values[:, 0]
+        self.normalized_values[:, 0] = (data_column - self.min_value) / (self.max_value - self.min_value)
+        self.normalized_values[:, 0] = np.where(data_column == 0, 0, self.normalized_values[:, 0])
+
+        distance_column = self.normalized_values[:, 1]
+        self.normalized_values[:, 1] = (self.max_value - distance_column) / (self.max_value - self.min_value)
+        self.normalized_values[:, 1] = np.where(data_column == 0, 0, self.normalized_values[:, 1])
+
+        return(self.normalized_values)
     
     def set_dustbin_robots(self,msg):
          # remove the robot from the dustbin goals
@@ -460,11 +455,11 @@ class ASVAllocator:
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
                 if(self.optimization_model==1):
-                    self.stimulus_variables[self.removed_robots[element]] = [0] #number of stimulus
-                    self.scaled_senses[self.removed_robots[element]] = [0] 
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0] #number of stimulus
+                    self.normalized_values[self.removed_robots[element]] = [0,0] 
                 elif(self.optimization_model==2):
-                    self.stimulus_variables[self.removed_robots[element]] = [0]
-                    self.scaled_senses[self.removed_robots[element]] = [0]
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0]
+                    self.normalized_values[self.removed_robots[element]] = [0,0]
             self.remove_robot=False  
         
     def initialization(self,robot_id):

@@ -142,8 +142,8 @@ class MultiRobotSystem:
             object_point = Point(self.priority_objects[element].x,self.priority_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element)):                             
-            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):                
+            # if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element)):                             
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):                
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting a PRIORITY OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")
@@ -168,8 +168,8 @@ class MultiRobotSystem:
             object_point = Point(self.regular_objects[element].x,self.regular_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
-            if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element)):                             
+            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
+            # if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element)):                             
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting REGULAR OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")
@@ -217,7 +217,7 @@ class MultiRobotSystem:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 

@@ -8,7 +8,7 @@ Panels:
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
       Splitter Ratio: 0.5
-    Tree Height: 843
+    Tree Height: 441
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -182,7 +182,7 @@ Visualization Manager:
       Marker Topic: /robot6/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        {}
+        /robot6/pilot: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -1161,25 +1161,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 10.905268669128418
+      Distance: 303.86492919921875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -6.668144702911377
-        Y: -3.4197003841400146
-        Z: 0.00010694468073779717
+        X: -106.7502212524414
+        Y: -21.111923217773438
+        Z: 0.00010498463234398514
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: true
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5347974896430969
+      Pitch: 1.5697963237762451
       Target Frame: turbot/base_link
       Value: XYOrbit (rviz)
-      Yaw: 2.7672243118286133
+      Yaw: 3.0872254371643066
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875
@@ -1212,4 +1212,4 @@ Window Geometry:
     collapsed: true
   Width: 960
   X: 960
-  Y: 0
+  Y: 27

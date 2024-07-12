@@ -17,9 +17,9 @@ from multi_robot_system.msg import PartitionedPolygonInfo
 class polygon_division:
 
     def __init__(self, name):
-        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
-        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/missions/230622123222_andratx_middle.xml") 
+        # self.exploration_area = get_param(self,'exploration_area',"/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
+        # self.exploration_area = get_param(self,'exploration_area',"/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
+        self.exploration_area = get_param(self,'exploration_area',"/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/missions/230622123222_andratx_middle.xml") 
         self.number_of_robots = get_param(self,'number_of_robots',6)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = 39.543330
@@ -51,7 +51,7 @@ class polygon_division:
             'array7': self.priority_objects
         }
 
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'wb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'wb') as file:
             pickle.dump(data, file)
         print("...process finished")
  
