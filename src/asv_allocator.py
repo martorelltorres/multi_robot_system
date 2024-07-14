@@ -244,7 +244,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -316,6 +316,7 @@ class ASVAllocator:
         msg.comm_latency = latency
         self.communication_latency_pub.publish(msg)
     
+    #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     def update_acoustic_info(self, msg, robot_agent):
         self.current_time[robot_agent] = rospy.Time.now().nsecs

@@ -217,7 +217,7 @@ class MultiRobotSystem:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
