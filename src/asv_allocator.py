@@ -244,7 +244,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -316,7 +316,6 @@ class ASVAllocator:
         msg.comm_latency = latency
         self.communication_latency_pub.publish(msg)
     
-    #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     #  ----------------------- POSITION & COMMUNICATION SIGNAL -----------------------------------
     def update_acoustic_info(self, msg, robot_agent):
         self.current_time[robot_agent] = rospy.Time.now().nsecs
@@ -390,7 +389,7 @@ class ASVAllocator:
             # check if there are data to transmit, if not stop the tracking
             if(np.array_equal(self.stimulus_variables, [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]])):
                 # send the order to stop the tracking process
-                print("INNNN")
+                # print("INNNN")
                 msg = Bool()
                 msg.data = False
                 self.pub_tracking_control_asv0.publish(msg)
@@ -420,8 +419,6 @@ class ASVAllocator:
             s = self.alpha*scaled_values[0]+self.beta*scaled_values[1]
             self.stimulus[robot] = s**self.n/(s**self.n + self.comm_signal[robot]**self.n)
         
-        print(self.stimulus)
-
         # extract the sorted goal robot IDs in descending order
         sorted_goal_ids = np.array([])
         sorted_goal_ids = np.argsort(self.stimulus)[::-1] 

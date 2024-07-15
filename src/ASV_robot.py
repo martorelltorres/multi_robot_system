@@ -294,10 +294,10 @@ class ASVRobot:
     
     def update_tracking_status(self,msg):
         if(msg.data==False):
-            print("ASV"+str(self.asv_ID)+" STOPPED!")
+            # print("ASV"+str(self.asv_ID)+" STOPPED!")
             self.enable_tracking = False
         elif(msg.data==True):
-            print("ASV"+str(self.asv_ID)+" RUNNING!")
+            # print("ASV"+str(self.asv_ID)+" RUNNING!")
             self.enable_tracking = True
 
     def update_process_time(self,event):
@@ -305,7 +305,7 @@ class ASVRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -523,7 +523,6 @@ class ASVRobot:
             if(self.set_transmission_init_time==True):
                 self.transmission_init_time [self.robot_goal_id] = rospy.Time.now().secs
                 self.set_transmission_init_time=False
-            print(self.transmission_init_time)
             
             # get RSSI communication signal
             distance =  sqrt(self.x_distance**2 + self.y_distance**2 )  
@@ -539,7 +538,7 @@ class ASVRobot:
             self.communication_time =  self.communication_time + normalized_RSSI
             if(self.storage_disk[self.robot_goal_id]>0):
                  
-                print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+                # print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
                 
                 if(self.communication_time > self.transmission_time):
                     # ----------- update buffered data --------------
