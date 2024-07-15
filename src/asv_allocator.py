@@ -126,7 +126,7 @@ class ASVAllocator:
         if(self.optimization_model==1):
             self.number_of_stimulus=2
         else:
-            self.number_of_stimulus=4
+            self.number_of_stimulus=3
 
         self.read_area_info()
 
@@ -403,14 +403,13 @@ class ASVAllocator:
             print("NORMALIZED VALUES")
             print(normalized_values)
 
-        # obtain the sorted goal id's for each ASV using ARTM
-        self.sorted_ids = self.ARTM(normalized_values)
-
-        print("__________SORTED IDs__________")
-        print(self.sorted_ids)
+        # obtain the sorted goal id's for each ASV using OWA
+        self.OWA()
+        # print("__________SORTED IDs__________")
+        # print(self.robot_goal_id)
           
     def get_goal_AUV(self):
-        return(self.sorted_ids[0])
+        return(self.robot_goal_id)
            
     def ARTM(self,normalized_values):
         for robot in range(self.active_robots):
@@ -490,32 +489,42 @@ class ASVAllocator:
                 self.pub_priority_object.publish(priority_object)
     
     def OWA(self):
-        self.number_of_stimulus = 4 #Set to 4 in order to take into account the comm signal RSSI 
+        self.number_of_stimulus = 3 #data distance and RSSI 
         OWA_inputs = self.min_max_scale(self.stimulus_variables)
+        comm = np.array([])
+        OWA_inputs_out = np.array([])
+
+        #Iteram a traves de la sortida de min_max_scale per afegir l'estimul de RSSI
+        for element in range(self.number_of_robots):
+            signal = self.get_communication_signal(0,element)
+            comm=np.append(comm,signal)
+
+        OWA_inputs_out = np.column_stack((OWA_inputs,comm))
+
+        for i in range(len(OWA_inputs)):
+            if np.all(OWA_inputs[i] == 0):
+                OWA_inputs_out[i, 2] = 0
+
         self.owa=[0,0,0,0,0,0]
-        print("________________________________")
-        print(OWA_inputs)
 
         # get the weights and set the values for w1,w2,w3,w4 where w1>=w2>=w3>=w4
-        OWA_weights =np.array([self.w1,self.w2,self.w3,self.w4])
+        OWA_weights =np.array([self.w1,self.w2,self.w3])
         OWA_weights_sorted = np.sort(OWA_weights)
-        self.w1 = OWA_weights_sorted[3]
-        self.w2 = OWA_weights_sorted[2]
-        self.w3 = OWA_weights_sorted[1]
-        self.w4 = OWA_weights_sorted[0]
+        self.w1 = OWA_weights_sorted[2]
+        self.w2 = OWA_weights_sorted[1]
+        self.w3 = OWA_weights_sorted[0]
 
         for robot in range(self.number_of_robots):
-            OWA_input = np.sort(OWA_inputs[robot]) 
-            self.max_element = OWA_input[3]
-            self.middle1 = OWA_input[2]
-            self.middle2 = OWA_input[1]
-            self.min_element= OWA_input[0]
-            self.owa[robot]= self.max_element*self.w1 + self.middle1*self.w2 + self.middle2*self.w3 + self.min_element*self.w4
+            sorted_values = np.sort(OWA_inputs_out[robot]) 
+            self.max_element = sorted_values[2]
+            self.middle1 = sorted_values[1]
+            self.min_element= sorted_values[0]
+            self.owa[robot]= self.max_element*self.w1 + self.middle1*self.w2 + self.min_element*self.w3
 
-        print("The owas are: "+str(self.owa))
+        # print("The owas are: "+str(self.owa))
         max_owa = max(self.owa)
         self.robot_goal_id = self.owa.index(max_owa)
-        print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
+        # print("The maximum owa:"+str(max_owa)+" belongs to robot"+str(self.robot_goal_id))
 
     def get_param(self, param_name, default = None):
         if rospy.has_param(param_name):

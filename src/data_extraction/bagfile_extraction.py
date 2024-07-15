@@ -31,10 +31,9 @@ class DataExtraction:
         self.beta = [0,1,2,3,4,5,6,7,8,9,10]
         self.n = [0,2,4,6,8,10]
 
-        self.w1 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-        self.w2 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-        self.w3 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-        self.w4 = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+        self.w1 = [0,0.2,0.4,0.6,0.8,1]
+        self.w2 = [0,0.2,0.4,0.6,0.8,1]
+        self.w3 = [0,0.2,0.4,0.6,0.8,1]
         # self.combinations = [0,1,2]
 
         # self.combinations = [[10,0,0],[0,0,10],[5,0,5],[7,0,3],[3,0,7],[8,0,2],[2,0,8],[6,0,4],[4,0,6]]
@@ -43,8 +42,8 @@ class DataExtraction:
         self.w_range = [i / 10 for i in range(11)]
 
         self.simulation_count = -1
-        self.optimization_model = 1
-        self.data_path = '/home/tintin/MRS_data/new_architecture/test_3/'
+        self.optimization_model = 2
+        self.data_path = '/home/tintin/MRS_data/new_architecture/test_4/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
@@ -114,7 +113,7 @@ class DataExtraction:
             self.bagfiles_folder = self.owa_bagfiles
             self.params_folder = self.owa_params
             self.csv_folder = self.owa_csv
-            # self.owas_combinations()
+            self.owas_combinations()
 
         # Set the simulation parameters
         self.set_parameters()
@@ -220,13 +219,12 @@ class DataExtraction:
             #     data['test'] = self.combinations[self.simulation_count]  
 
         if(self.optimization_model==2):
-            if all(key in data for key in ['optimization_model','w1','w2','w3','w4']):
+            if all(key in data for key in ['optimization_model','w1','w2','w3']):
                 # for combination in self.combinations:
                 data['optimization_model'] = 2
                 data['w1'] = self.combinations[self.simulation_count][0]  
                 data['w2'] = self.combinations[self.simulation_count][1] 
                 data['w3'] = self.combinations[self.simulation_count][2]
-                data['w4'] = self.combinations[self.simulation_count][3]   
 
         self.write_yaml(data)
 
@@ -240,11 +238,11 @@ class DataExtraction:
             yaml.dump(data, yaml_file)
 
     def owas_combinations(self):
-        # values = combinations_with_replacement(self.w1, 4)
-        values = product(self.w1,self.w2,self.w3,self.w4)
-        self.combinations= [combo for combo in values if (sum(combo)==1 and (combo[0]>=combo[1]>=combo[2]>=combo[3]))]
+        values = product(self.w1,self.w2,self.w3)
+        self.combinations= [combo for combo in values if (sum(combo)==1 and (combo[0]>=combo[1]>=combo[2]))]
         print("*********************There are "+ str(len(self.combinations))+ " combinations.*********************")
         print(self.combinations)
+
 
     def response_threshold_combinations(self):
         for a in self.alpha:

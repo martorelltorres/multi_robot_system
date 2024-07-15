@@ -8,9 +8,9 @@ import argparse
 import time
 
 # Parameters to set
-bagfile_path = "/home/tintin/MRS_data/new_architecture/test_3/response_threshold/bagfiles"
-# /mnt/storage_disk/ARTM/ctt
-# extracted_data_path = "/home/tintin/MRS_data/response_threshold/bagfiles"
+bagfile_path = "/home/tintin/MRS_data/new_architecture/test_4/owa/bagfiles"
+
+# extracted_data_path = "/home/uib/MRS_data/response_threshold/bagfiles"
 topics_of_interest = [  "/mrs/allocator_communication_latency",
                         "/mrs/asv_travelled_distance",
                         "/mrs/allocator_data_transmited",
@@ -30,24 +30,32 @@ for bag_file in range(len(bag_files)):
     # Get the start time of the bag file
     start_time = bag.get_start_time()
 
+
     # Extract data from the specified topics and write to the CSV file
     reg_latency_values = np.array([]) 
+    reg_time_latency_values = np.array([])
     prior_latency_values = np.array([]) 
+    prior_time_latency_values = np.array([])
 
     prior_objects = []
     reg_objects = []
 
     for topic, msg, t in bag.read_messages(topics=topics_of_interest):
-            
+        init_time = msg.header.stamp.secs
+        
         if "/mrs/asv0_regular_communication_latency" in topic:
             reg_latency = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
+            reg_time_latency = (msg.header.stamp.secs-start_time)/60
             sum_reg_latency = sum(reg_latency)
             reg_latency_values= np.append(reg_latency_values,sum_reg_latency)
+            reg_time_latency_values = np.append(reg_time_latency_values,reg_time_latency)
         
         if "/mrs/asv0_priority_communication_latency" in topic:
             prior_latency = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
+            prior_time_latency = (msg.header.stamp.secs-start_time)/60
             sum_prior_latency = sum(prior_latency)
             prior_latency_values= np.append(prior_latency_values,sum_prior_latency)
+            prior_time_latency_values = np.append(prior_time_latency_values,prior_time_latency)
                       
         if "/mrs/asv_travelled_distance" in topic:
             # time_distance.append(msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 - start_time)
@@ -103,18 +111,15 @@ for bag_file in range(len(bag_files)):
             'transmitted_data': [sum_data],
             'priority_objects' : [sum_prior_objects],
             'regular_objects' : [sum_reg_objects],
-            'travelled_distance':[travelled_distance]
+            'travelled_distance':[travelled_distance],
+            'regular_latency_values': [reg_latency_values],
+            'regular_time_latency': [reg_time_latency_values],
+            'priority_latency_values': [prior_latency_values],
+            'priority_time_latency': [prior_time_latency_values]
     }
 
     df = pd.DataFrame(data)
-    df.to_csv(output_csv_path, mode='a', index=False, header=False)
+    df.to_csv(output_csv_path, mode='a', index=False, header=True)
     
 print("   ")
 print("DATA EXTRACTION PROCESS FINISHED")
-
-
-
-
-
-
-
