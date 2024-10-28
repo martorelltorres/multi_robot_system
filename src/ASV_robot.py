@@ -416,9 +416,9 @@ class ASVRobot:
         self.asv_yaw = msg.orientation.yaw
         self.asv_init = True
 
-        # if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
-        #     self.transit_to(self.main_polygon_centroid)
-        #     self.robot_at_center = True
+        if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
+            self.transit_to(self.main_polygon_centroid)
+            self.robot_at_center = True
     
     def update_acoustic_info(self, msg, robot_agent):
         # tranform from quaternion to euler angles
@@ -467,8 +467,8 @@ class ASVRobot:
     def check_dustbin_robot(self):
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            # if(self.asv_init == True):
-            #     self.goto_central_area()
+            if(self.asv_init == True):
+                self.goto_central_area()
                   
     def goto_central_area(self):
         self.transit_to(self.main_polygon_centroid)

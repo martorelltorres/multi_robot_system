@@ -473,7 +473,7 @@ class ASVAllocator:
                 regular_object.header.frame_id = "world_ned"
                 regular_object.point.x = self.regular_objects[element].x
                 regular_object.point.y = self.regular_objects[element].y
-                regular_object.point.z = 0
+                regular_object.point.z = 30
                 # Publish
                 self.pub_regular_object.publish(regular_object)
 
@@ -484,7 +484,7 @@ class ASVAllocator:
                 priority_object.header.frame_id = "world_ned"
                 priority_object.point.x = self.priority_objects[element].x
                 priority_object.point.y = self.priority_objects[element].y
-                priority_object.point.z = 0
+                priority_object.point.z = 30
                 # Publish
                 self.pub_priority_object.publish(priority_object)
     
