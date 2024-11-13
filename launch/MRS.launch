@@ -12,9 +12,9 @@
   <arg name="robot_2" default="robot2"/>  <!--AUV2-->
   <arg name="robot_3" default="robot3"/>  <!--AUV3-->
   <arg name="robot_4" default="robot4"/>  <!--AUV4-->
-  <arg name="robot_5" default="robot5"/>  <!--AUV5-->
-  <arg name="robot_6" default="robot6"/>  <!--ASV1-->
-  <arg name="ASV_ID" default="6"/>  <!--ASV acoustic communication link-->
+  <!-- <arg name="robot_5" default="robot5"/>   -->
+  <arg name="robot_5" default="robot5"/>  <!--ASV1-->
+  <arg name="ASV_ID" default="5"/>  <!--ASV acoustic communication link-->
   
   <!-- Launch the AUVs Simulation -->
   <include  file="$(find multi_robot_system)/launch/turbot_simulation.launch">
@@ -24,14 +24,14 @@
     <arg name="robot2_name" value="$(arg robot_2)"/>
     <arg name="robot3_name" value="$(arg robot_3)"/>
     <arg name="robot4_name" value="$(arg robot_4)"/>
-    <arg name="robot5_name" value="$(arg robot_5)"/>
+    <!-- <arg name="robot5_name" value="$(arg robot_5)"/> -->
   </include>
 
   <!-- Launch the ASVs Simulation -->
   <include  file="$(find cola2_xiroi)/launch/simulation.launch">
     <arg name="enableIqua" value="$(arg enableIquaASV)"/>
     <arg name="place" value="$(arg place)"/>
-    <arg name="robot_name" value="$(arg robot_6)"/>
+    <arg name="robot_name" value="$(arg robot_5)"/>
   </include>
   
   <group ns="/mrs">
@@ -40,7 +40,7 @@
     <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
     <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/>
 
-    <!-- divide the exploration area, this script should be executed at the begining. Then the area information will be stored in a file -->
+    <!-- divide the exploration area, this script should be executed at the begining. Then the area information will be stored in a pickle file -->
     <!-- <node name="polygon_division" pkg="multi_robot_system" type="polygon_division.py" respawn="true"/> -->
 
   
@@ -105,7 +105,7 @@
     </node>
 
     <!-- Robot 5 -->
-    <node name="AUV_$(arg robot_5)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
+    <!-- <node name="AUV_$(arg robot_5)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
       <param name="robot_ID" value="5"/>
       <param name="robot_name" value= "$(arg robot_5)"/>
       <param name="battery_topic" value="/$(arg robot_5)/batteries/status"/>
@@ -114,16 +114,16 @@
       <param name="robot_bvr_topic" value="/$(arg robot_5)/controller/body_velocity_req"/>
       <param name="navigation_depth" value="15"/>
       <remap from="/task_monitoring" to="$(arg robot_5)/task_monitoring"/>
-    </node>
+    </node> -->
 
     <!-- ACOUSTIC COMMUNICATIONS -->
     <node name="acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="log" respawn="true"/>
 
     <!-- ROBOT 6 ASV -->
-    <node name="asv_$(arg robot_6)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
-      <param name="robot_ID" value="6"/>
+    <node name="asv_$(arg robot_5)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
+      <param name="robot_ID" value="5"/>
       <param name="asv_ID" value="0"/>
-      <remap from="/asv0/navigator/navigation" to="/robot6/navigator/navigation"/>
+      <remap from="/asv0/navigator/navigation" to="/robot5/navigator/navigation"/>
     </node>
   </group>
 

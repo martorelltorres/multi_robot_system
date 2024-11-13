@@ -33,7 +33,7 @@ class ASVAllocator:
         node_name = rospy.get_name()
 
         # Get config parameters from the parameter server
-        self.number_of_robots = self.get_param('number_of_robots')
+        self.number_of_robots = 5
         self.robot_ID = self.get_param('~robot_ID',0) 
         self.asv_ID = self.get_param('~asv_ID',0)
         self.tolerance = self.get_param('tolerance',2)
@@ -67,17 +67,17 @@ class ASVAllocator:
         self.get_information = False
         self.start_to_publish = False
         self.robot_at_center = False
-        self.acquired_data = [0,0,0,0,0,0]
+        self.acquired_data = [0,0,0,0,0]
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
         self.penalty = np.array([])
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[],[],[],[],[],[],[]]
+        self.robots_information = [[],[],[],[],[]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.set_end_time = False
-        self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
+        self.start_dustbin_strategy =np.array([False,False,False,False,False])
         self.exploration_tasks_update = np.array([])
         self.battery_charge= []
         self.distance = []
@@ -110,11 +110,11 @@ class ASVAllocator:
         self.asvs_init = np.array([])
         self.init=False
         self.elapsed_time =np.array([])
-        self.auv_goal_ids = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
+        self.auv_goal_ids = np.array([[0,0,0,0,0],[0,0,0,0,0]])
         self.asv_id = 100
-        self.data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
-        self.latency_data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
-        self.transmited_data = np.array([[0,0,0,0,0,0],[0,0,0,0,0,0]])
+        self.data = np.array([[0,0,0,0,0],[0,0,0,0,0]])
+        self.latency_data = np.array([[0,0,0,0,0],[0,0,0,0,0]])
+        self.transmited_data = np.array([[0,0,0,0,0],[0,0,0,0,0]])
 
         self.zero_stimulus_variables = np.tile(np.zeros(0), (self.number_of_robots, 1))
         # -----------------------------------------------------------------
@@ -174,7 +174,7 @@ class ASVAllocator:
                             robot_agent,
                             queue_size=1)
         
-        rospy.Subscriber('/robot6/navigator/navigation',
+        rospy.Subscriber('/robot5/navigator/navigation',
                         NavSts,    
                         self.update_asv_position,
                         0,
@@ -244,7 +244,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/output.pickle', 'rb') as file:
+        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/70000_5AUVs.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -387,7 +387,7 @@ class ASVAllocator:
                     self.stimulus_variables[auv]=[0,0]
 
             # check if there are data to transmit, if not stop the tracking
-            if(np.array_equal(self.stimulus_variables, [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]])):
+            if(np.array_equal(self.stimulus_variables, [[0,0],[0,0],[0,0],[0,0],[0,0]])):
                 # send the order to stop the tracking process
                 # print("INNNN")
                 msg = Bool()

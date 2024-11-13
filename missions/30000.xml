@@ -1,0 +1,82 @@
+<mission>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.54353949436095</latitude>
+        <longitude>2.3758019527777785</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2.0</x>
+        <y>2.0</y>
+        <z>1.0</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.543646752702536</latitude>
+        <longitude>2.3768160316436884</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2.0</x>
+        <y>2.0</y>
+        <z>1.0</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.542535166253366</latitude>
+        <longitude>2.3779861226428154</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2.0</x>
+        <y>2.0</y>
+        <z>1.0</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.54157958786137</latitude>
+        <longitude>2.3767876834086774</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2.0</x>
+        <y>2.0</y>
+        <z>1.0</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="waypoint">
+      <position>
+        <latitude>39.54218413895362</latitude>
+        <longitude>2.3756361898862357</longitude>
+        <z>0.0</z>
+        <altitude_mode>False</altitude_mode>
+      </position>
+      <speed>0.5</speed>
+      <tolerance>
+        <x>2.0</x>
+        <y>2.0</y>
+        <z>1.0</z>
+      </tolerance>
+    </maneuver>
+  </mission_step>
+</mission>

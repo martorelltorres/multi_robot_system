@@ -27,10 +27,12 @@ import subprocess
 class DataExtraction:
 
     def __init__(self):
-        self.alpha = [0,1,2,3,4,5,6,7,8,9,10]
-        self.beta = [0,1,2,3,4,5,6,7,8,9,10]
-        self.n = [0,2,4,6,8,10]
+        # ARTM
+        self.alpha = [0,2.5,5,7.5,10]
+        self.beta = [0,2.5,5,7.5,10]
+        # [0,2,4,6,8,10]
 
+        # OWA
         self.w1 = [0,0.2,0.4,0.6,0.8,1]
         self.w2 = [0,0.2,0.4,0.6,0.8,1]
         self.w3 = [0,0.2,0.4,0.6,0.8,1]
@@ -43,7 +45,7 @@ class DataExtraction:
 
         self.simulation_count = -1
         self.optimization_model = 2
-        self.data_path = '/home/tintin/MRS_data/new_architecture/test_4/'
+        self.data_path = '/home/tintin/MRS_data/NN/70000/5AUVs/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
