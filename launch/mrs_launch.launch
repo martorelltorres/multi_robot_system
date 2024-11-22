@@ -5,7 +5,7 @@
   <!-- Autonomous vehicles architecture imulation -->
   <node name="vehicles_architecture" pkg="multi_robot_system" type="architecture_launcher.py" output="screen" respawn="false"/>
 
-  Multi-robot system
+  <!-- Multi-robot system -->
     <group ns="/mrs">
 
       <!-- load the multi_robot_system.yaml parameters file -->
