@@ -4,7 +4,7 @@ from sklearn.datasets import load_digits
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-from cola2_lib.utils.ned import NED
+from cola2.utils.ned import NED
 from shapely.geometry import Polygon,LineString,Point
 from std_msgs.msg import Float32MultiArray, Header
 from random import uniform
@@ -17,9 +17,9 @@ from multi_robot_system.msg import PartitionedPolygonInfo
 class polygon_division:
 
     def __init__(self, name):
-        # self.exploration_area = get_param(self,'exploration_area',"/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/missions/230606142152_area_exploration.xml")
-        # self.exploration_area = get_param(self,'exploration_area',"/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
-        self.exploration_area = get_param(self,'exploration_area',"/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/missions/70000.xml") 
+        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/config/missions/230606142152_area_exploration.xml")
+        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/config/missions/230210085906_cabrera_small.xml")
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/missions/70000.xml") 
         self.number_of_robots = get_param(self,'number_of_robots',5)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = 39.543330
@@ -51,7 +51,7 @@ class polygon_division:
             'array7': self.priority_objects
         }
 
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/70000_5AUVs.pickle', 'wb') as file:
+        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/70000_5AUVs.pickle', 'wb') as file:
             pickle.dump(data, file)
         print("...process finished")
  

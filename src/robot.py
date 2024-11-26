@@ -2,14 +2,14 @@
 from dis import dis
 import rospy            
 import actionlib
-from cola2_lib.utils.ned import NED
+# from cola2_lib.utils.ned import NED
 import matplotlib.pyplot as plt
 from math import *
 from std_srvs.srv import Trigger, TriggerRequest
 from std_msgs.msg import Float32
-from cola2_msgs.msg import WorldSectionAction,WorldSectionGoal,GoalDescriptor,WorldSectionGoal,WorldSectionActionResult
+from cola2_msgs.msg import GoalDescriptor, CaptainStatus, CaptainStateFeedback
 from cola2_msgs.msg import  NavSts
-from cola2_msgs.srv import Goto, GotoRequest
+from cola2_msgs.srv import Goto, GotoRequest, Section
 from shapely.geometry import Polygon
 from sensor_msgs.msg import BatteryState
 import numpy as np
@@ -49,27 +49,24 @@ class Robot:
 
         for robot in range(self.number_of_robots):
             self.robots_information.append(robot_data) #set the self.robots_information initialized to 0
-            # self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
-            # self.robots.append(robot)  # self.robots = [0,1,2]
-            # print("***********---------------------")
-            # print(self.robots_information)
-        
-
-        #Subscribers
-        # for robot in range(self.number_of_robots):
-        #     rospy.Subscriber(
-        #         '/robot'+str(robot)+'/navigator/navigation',
-        #         NavSts,
-        #         self.update_robot_position,
-        #         robot,
-        #         queue_size=1)
-            
+           
        
         #Publishers
         self.travelled_distance_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/travelled_distance',
                                         TravelledDistance,
                                         queue_size=1)
+        rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/captain_status',
+                CaptainStatus,    
+                self.update_section_status,
+                queue_size=1)
+
+        rospy.Subscriber('/robot'+str(self.robot_ID)+'/pilot/actionlib/feedback',
+                CaptainStateFeedback,    
+                self.update_section_feedback,
+                queue_size=1)
+
         # Services clients
+        # goto
         try:
             rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/enable_goto', 20)
             self.goto_srv = rospy.ServiceProxy(
@@ -78,13 +75,19 @@ class Robot:
             rospy.logerr('%s: error creating client to goto service',
                          self.name)
             rospy.signal_shutdown('Error creating client to goto service')
+        # section
+        try:
+            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/enable_section', 20)
+            self.section_srv = rospy.ServiceProxy(
+                        '/robot'+str(self.robot_ID)+'/captain/enable_section', Section)
+        except rospy.exceptions.ROSException:
+            rospy.logerr('%s: error creating client to Section service',
+                         self.name)
+            rospy.signal_shutdown('Error creating client to Section service')
         
         # Init periodic timers
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
 
-        #Actionlib section client
-        self.section_strategy = actionlib.SimpleActionClient(self.section_action, WorldSectionAction)
-        self.section_strategy.wait_for_server()
     
     def disable_all_and_set_idle(self,robot_id):
         """ This method sets the captain back to idle """
@@ -179,62 +182,21 @@ class Robot:
         initial_position_y = initial_point[1]
         final_position_y = final_point[1]
 
-        section_req = WorldSectionGoal()
-        section_req.initial_position.x = initial_position_x
-        section_req.initial_position.y = initial_position_y
-        section_req.initial_position.z = self.navigation_depth
-        section_req.initial_yaw = self.robots_information[robot_id][2] #yaw
-        section_req.final_position.x = final_position_x
-        section_req.final_position.y = final_position_y
-        section_req.final_position.z = self.navigation_depth
-        section_req.altitude_mode = False
-        section_req.tolerance.x = self.tolerance
-        section_req.tolerance.y = self.tolerance
-        section_req.tolerance.z = self.tolerance
-        section_req.controller_type = WorldSectionGoal.LOSCTE
-        section_req.priority = GoalDescriptor.PRIORITY_NORMAL
-        section_req.surge_velocity = 2
+        section_req = Section()
+        section_req.initial_x = initial_position_x
+        section_req.initial_y = initial_position_y
+        section_req.initial_depth = self.navigation_depth
+        section_req.final_x = final_position_x
+        section_req.final_y = final_position_y
+        section_req.final_depth = self.navigation_depth
+        section_req.heave_mode = 1 #heave mode
+        section_req.reference = 0 #NED
+        section_req.tolerance_xy = self.tolerance
+        section_req.no_altitude_goes_up = False
         section_req.timeout = 6000
+        self.section_srv(section_req)
 
-        # send section goal using actionlib
-        self.success_result = False
-        self.is_section_actionlib_running = True
-        self.section_strategy.send_goal(section_req)
-
-        #  Wait for result or cancel if timed out
-        self.section_strategy.wait_for_result()
-    
-    def send_exploration_strategy(self,initial_point,final_point,robot_id):
-        initial_position_x = initial_point[0]
-        initial_position_y = initial_point[1]
-        final_position_x = final_point[0]
-        final_position_y = final_point[1]
-
-        section_req = WorldSectionGoal()
-        section_req.initial_position.x = initial_position_x
-        section_req.initial_position.y = initial_position_y
-        section_req.initial_position.z = self.navigation_depth
-        section_req.initial_yaw = self.robots_information[robot_id][2] #yaw
-        section_req.final_position.x = final_position_x
-        section_req.final_position.y = final_position_y
-        section_req.final_position.z = 2
-        section_req.altitude_mode = False
-        section_req.tolerance.x = 1
-        section_req.tolerance.y = 1
-        section_req.tolerance.z = 0.5
-        section_req.controller_type = WorldSectionGoal.LOSCTE
-        section_req.priority = GoalDescriptor.PRIORITY_NORMAL
-        section_req.surge_velocity = 5
-        section_req.timeout = 6000
-
-        # send section goal using actionlib
-        self.success_result = False
-        self.is_section_actionlib_running = True
-        self.section_strategy.send_goal(section_req)
-
-        #  Wait for result or cancel if timed out
-        self.section_strategy.wait_for_result()
-        
+            
     def set_current_section(self,current_section):
         return(current_section)
 
@@ -256,31 +218,23 @@ class Robot:
         self.battery_status[self.robot_ID] =  self.battery_charge
         return(self.battery_charge)
          
-    def update_section_result(self,msg):
-        final_status = msg.result.final_status
-        return(final_status)
-        # Possible section ending conditions
-        # uint64 final_status
-        # uint64 SUCCESS=0
-        # uint64 TIMEOUT=1
-        # uint64 FAILURE=2
-        # uint64 BUSY=3
+    def update_section_status(self,msg):
+        if(msg.state==6):
+            self.section_active = True
+        self.check_section_status
+    
+    def update_section_feedback(self,msg):
+        if(msg.state==1):
+            self.section_succes = True
+        self.check_section_status
 
-    # def update_robot_position(self,msg,robot_id):
-    #     # fill the robots_information array with the robots information received from the NavSts 
-    #     self.robots_information[robot_id][0] = msg.position.north
-    #     self.robots_information[robot_id][1] = msg.position.east
-    #     self.robots_information[robot_id][2] = msg.position.depth
-    #     self.robots_information[robot_id][3] = msg.altitude
-    #     self.robots_information[robot_id][4] = msg.global_position.latitude
-    #     self.robots_information[robot_id][5] = msg.global_position.longitude
-    #     self.robots_information[robot_id][6] = msg.body_velocity.x
-    #     self.robots_information[robot_id][7] = msg.body_velocity.y
-    #     self.robots_information[robot_id][8] = msg.body_velocity.z
-    #     self.robots_information[robot_id][9] = msg.orientation.roll
-    #     self.robots_information[robot_id][10] = msg.orientation.pitch
-    #     self.robots_information[robot_id][11] = msg.orientation.yaw
-   
+    def check_section_status():
+        if(self.section_active == self.section_succes == True):
+            return(True)
+        else:
+            return(False)
+
+  
     def get_robot_position(self,robot_id):
         return(self.robots_information[robot_id][0],self.robots_information[robot_id][1],self.robots_information[robot_id][2],self.robots_information[robot_id][11])
     

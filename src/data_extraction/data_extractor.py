@@ -8,7 +8,7 @@ import argparse
 import time
 
 # Parameters to set
-bagfile_path = "/home/tintin/MRS_data/new_architecture/test_4/owa/bagfiles"
+bagfile_path = "/home/uib/MRS_data/new_architecture/test_4/owa/bagfiles"
 
 # extracted_data_path = "/home/uib/MRS_data/response_threshold/bagfiles"
 topics_of_interest = [  "/mrs/allocator_communication_latency",

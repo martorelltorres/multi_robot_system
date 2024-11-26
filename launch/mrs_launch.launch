@@ -1,6 +1,13 @@
 <launch>
   <arg name="place" default="andratx_exterior.yaml"/>
-  <arg name="enableRviz" default="true"/>
+  <arg name="enableRviz" default="false"/>
+
+  <!-- General robots information -->
+  <arg name="robot_0" default="robot0"/>  <!--AUV0-->
+  <arg name="robot_1" default="robot1"/>  <!--AUV1-->
+  <arg name="robot_2" default="robot2"/>  <!--AUV2-->
+  <arg name="robot_3" default="robot3"/>  <!--AUV3-->
+  <arg name="robot_4" default="robot4"/>  <!--ASV1-->
 
   <!-- Autonomous vehicles architecture imulation -->
   <node name="vehicles_architecture" pkg="multi_robot_system" type="architecture_launcher.py" output="screen" respawn="false"/>
@@ -21,7 +28,6 @@
         <param name="section_result" value="/$(arg robot_0)/pilot/world_section_req/result"/>
         <param name="robot_bvr_topic" value="/$(arg robot_0)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="5"/>
-        <remap from="/task_monitoring" to="$(arg robot_0)/task_monitoring"/>
       </node>
 
       <!-- Robot 1 -->
@@ -33,7 +39,6 @@
         <param name="section_result" value="/$(arg robot_1)/pilot/world_section_req/result"/>
         <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="7"/>
-        <remap from="/task_monitoring" to="$(arg robot_1)/task_monitoring"/>
       </node>
 
       <!-- Robot 2 -->
@@ -45,7 +50,6 @@
         <param name="section_result" value="/$(arg robot_2)/pilot/world_section_req/result"/>
         <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="9"/>
-        <remap from="/task_monitoring" to="$(arg robot_2)/task_monitoring"/>
       </node>
 
       <!-- Robot 3 -->
@@ -57,27 +61,14 @@
         <param name="section_result" value="/$(arg robot_3)/pilot/world_section_req/result"/>
         <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="11"/>
-        <remap from="/task_monitoring" to="$(arg robot_3)/task_monitoring"/>
-      </node>
-
-      <!-- Robot 4 -->
-      <node name="AUV_$(arg robot_4)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
-        <param name="robot_ID" value="4"/>
-        <param name="robot_name" value= "$(arg robot_4)"/>
-        <param name="battery_topic" value="/$(arg robot_4)/batteries/status"/>
-        <param name="section_action" value="/$(arg robot_4)/pilot/world_section_req"/>
-        <param name="section_result" value="/$(arg robot_4)/pilot/world_section_req/result"/>
-        <param name="robot_bvr_topic" value="/$(arg robot_4)/controller/body_velocity_req"/>
-        <param name="navigation_depth" value="13"/>
-        <remap from="/task_monitoring" to="$(arg robot_4)/task_monitoring"/>
       </node>
 
       <!-- ACOUSTIC COMMUNICATIONS -->
       <node name="acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="log" respawn="true"/>
 
       <!-- ROBOT 6 ASV -->
-      <node name="asv_$(arg robot_5)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
-        <param name="robot_ID" value="5"/>
+      <node name="asv_$(arg robot_4)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
+        <param name="robot_ID" value="4"/>
         <param name="asv_ID" value="0"/>
         <remap from="/asv0/navigator/navigation" to="/robot5/navigator/navigation"/>
       </node>

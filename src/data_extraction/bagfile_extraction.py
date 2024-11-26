@@ -45,7 +45,7 @@ class DataExtraction:
 
         self.simulation_count = -1
         self.optimization_model = 2
-        self.data_path = '/home/tintin/MRS_data/NN/70000/5AUVs/'
+        self.data_path = '/home/uib/MRS_data/NN/70000/5AUVs/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
@@ -68,7 +68,7 @@ class DataExtraction:
         self.rr_csv = self.data_path+'round_robin/csv'
 
         self.launchfile = 'roslaunch multi_robot_system MRS.launch'
-        self.yaml_file_path = "/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/data_extraction.yaml"
+        self.yaml_file_path = "/home/uib/MMRS_ws/src/multi_robot_system/config/data_extraction.yaml"
 
         self.topics = [
                 '/mrs/allocator_communication_latency',

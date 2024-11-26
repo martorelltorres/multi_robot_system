@@ -17,7 +17,7 @@ from random import uniform
 from std_srvs.srv import Empty, EmptyResponse
 from scipy.spatial import Voronoi, voronoi_plot_2d
 from shapely.ops import split, LineString,triangulate
-from cola2_lib.utils.ned import NED
+# from cola2_lib.utils.ned import ned
 from geometry_msgs.msg import PointStamped
 import matplotlib.pyplot as plt
 from std_srvs.srv import Empty, EmptyRequest
@@ -28,6 +28,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import pickle
+
 
 
 class area_partition:
@@ -49,7 +50,7 @@ class area_partition:
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance',5)
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance',10)
         self.surge_velocity = get_param(self,'surge_velocity',0.8)
-        self.exploration_area = get_param(self,'exploration_area',"/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/missions/230210085906_cabrera_small.xml")
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/config/missions/230210085906_cabrera_small.xml")
         self.number_of_robots = get_param(self,'number_of_robots',6)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.offset_distance = 0
@@ -72,7 +73,7 @@ class area_partition:
    
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/70000_5AUVs.pickle', 'rb') as file:
+        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/70000_5AUVs.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 

@@ -12,10 +12,9 @@ import pickle
 import actionlib
 from shapely.geometry import Polygon,Point
 from geometry_msgs.msg  import PointStamped
-from cola2_msgs.msg import WorldSectionActionResult
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
-from cola2_msgs.msg import  NavSts
+from cola2_msgs.msg import  NavSts,CaptainStatus, CaptainStateFeedback
 from multi_robot_system.msg import CoverageStartTime, ExplorationUpdate, RegularObjectInformation,PriorityObjectInformation,BufferedData    
 from std_msgs.msg import Int16, Bool
 
@@ -61,6 +60,8 @@ class MultiRobotSystem:
         self.robots_information =[]
         self.robot_data = [0,0]
         self.object_exploration = False
+        self.section_active = False
+        self.section_succes = False
 
         # initialize the robots variables
         for i in range(self.number_of_robots):
@@ -74,12 +75,7 @@ class MultiRobotSystem:
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
-        #Subscribers
-        rospy.Subscriber(self.section_result,
-                         WorldSectionActionResult,    
-                         self.update_section_result,
-                         queue_size=1)
-        
+        #Subscribers       
         rospy.Subscriber(
             '/robot'+str(self.robot_ID)+'/navigator/navigation',
             NavSts,
@@ -89,6 +85,16 @@ class MultiRobotSystem:
             '/mrs/coverage_init',
             Bool,
             self.object_exploration_flag) 
+        
+        # rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/captain_status',
+        #         CaptainStatus,    
+        #         self.update_section_status,
+        #         queue_size=1)
+
+        rospy.Subscriber('/robot'+str(self.robot_ID)+'/pilot/actionlib/feedback',
+                CaptainStateFeedback,    
+                self.update_section_result,
+                queue_size=1)
         
         #Publishers
         self.polygon_pub = rospy.Publisher("voronoi_polygons",
@@ -191,12 +197,12 @@ class MultiRobotSystem:
         self.robot_handler.send_section_strategy(point_a1,point_b1,self.robot_ID)
             
     def wait_until_section_reached(self):
-        if(self.final_status==0):
+        if(self.section_ended==True):
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
             self.actual_section = self.actual_sections[self.robot_ID][1]
             self.send_folowing_section = True
 
-        elif(self.final_status!=0): 
+        elif(self.section_ended == False): 
             self.send_folowing_section = False
 
                                    
@@ -205,19 +211,33 @@ class MultiRobotSystem:
         self.robot_position_east = msg.position.east           
 
     def update_section_result(self,msg):
-        if (self.executing_dense_mission == False):
-            self.final_status = msg.result.final_status
+        if(msg.state==1):
+            self.section_ended = True
 
-        elif(self.executing_dense_mission == True):
-            self.final_status = 8888
+
+    # def update_section_status(self,msg):
+    #     if(msg.state==6):
+    #         self.section_active = True
+    #     self.check_section_status()
+    
+    # def update_section_feedback(self,msg):
+    #     if(msg.state==1):
+    #         self.section_succes = True
+    #     self.check_section_status()
+
+    def check_section_status():
+        if(self.section_active == self.section_succes == True):
+            self.section_active = False
+            self.section_succes = False
+            return(True)
+        else:
+            return(False)
             
-        # self.final_status = msg.result.final_status
-
 
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/tintin/MRS_ws/src/MRS_stack/multi_robot_system/config/70000_5AUVs.pickle', 'rb') as file:
+        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/70000_5AUVs.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
