@@ -73,7 +73,7 @@ class area_partition:
    
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/70000_5AUVs.pickle', 'rb') as file:
+        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -164,7 +164,7 @@ class area_partition:
         return(estimated_coverage_time)
 
     def define_path_coverage(self):
-        for self.polygon_id in range(self.number_of_robots):
+        for self.polygon_id in range(self.number_of_robots-1):
             self.find_largest_side(self.voronoi_polygons[self.polygon_id])
             goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
         return(goal_points)

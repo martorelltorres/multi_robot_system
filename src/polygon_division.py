@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.cluster import KMeans
@@ -12,15 +12,14 @@ from scipy.spatial import Voronoi, voronoi_plot_2d
 import rospy  
 import pickle
 from multi_robot_system.msg import PartitionedPolygonInfo
+import xml.etree.ElementTree as ET
 
 
 class polygon_division:
 
     def __init__(self, name):
-        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/config/missions/230606142152_area_exploration.xml")
-        # self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/config/missions/230210085906_cabrera_small.xml")
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/missions/70000.xml") 
-        self.number_of_robots = get_param(self,'number_of_robots',5)
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/missions/mission.xml") 
+        self.number_of_robots = get_param(self,'number_of_robots',4)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = 39.543330
         self.ned_origin_lon = 2.377940
@@ -51,33 +50,36 @@ class polygon_division:
             'array7': self.priority_objects
         }
 
-        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/70000_5AUVs.pickle', 'wb') as file:
+        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/mission.pickle', 'wb') as file:
             pickle.dump(data, file)
         print("...process finished")
  
 
     def read_file(self):
-            data = []
-            self.latitude = []
-            self.longitude = []
+        data = []
+        self.latitude = []
+        self.longitude = []
+        try:
+            # Parsear el archivo XML
+            tree = ET.parse(self.exploration_area)
+            root = tree.getroot()
 
-            file = open(str(self.exploration_area), "r")
+            # Recorrer cada "mission_step" en el XML
+            for mission_step in root.findall("mission_step"):
+                maneuver = mission_step.find("maneuver")
 
-            for line in file:
-                data.append(line)
+                # Extraer final_latitude y final_longitude si están presentes
+                final_lat = maneuver.find("final_latitude")
+                final_lon = maneuver.find("final_longitude")
 
-            for line in data:
-                if "<latitude>" in line :
-                    start = line.find("<latitude>") + len("<latitude>")
-                    end = line.find("</latitude>")
-                    substring_lat = line[start:end]
-                    self.latitude.append(float(substring_lat))
+                if final_lat is not None and final_lon is not None:
+                    self.latitude.append(float(final_lat.text))
+                    self.longitude.append(float(final_lon.text))
 
-                if "<longitude>" in line :
-                    start = line.find("<longitude>") + len("<longitude>")
-                    end = line.find("</longitude>")
-                    substring_long = line[start:end]
-                    self.longitude.append(float(substring_long))
+        except ET.ParseError as e:
+            print(f"Error al analizar el archivo XML: {e}")
+        except Exception as e:
+            print(f"Error inesperado: {e}")
             
     def extract_NED_positions(self):
         self.ned = NED(self.ned_origin_lat, self.ned_origin_lon, 0.0)  # NED frame

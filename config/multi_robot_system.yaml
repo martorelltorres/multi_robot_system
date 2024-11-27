@@ -3,7 +3,7 @@
 # ---------------------------------------------------------
 
 # ------------------ ROBOTS INFO -----------------------
-number_of_robots: 5 #OJO!!!
+number_of_robots: 5 #TOTAL number of robots that composes the MMRS (AUVs+ASVs)
 # be sure that all the simulated architectures has the same NED origin 
 
 # Andratx exterior

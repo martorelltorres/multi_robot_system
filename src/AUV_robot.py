@@ -39,7 +39,7 @@ class MultiRobotSystem:
         self.task_allocation_handler = task_allocation("task_allocation")
         self.robot_handler = Robot("robot")
         self.executing_dense_mission = False
-        self.send_folowing_section = False
+        self.send_following_section = False
         self.points = []
         self.goal_section_point = [0,0]
         self.threshold_detection_distance = self.offset_polygon_distance*1.2
@@ -62,6 +62,7 @@ class MultiRobotSystem:
         self.object_exploration = False
         self.section_active = False
         self.section_succes = False
+        self.section_ended = False
 
         # initialize the robots variables
         for i in range(self.number_of_robots):
@@ -91,7 +92,7 @@ class MultiRobotSystem:
         #         self.update_section_status,
         #         queue_size=1)
 
-        rospy.Subscriber('/robot'+str(self.robot_ID)+'/pilot/actionlib/feedback',
+        rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/state_feedback',
                 CaptainStateFeedback,    
                 self.update_section_result,
                 queue_size=1)
@@ -197,14 +198,12 @@ class MultiRobotSystem:
         self.robot_handler.send_section_strategy(point_a1,point_b1,self.robot_ID)
             
     def wait_until_section_reached(self):
+        while self.section_ended==False:
+            rospy.sleep(1)  
+
         if(self.section_ended==True):
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
             self.actual_section = self.actual_sections[self.robot_ID][1]
-            self.send_folowing_section = True
-
-        elif(self.section_ended == False): 
-            self.send_folowing_section = False
-
                                    
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
@@ -214,30 +213,10 @@ class MultiRobotSystem:
         if(msg.state==1):
             self.section_ended = True
 
-
-    # def update_section_status(self,msg):
-    #     if(msg.state==6):
-    #         self.section_active = True
-    #     self.check_section_status()
-    
-    # def update_section_feedback(self,msg):
-    #     if(msg.state==1):
-    #         self.section_succes = True
-    #     self.check_section_status()
-
-    def check_section_status():
-        if(self.section_active == self.section_succes == True):
-            self.section_active = False
-            self.section_succes = False
-            return(True)
-        else:
-            return(False)
-            
-
-
+         
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/70000_5AUVs.pickle', 'rb') as file:
+        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -267,6 +246,8 @@ class MultiRobotSystem:
         self.goal_polygons = self.goals[self.robot_ID][1]
         self.goal_points = self.area_handler.define_path_coverage()
         self.robot_sections = self.goal_points[self.robot_ID]
+        # print("************************************************")
+        # print(self.robot_sections)
         # print( "The goals for robot"+str(self.robot_ID)+" are: "+str(self.goal_points[self.robot_ID]))
         self.coverage()
     
@@ -285,7 +266,6 @@ class MultiRobotSystem:
         self.robot_handler.send_section_strategy((self.robot_position_north,self.robot_position_east),final_point,self.robot_ID)
         self.wait_until_section_reached()
         # start the area exploration coverage
-        # print( "******* The robot"+str(self.robot_ID)+" started the exploration of area"+str(self.goals[self.robot_ID][1]))
         # flag used to start the object_detection, only starts when robots are in its assigned areas.
         self.coverage_start[self.robot_ID] = True
         # advise the time when the robot starts the coverage
@@ -338,7 +318,7 @@ class MultiRobotSystem:
         self.exploration_end_pub.publish(msg)
 
         # move the robot to the surface
-        self.robot_handler.send_goto_strategy(self.robot_position_north,self.robot_position_east,True)
+        # self.robot_handler.send_goto_strategy(self.robot_position_north,self.robot_position_east,True)
   
     def print_polygon(self,event):
         points = []

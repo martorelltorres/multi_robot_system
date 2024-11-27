@@ -9,7 +9,7 @@ from std_srvs.srv import Trigger, TriggerRequest
 from std_msgs.msg import Float32
 from cola2_msgs.msg import GoalDescriptor, CaptainStatus, CaptainStateFeedback
 from cola2_msgs.msg import  NavSts
-from cola2_msgs.srv import Goto, GotoRequest, Section
+from cola2_msgs.srv import Goto, GotoRequest, Section, SectionRequest
 from shapely.geometry import Polygon
 from sensor_msgs.msg import BatteryState
 import numpy as np
@@ -144,7 +144,7 @@ class Robot:
         """Goto to position x, y, z, at velocity vel."""
         # // Define waypoint attributes
         goto_req = GotoRequest()
-        goto_req.altitude = 0
+        # goto_req.altitude = 0
         goto_req.altitude_mode = False
         goto_req.linear_velocity.x = self.surge_velocity
         goto_req.position.x = position_x
@@ -182,15 +182,25 @@ class Robot:
         initial_position_y = initial_point[1]
         final_position_y = final_point[1]
 
-        section_req = Section()
+        section_req = SectionRequest()
         section_req.initial_x = initial_position_x
         section_req.initial_y = initial_position_y
         section_req.initial_depth = self.navigation_depth
+
         section_req.final_x = final_position_x
         section_req.final_y = final_position_y
         section_req.final_depth = self.navigation_depth
-        section_req.heave_mode = 1 #heave mode
+        section_req.final_altitude = 5
+
         section_req.reference = 0 #NED
+        # uint8 NED=0
+        # uint8 GLOBAL=1
+        section_req.heave_mode = 0 #heave mode
+        # uint64 DEPTH=0
+        # uint64 ALTITUDE=1
+        # uint64 BOTH=2
+        section_req.surge_velocity = self.surge_velocity
+        
         section_req.tolerance_xy = self.tolerance
         section_req.no_altitude_goes_up = False
         section_req.timeout = 6000
