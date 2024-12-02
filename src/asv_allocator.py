@@ -33,7 +33,7 @@ class ASVAllocator:
         node_name = rospy.get_name()
 
         # Get config parameters from the parameter server
-        self.number_of_robots = 5
+        self.number_of_robots = self.get_param('number_of_robots')
         self.robot_ID = self.get_param('~robot_ID',0) 
         self.asv_ID = self.get_param('~asv_ID',0)
         self.tolerance = self.get_param('tolerance',2)

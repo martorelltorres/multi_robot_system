@@ -10,14 +10,14 @@
   <arg name="robot_4" default="robot4"/>  <!--ASV1-->
 
   <!-- Autonomous vehicles architecture imulation -->
-  <node name="vehicles_architecture" pkg="multi_robot_system" type="architecture_launcher.py" output="screen" respawn="false"/>
+  <!-- <node name="vehicles_architecture" pkg="multi_robot_system" type="architecture_launcher.py" output="screen" respawn="false"/> -->
 
   <!-- Multi-robot system -->
     <group ns="/mrs">
 
       <!-- load the multi_robot_system.yaml parameters file -->
       <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
-      <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/>
+      <!-- <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/> -->
   
       <!-- Robot 0-->
       <node name="AUV_$(arg robot_0)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
@@ -31,7 +31,7 @@
       </node>
 
       <!-- Robot 1 -->
-      <!-- <node name="AUV_$(arg robot_1)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
+      <node name="AUV_$(arg robot_1)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="1"/>
         <param name="robot_name" value="$(arg robot_1)"/>
         <param name="battery_topic" value="/$(arg robot_1)/batteries/status"/>
@@ -39,10 +39,10 @@
         <param name="section_result" value="/$(arg robot_1)/pilot/world_section_req/result"/>
         <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="7"/>
-      </node> -->
+      </node>
 
       <!-- Robot 2 -->
-      <!-- <node name="AUV_$(arg robot_2)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
+      <node name="AUV_$(arg robot_2)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="2"/>
         <param name="robot_name" value= "$(arg robot_2)"/>
         <param name="battery_topic" value="/$(arg robot_2)/batteries/status"/>
@@ -50,10 +50,10 @@
         <param name="section_result" value="/$(arg robot_2)/pilot/world_section_req/result"/>
         <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="9"/>
-      </node> -->
+      </node>
 
       <!-- Robot 3 -->
-      <!-- <node name="AUV_$(arg robot_3)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
+      <node name="AUV_$(arg robot_3)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="3"/>
         <param name="robot_name" value= "$(arg robot_3)"/>
         <param name="battery_topic" value="/$(arg robot_3)/batteries/status"/>
@@ -61,17 +61,17 @@
         <param name="section_result" value="/$(arg robot_3)/pilot/world_section_req/result"/>
         <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="11"/>
-      </node> -->
+      </node>
 
       <!-- ACOUSTIC COMMUNICATIONS -->
       <node name="acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="log" respawn="true"/>
 
       <!-- ROBOT 4 ASV -->
-      <!-- <node name="asv_$(arg robot_4)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
+      <node name="asv_$(arg robot_4)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="4"/>
         <param name="asv_ID" value="0"/>
-        <remap from="/asv0/navigator/navigation" to="/robot5/navigator/navigation"/>
-      </node> -->
+        <remap from="/asv0/navigator/navigation" to="/robot4/navigator/navigation"/>
+      </node>
     </group>
 
   <!-- RViz -->

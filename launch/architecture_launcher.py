@@ -30,14 +30,18 @@ def launch_ros_processes(show_terminal=True):
             process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         processes.append(process)
-        time.sleep(5)  # Wait 5 seconds before launching the next robot
+        time.sleep(4)  # Wait 4 seconds before launching the next robot
         print(f"{name}: launched")
 
+    time.sleep(4)  # Wait 4 seconds before launching the next robot
     return processes
 
 def signal_handler(sig, frame):
-    print("\nCtrl+C detected! Shutting down...")
-    sys.exit(0)
+    print("\nCtrl+C detected! Cleaning up...")
+    for process in processes:
+        process.terminate()  
+    print("Processes terminated. Exiting gracefully.")
+    sys.exit(0)  
 
 if __name__ == "__main__":
     # Set to False to hide terminals

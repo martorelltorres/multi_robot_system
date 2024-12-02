@@ -212,6 +212,8 @@ class MultiRobotSystem:
     def update_section_result(self,msg):
         if(msg.state==1):
             self.section_ended = True
+        else:
+            self.section_ended = False
 
          
     def read_area_info(self):
@@ -322,7 +324,7 @@ class MultiRobotSystem:
   
     def print_polygon(self,event):
         points = []
-        for polygon in range(self.number_of_robots):
+        for polygon in range(self.number_of_robots-1):
             polygon_coords_x,polygon_coords_y = self.area_handler.get_polygon_points(polygon)
 
             for coord in range(len(polygon_coords_x)):

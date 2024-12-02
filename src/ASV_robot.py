@@ -15,7 +15,7 @@ from std_msgs.msg import Int16, Bool, Int16MultiArray
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
-from cola2_msgs.srv import Goto, GotoRequest
+from cola2_msgs.srv import Goto, GotoRequest,Section, SectionRequest
 from multi_robot_system.msg import CoverageStartTime,AcousticData,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,RegularObjectInformation,PriorityObjectInformation,Communication,Distances, Data
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Quaternion,PointStamped
@@ -281,6 +281,16 @@ class ASVRobot:
             rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
                          self.name)
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
+
+        # section
+        try:
+            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/captain/enable_section', 20)
+            self.section_srv = rospy.ServiceProxy(
+                        '/robot'+str(self.robot_ID)+'/captain/enable_section', Section)
+        except rospy.exceptions.ROSException:
+            rospy.logerr('%s: error creating client to Section service',
+                         self.name)
+            rospy.signal_shutdown('Error creating client to Section service')
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
@@ -696,28 +706,29 @@ class ASVRobot:
         self.corrected_bvr.publish(bvr)
     
     def transit_to(self,pose):    
-        self.disable_all_and_set_idle_srv()
-        goto_req = GotoRequest()
-        goto_req.altitude = 0
-        goto_req.altitude_mode = False
-        goto_req.linear_velocity.x = 1
-        goto_req.position.x = pose.x
-        goto_req.position.y = pose.y
-        goto_req.position.z = 0.0
-        goto_req.position_tolerance.x = 5
-        goto_req.position_tolerance.y = 5
-        goto_req.position_tolerance.z = 5
-        goto_req.blocking = True
-        goto_req.keep_position = False
-        goto_req.disable_axis.x = False
-        goto_req.disable_axis.y = True
-        goto_req.disable_axis.z = False
-        goto_req.disable_axis.roll = True
-        goto_req.disable_axis.yaw = False
-        goto_req.disable_axis.pitch = True
-        goto_req.priority = 20
-        goto_req.reference = 0 
-        self.goto_srv(goto_req)
+        section_req = SectionRequest()
+        section_req.initial_x = self.asv_north
+        section_req.initial_y = self.asv_east
+        section_req.initial_depth = 0
+
+        section_req.final_x = pose.x
+        section_req.final_y = pose.y
+        section_req.final_depth = 0
+        section_req.final_altitude = 5
+
+        section_req.reference = 0 #NED
+        # uint8 NED=0
+        # uint8 GLOBAL=1
+        section_req.heave_mode = 0 #heave mode
+        # uint64 DEPTH=0
+        # uint64 ALTITUDE=1
+        # uint64 BOTH=2
+        section_req.surge_velocity = self.surge_velocity
+        
+        section_req.tolerance_xy = self.tolerance
+        section_req.no_altitude_goes_up = False
+        section_req.timeout = 6000
+        self.section_srv(section_req)
 
     def repulsion_marker(self):
         self.robotMarker = Marker()
