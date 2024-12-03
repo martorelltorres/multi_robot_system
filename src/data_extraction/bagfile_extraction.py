@@ -68,7 +68,7 @@ class DataExtraction:
         self.rr_csv = self.data_path+'round_robin/csv'
 
         self.launchfile = 'roslaunch multi_robot_system MRS.launch'
-        self.yaml_file_path = "/home/uib/MMRS_ws/src/multi_robot_system/config/data_extraction.yaml"
+        self.yaml_file_path = "/home/uib/MRS_ws/src/multi_robot_system/config/data_extraction.yaml"
 
         self.topics = [
                 '/mrs/allocator_communication_latency',

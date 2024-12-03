@@ -28,8 +28,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import pickle
-
-
+from shapely.affinity import translate
 
 class area_partition:
     local_points=[]
@@ -50,7 +49,7 @@ class area_partition:
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance',5)
         self.offset_coverage_distance = get_param(self,'offset_coverage_distance',10)
         self.surge_velocity = get_param(self,'surge_velocity',0.8)
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/config/missions/230210085906_cabrera_small.xml")
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/multi_robot_system/config/missions/230210085906_cabrera_small.xml")
         self.number_of_robots = get_param(self,'number_of_robots',6)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.offset_distance = 0
@@ -73,7 +72,7 @@ class area_partition:
    
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -167,6 +166,7 @@ class area_partition:
         for self.polygon_id in range(self.number_of_robots-1):
             self.find_largest_side(self.voronoi_polygons[self.polygon_id])
             goal_points = self.cover_lines(self.voronoi_polygons[self.polygon_id])
+            # goal_points = self.coverage_transects(self.voronoi_polygons[self.polygon_id])
         return(goal_points)
 
     def distance_between_points(self,point_a, point_b):
@@ -222,7 +222,7 @@ class area_partition:
         # create voronoi_offset_polygons in order to ensure the complete coverage of the areas
         for voronoi_polygon in range(len(self.voronoi_polygons)):
             new_polygon = self.create_voronoi_offset_polygon(voronoi_polygon,offset)
-            self.voronoi_offset_polygons.append(new_polygon)
+            self.voronoi_offset_polygons.append(new_polygon)  
     
     def cover_lines(self, polygon):
         x,y = polygon.exterior.coords.xy

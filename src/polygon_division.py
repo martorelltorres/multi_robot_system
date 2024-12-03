@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ET
 class polygon_division:
 
     def __init__(self, name):
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/missions/mission.xml") 
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/multi_robot_system/missions/mission.xml") 
         self.number_of_robots = get_param(self,'number_of_robots',4)
         self.robot_ID = get_param(self,'~robot_ID',0) 
         self.ned_origin_lat = 39.543330
@@ -50,7 +50,7 @@ class polygon_division:
             'array7': self.priority_objects
         }
 
-        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/mission.pickle', 'wb') as file:
+        with open('/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle', 'wb') as file:
             pickle.dump(data, file)
         print("...process finished")
  

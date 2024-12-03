@@ -1,5 +1,4 @@
 <launch>
-  <arg name="place" default="andratx_exterior.yaml"/>
   <arg name="enableRviz" default="true"/>
 
   <!-- General robots information -->
@@ -9,24 +8,47 @@
   <arg name="robot_3" default="robot3"/>  <!--AUV3-->
   <arg name="robot_4" default="robot4"/>  <!--ASV1-->
 
-  <!-- Autonomous vehicles architecture imulation -->
-  <!-- <node name="vehicles_architecture" pkg="multi_robot_system" type="architecture_launcher.py" output="screen" respawn="false"/> -->
+  <!-- Autonomous vehicles architecture simulation -->
+  <!-- <node name="launch_vehicles" pkg="multi_robot_system" type="robots_launcher.bash" output="screen" /> -->
+  <!-- <node name="launch_vehicles" pkg="multi_robot_system" type="architecture_launcher.py" output="screen" /> -->
+
+  <!-- Static transform -->
+  <node name="world2ned" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 3.1415 world world_ned 100"/>
+
+  <include file="$(find cola2_turbot)/launch/sim_start.launch">
+      <arg name="robot_name" value="$(arg robot_0)"/>
+  </include>
+
+  <include file="$(find cola2_turbot)/launch/sim_start.launch">
+      <arg name="robot_name" value="$(arg robot_1)"/>
+  </include>
+
+  <include file="$(find cola2_turbot)/launch/sim_start.launch">
+      <arg name="robot_name" value="$(arg robot_2)"/>
+  </include>
+
+  <include file="$(find cola2_turbot)/launch/sim_start.launch">
+      <arg name="robot_name" value="$(arg robot_3)"/>
+  </include>
+
+  <include file="$(find cola2_xiroi)/launch/sim_start.launch">
+      <arg name="robot_name" value="$(arg robot_4)"/>
+      <arg name="safety" value="false"/>
+      <arg name="enable_gui" value="false"/>
+      <arg name="enable_keyboard" value="true"/>
+  </include>
 
   <!-- Multi-robot system -->
     <group ns="/mrs">
 
       <!-- load the multi_robot_system.yaml parameters file -->
       <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
-      <!-- <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/> -->
+      <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/>
   
       <!-- Robot 0-->
       <node name="AUV_$(arg robot_0)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="0"/>
         <param name="robot_name" value="$(arg robot_0)"/>
-        <param name="battery_topic" value="/$(arg robot_0)/batteries/status"/>
-        <param name="section_action" value="/$(arg robot_0)/pilot/world_section_req"/>
-        <param name="section_result" value="/$(arg robot_0)/pilot/world_section_req/result"/>
-        <param name="robot_bvr_topic" value="/$(arg robot_0)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="5"/>
       </node>
 
@@ -34,10 +56,6 @@
       <node name="AUV_$(arg robot_1)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="1"/>
         <param name="robot_name" value="$(arg robot_1)"/>
-        <param name="battery_topic" value="/$(arg robot_1)/batteries/status"/>
-        <param name="section_action" value="/$(arg robot_1)/pilot/world_section_req"/>
-        <param name="section_result" value="/$(arg robot_1)/pilot/world_section_req/result"/>
-        <param name="robot_bvr_topic" value="/$(arg robot_1)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="7"/>
       </node>
 
@@ -45,10 +63,6 @@
       <node name="AUV_$(arg robot_2)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="2"/>
         <param name="robot_name" value= "$(arg robot_2)"/>
-        <param name="battery_topic" value="/$(arg robot_2)/batteries/status"/>
-        <param name="section_action" value="/$(arg robot_2)/pilot/world_section_req"/>
-        <param name="section_result" value="/$(arg robot_2)/pilot/world_section_req/result"/>
-        <param name="robot_bvr_topic" value="/$(arg robot_2)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="9"/>
       </node>
 
@@ -56,10 +70,6 @@
       <node name="AUV_$(arg robot_3)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="3"/>
         <param name="robot_name" value= "$(arg robot_3)"/>
-        <param name="battery_topic" value="/$(arg robot_3)/batteries/status"/>
-        <param name="section_action" value="/$(arg robot_3)/pilot/world_section_req"/>
-        <param name="section_result" value="/$(arg robot_3)/pilot/world_section_req/result"/>
-        <param name="robot_bvr_topic" value="/$(arg robot_3)/controller/body_velocity_req"/>
         <param name="navigation_depth" value="11"/>
       </node>
 
@@ -78,4 +88,3 @@
   <node if="$(arg enableRviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find multi_robot_system)/scene/MRS.rviz"/>
 
 </launch>
-

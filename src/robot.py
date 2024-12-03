@@ -203,7 +203,7 @@ class Robot:
         
         section_req.tolerance_xy = self.tolerance
         section_req.no_altitude_goes_up = False
-        section_req.timeout = 6000
+        section_req.timeout = 60
         self.section_srv(section_req)
 
             

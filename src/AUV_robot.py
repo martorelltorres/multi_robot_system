@@ -30,7 +30,6 @@ class MultiRobotSystem:
         self.name = name
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID')   
-        self.section_result = self.get_param('~section_result') 
         self.number_of_robots = self.get_param('number_of_robots')
         self.offset_polygon_distance = self.get_param('offset_polygon_distance')
         self.actual_sections = []
@@ -66,12 +65,15 @@ class MultiRobotSystem:
 
         # initialize the robots variables
         for i in range(self.number_of_robots):
-            self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
+            self.robot_initialization = np.append(self.robot_initialization,False) 
             self.actual_sections.append([i,0])
             self.robots_information.append (self.robot_data)
             self.explored_regular_objects_index.append(np.array([]))
             self.explored_priority_objects_index.append(np.array([]))
             self.coverage_start.append(False)
+        
+        print("***********INITIALIZATION**********")
+        print(self.robot_initialization)
 
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
@@ -87,11 +89,6 @@ class MultiRobotSystem:
             Bool,
             self.object_exploration_flag) 
         
-        # rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/captain_status',
-        #         CaptainStatus,    
-        #         self.update_section_status,
-        #         queue_size=1)
-
         rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/state_feedback',
                 CaptainStateFeedback,    
                 self.update_section_result,
@@ -127,6 +124,8 @@ class MultiRobotSystem:
                         queue_size=1)
 
         self.pub_explored_object = rospy.Publisher('explored_object', PointStamped, queue_size=2)
+
+        self.pub_points = rospy.Publisher('section_points_robot'+str(self.robot_ID), PointStamped, queue_size=2)
        
         
         self.read_area_info()   
@@ -212,13 +211,14 @@ class MultiRobotSystem:
     def update_section_result(self,msg):
         if(msg.state==1):
             self.section_ended = True
+            print("4444444444444444444444444444444444")
         else:
             self.section_ended = False
 
          
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MMRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
+        with open('/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -245,12 +245,15 @@ class MultiRobotSystem:
         self.goals = self.task_allocation_handler.task_allocation()
         for task in range(len(self.goals)):
             self.task_monitoring.append(0)
-        self.goal_polygons = self.goals[self.robot_ID][1]
+
+        self.goal_polygons = self.goals[self.robot_ID][1] #sub area asigned to each robot
+
+        print("Robot"+str(self.robot_ID)+" is exploring the subarea:" +str( self.goal_polygons))
+
         self.goal_points = self.area_handler.define_path_coverage()
+
         self.robot_sections = self.goal_points[self.robot_ID]
-        # print("************************************************")
-        # print(self.robot_sections)
-        # print( "The goals for robot"+str(self.robot_ID)+" are: "+str(self.goal_points[self.robot_ID]))
+
         self.coverage()
     
     def coverage(self):
@@ -258,24 +261,32 @@ class MultiRobotSystem:
         point1, point2 = self.area_handler.find_largest_side_distance(self.voronoi_polygons[self.robot_ID])
         dist_p1 = self.robot_handler.get_robot_distance_to_point(self.robot_position_north, self.robot_position_east,point1[0],point1[1])
         dist_p2 = self.robot_handler.get_robot_distance_to_point(self.robot_position_north, self.robot_position_east,point2[0],point2[1])
+        print(point1)
+        print(point2)
+        print( dist_p1)
+        print(dist_p2)
         
         if(dist_p1 > dist_p2):
             final_point = point2
         else: 
             final_point = point1
+        
+        print(final_point)
 
-        # self.goal_section_point = final_point
+        print("1111111111111111111111111111111111111111111111111")
         self.robot_handler.send_section_strategy((self.robot_position_north,self.robot_position_east),final_point,self.robot_ID)
+        print("2222222222222222222222222222222222222222")
         self.wait_until_section_reached()
-        # start the area exploration coverage
-        # flag used to start the object_detection, only starts when robots are in its assigned areas.
+        print("3333333333333333333333333333333333333")
+
+        # start the area exploration coverage, flag used to start the object_detection, only starts when robots are in its assigned areas.
         self.coverage_start[self.robot_ID] = True
+
         # advise the time when the robot starts the coverage
         msg = CoverageStartTime()
         msg.time = rospy.Time.now()
         msg.robot_id = self.robot_ID
         self.start_coverage_time.publish(msg)
-
 
         for section in range(len(self.robot_sections)):
             # get points from sections
