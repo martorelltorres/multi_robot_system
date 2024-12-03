@@ -9,13 +9,12 @@ import numpy as np
 import os
 import subprocess
 import pickle
-import actionlib
 from shapely.geometry import Polygon,Point
 from geometry_msgs.msg  import PointStamped
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
-from cola2_msgs.msg import  NavSts,CaptainStatus, CaptainStateFeedback
-from multi_robot_system.msg import CoverageStartTime, ExplorationUpdate, RegularObjectInformation,PriorityObjectInformation,BufferedData    
+from cola2_msgs.msg import  NavSts, CaptainStateFeedback
+from multi_robot_system.msg import CoverageStartTime, ExplorationUpdate, RegularObjectInformation,PriorityObjectInformation 
 from std_msgs.msg import Int16, Bool
 
 #import classes
@@ -148,8 +147,8 @@ class MultiRobotSystem:
             object_point = Point(self.priority_objects[element].x,self.priority_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            # if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element)):                             
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):                
+            if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element)):                             
+            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_priority_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):                
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting a PRIORITY OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")
@@ -174,8 +173,8 @@ class MultiRobotSystem:
             object_point = Point(self.regular_objects[element].x,self.regular_objects[element].y)
 
             # check if the object is in the AUV assigned sub-area
-            if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
-            # if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element)):                             
+            # if(self.voronoi_polygons[self.robot_ID].contains(object_point) and distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element) and self.coverage_start[self.robot_ID] == True ):       
+            if(distance_AUV_object < self.threshold_detection_distance and np.all(self.explored_regular_objects_index[self.robot_ID] != element)):                             
                 print("*******************************************************************************")
                 print("Robot "+str(self.robot_ID)+ " has been detecting REGULAR OBJECT:" + str(element)+" at position "+str(self.regular_objects[element].x)+" , "+str(self.regular_objects[element].y))
                 print("*******************************************************************************")
@@ -261,23 +260,14 @@ class MultiRobotSystem:
         point1, point2 = self.area_handler.find_largest_side_distance(self.voronoi_polygons[self.robot_ID])
         dist_p1 = self.robot_handler.get_robot_distance_to_point(self.robot_position_north, self.robot_position_east,point1[0],point1[1])
         dist_p2 = self.robot_handler.get_robot_distance_to_point(self.robot_position_north, self.robot_position_east,point2[0],point2[1])
-        print(point1)
-        print(point2)
-        print( dist_p1)
-        print(dist_p2)
-        
+       
         if(dist_p1 > dist_p2):
             final_point = point2
         else: 
             final_point = point1
         
-        print(final_point)
-
-        print("1111111111111111111111111111111111111111111111111")
         self.robot_handler.send_section_strategy((self.robot_position_north,self.robot_position_east),final_point,self.robot_ID)
-        print("2222222222222222222222222222222222222222")
         self.wait_until_section_reached()
-        print("3333333333333333333333333333333333333")
 
         # start the area exploration coverage, flag used to start the object_detection, only starts when robots are in its assigned areas.
         self.coverage_start[self.robot_ID] = True

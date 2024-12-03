@@ -65,10 +65,10 @@ class ASVRobot:
         self.transmission_time = 30
         self.pose = [0,0]
         self.data_transmited = []
-        self.regular_objects_info = np.array([[0],[0],[0],[0],[0],[0]])
-        self.priority_objects_info = np.array([[0],[0],[0],[0],[0],[0]])
-        self.regular_objects_transmitted = np.array([[0],[0],[0],[0],[0],[0]])
-        self.priority_objects_transmitted = np.array([[0],[0],[0],[0],[0],[0]])
+        self.regular_objects_info = np.array([])
+        self.priority_objects_info = np.array([])
+        self.regular_objects_transmitted = np.array([])
+        self.priority_objects_transmitted = np.array([])
         self.in_process = False
         self.get_information = False
         self.start_to_publish = False
@@ -79,12 +79,12 @@ class ASVRobot:
         self.elapsed_time = []
         self.system_init = False
         self.robot_data = [0,0]
-        self.auvs_information = [[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None]]
+        self.auvs_information = [[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None]]
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
         self.set_end_time = False
-        self.start_dustbin_strategy =np.array([False,False,False,False,False,False])
+        self.start_dustbin_strategy =np.array([False,False,False,False,False])
         self.exploration_tasks_update = np.array([])
         self.battery_charge= []
         self.distance = []
@@ -133,6 +133,10 @@ class ASVRobot:
 
         # initialize the robots variables
         for robot_ in range(self.number_of_robots):
+            self.regular_objects_info = np.append(self.regular_objects_info,[0])
+            self.priority_objects_info = np.append(self.priority_objects_info,[0])
+            self.regular_objects_transmitted = np.append(self.regular_objects_transmitted,[0])
+            self.priority_objects_transmitted = np.append(self.priority_objects_transmitted,[0])
             self.exploration_tasks_update = np.append(self.exploration_tasks_update,False)
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot_)  
@@ -343,6 +347,11 @@ class ASVRobot:
 
         # Publish the buffered data
         msg = BufferedData()
+        print(self.storage_disk)
+        print(self.data_stimulus)
+        print(self.regular_objects_info)
+        print(self.priority_objects_info)
+
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
         msg.data_stimulus = self.data_stimulus
@@ -365,6 +374,12 @@ class ASVRobot:
 
         # Publish the buffered data
         msg = BufferedData()
+
+        print(self.storage_disk)
+        print(self.data_stimulus)
+        print(self.regular_objects_info)
+        print(self.priority_objects_info)
+
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
         msg.data_stimulus = self.data_stimulus

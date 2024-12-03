@@ -18,19 +18,23 @@ import tf
 class acoustic_communication:
 
     def __init__(self, name):
+
         self.name = name
         self.asv_init = False
         node_name = rospy.get_name()
         self.number_of_robots = self.get_param('number_of_robots')
         self.number_of_asvs= 1
-        self.auv_position = [[],[],[],[],[],[]]
+        self.auv_position = []
         self.asv_position = [[],[]]
-        self.auv_flag = np.array([False,False,False,False,False,False])
+        self.auv_flag = np.array([])
         self.asv_auv_distance = 10000
         self.closest_asv_indices = np.zeros(self.number_of_robots, dtype=int)
         self.closest_asv = None
         self.min_distance = np.inf
-          
+
+        for robot_ in range(self.number_of_robots):
+          self.auv_flag = np.append(self.auv_flag,False)
+          self.auv_position.append([])
         #Publishers      
         self.auv0_pose_covariance_pub = rospy.Publisher('/robot0/acoustic_communication',
                                 PoseWithCovarianceStamped,
@@ -48,14 +52,7 @@ class acoustic_communication:
                                 PoseWithCovarianceStamped,
                                 queue_size=2)
         
-        self.auv4_pose_covariance_pub = rospy.Publisher('/robot4/acoustic_communication',
-                                PoseWithCovarianceStamped,
-                                queue_size=2)
-        
-        # self.auv5_pose_covariance_pub = rospy.Publisher('/robot5/acoustic_communication',
-        #                         PoseWithCovarianceStamped,
-        #                         queue_size=2)
-   
+  
         #Subscribers 
         for auv in range(self.number_of_robots):        
             rospy.Subscriber('/robot'+str(auv)+'/navigator/navigation',
@@ -139,10 +136,6 @@ class acoustic_communication:
             self.auv2_pose_covariance_pub.publish(msg)
         elif(auv==3):
             self.auv3_pose_covariance_pub.publish(msg)
-        elif(auv==4):
-            self.auv4_pose_covariance_pub.publish(msg)
-        elif(auv==5):
-            self.auv5_pose_covariance_pub.publish(msg)
 
         self.rate.sleep()
       

@@ -55,16 +55,15 @@ class Robot:
         self.travelled_distance_pub = rospy.Publisher('/robot'+str(self.robot_ID)+'/travelled_distance',
                                         TravelledDistance,
                                         queue_size=1)
-        rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/captain_status',
-                CaptainStatus,    
-                self.update_section_status,
-                queue_size=1)
+        # rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/captain_status',
+        #         CaptainStatus,    
+        #         self.update_section_status,
+        #         queue_size=1)
 
-        rospy.Subscriber('/robot'+str(self.robot_ID)+'/pilot/actionlib/feedback',
-                CaptainStateFeedback,    
-                self.update_section_feedback,
-                queue_size=1)
-
+        # rospy.Subscriber('/robot'+str(self.robot_ID)+'/pilot/actionlib/feedback',
+        #         CaptainStateFeedback,    
+        #         self.update_section_feedback,
+        #         queue_size=1)
         # Services clients
         # goto
         try:
@@ -203,9 +202,8 @@ class Robot:
         
         section_req.tolerance_xy = self.tolerance
         section_req.no_altitude_goes_up = False
-        section_req.timeout = 60
+        section_req.timeout = 600
         self.section_srv(section_req)
-
             
     def set_current_section(self,current_section):
         return(current_section)
@@ -228,21 +226,21 @@ class Robot:
         self.battery_status[self.robot_ID] =  self.battery_charge
         return(self.battery_charge)
          
-    def update_section_status(self,msg):
-        if(msg.state==6):
-            self.section_active = True
-        self.check_section_status
+    # def update_section_status(self,msg):
+    #     if(msg.state==6):
+    #         self.section_active = True
+    #     self.check_section_status
     
-    def update_section_feedback(self,msg):
-        if(msg.state==1):
-            self.section_succes = True
-        self.check_section_status
+    # def update_section_feedback(self,msg):
+    #     if(msg.state==1):
+    #         self.section_succes = True
+    #     self.check_section_status
 
-    def check_section_status():
-        if(self.section_active == self.section_succes == True):
-            return(True)
-        else:
-            return(False)
+    # def check_section_status():
+    #     if(self.section_active == self.section_succes == True):
+    #         return(True)
+    #     else:
+    #         return(False)
 
   
     def get_robot_position(self,robot_id):

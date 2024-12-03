@@ -57,8 +57,8 @@ class ASVAllocator:
         self.optimization_strategy = self.get_param("optimization_strategy",1)
 
         # Initialize some variables
-        self.acoustic_time = [0,0,0,0,0,0]
-        self.current_time = [0,0,0,0,0,0]
+        self.acoustic_time = [0,0,0,0]
+        self.current_time = [0,0,0,0]
         self.first_acoustic_reception = True
         self.qlearning_init = False
         self.first=True
@@ -67,13 +67,14 @@ class ASVAllocator:
         self.get_information = False
         self.start_to_publish = False
         self.robot_at_center = False
-        self.acquired_data = [0,0,0,0,0]
+        self.acquired_data = [0,0,0,0]
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
         self.penalty = np.array([])
         self.system_init = False
         self.robot_data = [0,0]
-        self.robots_information = [[],[],[],[],[]]
+        self.robots_information = []
+        self.compare = []
         self.robots = []
         self.robot_initialization = np.array([])
         self.set_end_time = False
@@ -110,9 +111,7 @@ class ASVAllocator:
         self.asvs_init = np.array([])
         self.init=False
         self.elapsed_time =np.array([])
-        self.auv_goal_ids = np.array([[0,0,0,0,0],[0,0,0,0,0]])
         self.asv_id = 100
-        self.data = np.array([[0,0,0,0,0],[0,0,0,0,0]])
         self.latency_data = np.array([[0,0,0,0,0],[0,0,0,0,0]])
         self.transmited_data = np.array([[0,0,0,0,0],[0,0,0,0,0]])
 
@@ -158,6 +157,8 @@ class ASVAllocator:
             self.stimulus = np.append(self.stimulus,0)
             self.penalty = np.append(self.penalty,0)
             self.communication_latency.append(0)
+            self.compare.append([0,0]) 
+            self.robots_information.append([])
         
         robots_sense = np.zeros(2)
         self.stimulus_variables = np.tile(robots_sense, (self.number_of_robots, 1))
@@ -174,7 +175,7 @@ class ASVAllocator:
                             robot_agent,
                             queue_size=1)
         
-        rospy.Subscriber('/robot5/navigator/navigation',
+        rospy.Subscriber('/robot4/navigator/navigation',
                         NavSts,    
                         self.update_asv_position,
                         0,
@@ -359,6 +360,9 @@ class ASVAllocator:
         return(self.comm_signal[robot_id])
     
     def get_distance(self, asv_id, auv_id):
+        print("*************************************")
+        print("ASV ID: "+str(asv_id) )
+        print("AUV ID: "+str(auv_id) )
         x_diff =  self.asvs_positions[asv_id][0] - self.robots_information[auv_id][0]
         y_diff =  self.asvs_positions[asv_id][1] - self.robots_information[auv_id][1] 
         distance =  sqrt(x_diff**2 + y_diff**2 )
@@ -374,7 +378,7 @@ class ASVAllocator:
     def update_stimulus_matrix(self):
         # get the information from the AUVs and create the matrix stimulus
         for asv in range(self.number_of_asvs):
-            for auv in range(self.active_robots):
+            for auv in range(self.active_robots-1):
                 # obtain the amount of data to be transferred
                 self.stimulus_variables[auv][0] = self.acquired_data[auv]
                 
@@ -387,7 +391,7 @@ class ASVAllocator:
                     self.stimulus_variables[auv]=[0,0]
 
             # check if there are data to transmit, if not stop the tracking
-            if(np.array_equal(self.stimulus_variables, [[0,0],[0,0],[0,0],[0,0],[0,0]])):
+            if(np.array_equal(self.stimulus_variables, self.compare)):
                 # send the order to stop the tracking process
                 # print("INNNN")
                 msg = Bool()
