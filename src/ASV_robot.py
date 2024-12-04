@@ -682,8 +682,8 @@ class ASVRobot:
         self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
 
     def tracking_strategy(self):
-        constant_linear_velocity = 8
-        constant_angular_velocity = 4 
+        constant_linear_velocity = 4
+        constant_angular_velocity = 2 
 
         if (self.radius<self.tracking_radius and self.radius>self.adrift_radius):
             self.velocity_adjustment = (self.radius-(self.adrift_radius))/(self.tracking_radius-(self.adrift_radius))
