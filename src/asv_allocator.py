@@ -55,7 +55,7 @@ class ASVAllocator:
         self.w3 = self.get_param("w3",1)
         self.w4 = self.get_param("w4",1)
         self.optimization_strategy = self.get_param("optimization_strategy",1)
-
+        
         # Initialize some variables
         self.acoustic_time = [0,0,0,0]
         self.current_time = [0,0,0,0]
@@ -115,6 +115,7 @@ class ASVAllocator:
         self.latency_data = np.array([[0,0,0,0],[0,0,0,0]])
         self.transmited_data = np.array([[0,0,0,0],[0,0,0,0]])
         self.owa=[]
+        self.number_of_auvs = self.number_of_robots-self.number_of_asvs
 
         self.zero_stimulus_variables = np.tile(np.zeros(0), (self.number_of_robots, 1))
         # -----------------------------------------------------------------
@@ -362,9 +363,6 @@ class ASVAllocator:
         return(self.comm_signal[robot_id])
     
     def get_distance(self, asv_id, auv_id):
-        print("*************************************")
-        print("ASV ID: "+str(asv_id) )
-        print("AUV ID: "+str(auv_id) )
         x_diff =  self.asvs_positions[asv_id][0] - self.robots_information[auv_id][0]
         y_diff =  self.asvs_positions[asv_id][1] - self.robots_information[auv_id][1] 
         distance =  sqrt(x_diff**2 + y_diff**2 )
@@ -388,7 +386,7 @@ class ASVAllocator:
     def update_stimulus_matrix(self):
         # get the information from the AUVs and create the matrix stimulus
         for asv in range(self.number_of_asvs):
-            for auv in range(self.active_robots-2):
+            for auv in range(self.active_robots-1):
                 # obtain the amount of data to be transferred
                 self.stimulus_variables[auv][0] = self.acquired_data[auv]
                 
@@ -504,7 +502,6 @@ class ASVAllocator:
     
     def OWA(self):
         self.number_of_stimulus = 3 #data distance and RSSI 
-        self.number_of_auvs = self.number_of_robots-1
         OWA_inputs = self.min_max_scale(self.stimulus_variables)
         comm = np.array([])
         OWA_inputs_out = np.array([])

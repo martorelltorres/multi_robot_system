@@ -64,7 +64,7 @@ class ASVRobot:
         self.communication_time = 0
         self.transmission_time = 30
         self.pose = [0,0]
-        self.data_transmited = []
+        self.data_transmited = [0,0,0,0]
         self.regular_objects_info = np.array([])
         self.priority_objects_info = np.array([])
         self.regular_objects_transmitted = np.array([])
@@ -145,7 +145,7 @@ class ASVRobot:
             self.comm_signal.append(0)
             self.storage_disk.append(0)
             self.data_stimulus.append(0)
-            self.data_transmited.append(0)
+            # self.data_transmited.append(0)
             self.time_init.append(0)
             self.distance.append(0)
             self.start_recording_time.append(0)
@@ -682,8 +682,8 @@ class ASVRobot:
         self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
 
     def tracking_strategy(self):
-        constant_linear_velocity = 3
-        constant_angular_velocity = 2 
+        constant_linear_velocity = 8
+        constant_angular_velocity = 4 
 
         if (self.radius<self.tracking_radius and self.radius>self.adrift_radius):
             self.velocity_adjustment = (self.radius-(self.adrift_radius))/(self.tracking_radius-(self.adrift_radius))

@@ -28,7 +28,7 @@ offset_polygon_distance: 5
 # The offset_coverage_distance set the distance between the coverage lines path
 offset_coverage_distance: 5
 # Section strategy parameters
-surge_velocity: 0.5
+surge_velocity: 1
 tolerance: 2
 
 # ------------------ DUSTBIN ROBOT -----------------------
