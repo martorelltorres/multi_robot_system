@@ -4,6 +4,7 @@
 
 # ------------------ ROBOTS INFO -----------------------
 number_of_robots: 5 #TOTAL number of AUVs (explorer robots)
+number_of_AUVs: 3
 # be sure that all the simulated architectures has the same NED origin 
 
 # Andratx exterior

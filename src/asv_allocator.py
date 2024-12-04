@@ -28,7 +28,7 @@ import subprocess
 class ASVAllocator:
     def __init__(self, name):
         """ Init the class """
-        rospy.sleep(5)
+        rospy.sleep(2)
         self.name = name
         node_name = rospy.get_name()
 
@@ -107,20 +107,21 @@ class ASVAllocator:
         self.start_recording_time = []
         self.start_data_gathering = True
         self.number_of_asvs= 1
-        self.asvs_positions= np.array([[0,0,0],[0,0,0]])
+        self.asvs_positions= []
         self.asvs_init = np.array([])
         self.init=False
         self.elapsed_time =np.array([])
         self.asv_id = 100
-        self.latency_data = np.array([[0,0,0,0,0],[0,0,0,0,0]])
-        self.transmited_data = np.array([[0,0,0,0,0],[0,0,0,0,0]])
+        self.latency_data = np.array([[0,0,0,0],[0,0,0,0]])
+        self.transmited_data = np.array([[0,0,0,0],[0,0,0,0]])
+        self.owa=[]
 
         self.zero_stimulus_variables = np.tile(np.zeros(0), (self.number_of_robots, 1))
         # -----------------------------------------------------------------
 
         for asv in range(self.number_of_asvs):
             self.asvs_init = np.append(self.asvs_init,False)
- 
+            self.asvs_positions.append([0,0,0])
         # Set the number of stimulus depending of the optimization strategy
         if(self.optimization_model==1):
             self.number_of_stimulus=2
@@ -159,9 +160,10 @@ class ASVAllocator:
             self.communication_latency.append(0)
             self.compare.append([0,0]) 
             self.robots_information.append([])
+            self.owa.append(0)
         
         robots_sense = np.zeros(2)
-        self.stimulus_variables = np.tile(robots_sense, (self.number_of_robots, 1))
+        self.stimulus_variables = np.tile(robots_sense, (self.number_of_robots-1, 1))
 
         self.times = np.vstack((self.elapsed_time,self.elapsed_time))
         # Show initialization message
@@ -178,7 +180,7 @@ class ASVAllocator:
         rospy.Subscriber('/robot4/navigator/navigation',
                         NavSts,    
                         self.update_asv_position,
-                        0,
+                        self.asv_ID,
                         queue_size=1)
         
         for asv in range(self.number_of_asvs):
@@ -369,8 +371,16 @@ class ASVAllocator:
         return(distance)
 
     def update_asv_position(self, msg, asv):
-        self.asvs_init[asv]=True
-        self.asvs_positions[asv] = [msg.position.north,msg.position.east,msg.orientation.yaw]
+   
+        north = float(msg.position.north)
+        east = float(msg.position.east)
+        yaw = float(msg.orientation.yaw)
+
+        if asv not in self.asvs_positions:
+            self.asvs_positions[asv] = [0.0, 0.0, 0.0]  # Initialize if not already present
+        
+        self.asvs_positions[asv] = [north, east, yaw]
+        self.asvs_init[asv] = True
 
         if(np.all(self.asvs_init) == True):
             self.init=True
@@ -378,7 +388,7 @@ class ASVAllocator:
     def update_stimulus_matrix(self):
         # get the information from the AUVs and create the matrix stimulus
         for asv in range(self.number_of_asvs):
-            for auv in range(self.active_robots-1):
+            for auv in range(self.active_robots-2):
                 # obtain the amount of data to be transferred
                 self.stimulus_variables[auv][0] = self.acquired_data[auv]
                 
@@ -494,12 +504,13 @@ class ASVAllocator:
     
     def OWA(self):
         self.number_of_stimulus = 3 #data distance and RSSI 
+        self.number_of_auvs = self.number_of_robots-1
         OWA_inputs = self.min_max_scale(self.stimulus_variables)
         comm = np.array([])
         OWA_inputs_out = np.array([])
 
         #Iteram a traves de la sortida de min_max_scale per afegir l'estimul de RSSI
-        for element in range(self.number_of_robots):
+        for element in range(self.number_of_auvs):
             signal = self.get_communication_signal(0,element)
             comm=np.append(comm,signal)
 
@@ -509,8 +520,6 @@ class ASVAllocator:
             if np.all(OWA_inputs[i] == 0):
                 OWA_inputs_out[i, 2] = 0
 
-        self.owa=[0,0,0,0,0,0]
-
         # get the weights and set the values for w1,w2,w3,w4 where w1>=w2>=w3>=w4
         OWA_weights =np.array([self.w1,self.w2,self.w3])
         OWA_weights_sorted = np.sort(OWA_weights)
@@ -518,7 +527,7 @@ class ASVAllocator:
         self.w2 = OWA_weights_sorted[1]
         self.w3 = OWA_weights_sorted[0]
 
-        for robot in range(self.number_of_robots):
+        for robot in range(self.number_of_auvs):
             sorted_values = np.sort(OWA_inputs_out[robot]) 
             self.max_element = sorted_values[2]
             self.middle1 = sorted_values[1]
