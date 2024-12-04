@@ -556,16 +556,16 @@ class ASVRobot:
             rssi=-44.5 + -0.497*distance + 2.7E-03*distance**2 + -6.79E-06*distance**3 + 6.37E-09*distance**4
             
             if (rssi>-50):
-                normalized_RSSI = 0.2
+                normalized_RSSI = 0.2/10
             else:
                 normalized_RSSI = (rssi - (-85)) / ((-52) - (-85))
                 
             # print("Distance: "+str(distance) + " RSSI: "+str(rssi)+ " Communication signal: "+str(normalized_RSSI))
                    
-            self.communication_time =  self.communication_time + normalized_RSSI
+            self.communication_time =  self.communication_time + (normalized_RSSI/10)
             if(self.storage_disk[self.robot_goal_id]>0):
                  
-                # print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+                print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
                 
                 if(self.communication_time > self.transmission_time):
                     # ----------- update buffered data --------------
