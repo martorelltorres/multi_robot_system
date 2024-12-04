@@ -32,7 +32,7 @@
       <arg name="robot_name" value="$(arg robot_4)"/>
       <arg name="safety" value="false"/>
       <arg name="enable_gui" value="false"/>
-      <arg name="enable_keyboard" value="true"/>
+      <arg name="enable_keyboard" value="false"/>
   </include>
 
   <!-- Multi-robot system -->

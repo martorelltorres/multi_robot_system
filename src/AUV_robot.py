@@ -31,6 +31,7 @@ class MultiRobotSystem:
         self.robot_ID = self.get_param('~robot_ID')   
         self.number_of_robots = self.get_param('number_of_robots')
         self.offset_polygon_distance = self.get_param('offset_polygon_distance')
+        self.pickle_path = self.get_param('pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
         self.actual_sections = []
         self.actual_section = 0
         self.area_handler =  area_partition("area_partition")
@@ -216,7 +217,7 @@ class MultiRobotSystem:
          
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
+        with open(self.pickle_path, 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 

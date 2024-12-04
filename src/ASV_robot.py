@@ -43,7 +43,7 @@ class ASVRobot:
         self.repulsion_radius = self.get_param("repulsion_radius",10)
         self.adrift_radius = self.get_param("adrift_radius",17)
         self.tracking_radius = self.get_param("tracking_radius",20)
-        self.dutsbin_timer = self.get_param("dutsbin_timer",1)
+        self.pickle_path = self.get_param('pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
 
         self.alpha = self.get_param("alpha",1)
         self.beta = self.get_param("beta",1)
@@ -300,7 +300,7 @@ class ASVRobot:
         rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
         rospy.Timer(rospy.Duration(1.0), self.send_elapsed_time)
         rospy.Timer(rospy.Duration(1.0), self.update_process_time)
-        rospy.Timer(rospy.Duration(1.0), self.AUV_tracking)
+        rospy.Timer(rospy.Duration(0.1), self.AUV_tracking)
     
     def AUV_tracking(self,event):
         if(self.enable_tracking == True):
@@ -319,7 +319,7 @@ class ASVRobot:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
+        with open(self.pickle_path, 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
@@ -522,6 +522,8 @@ class ASVRobot:
         return(distance)
 
     def tracking(self):
+            # disable all and sed IDLE
+            self.disable_all_and_set_idle_srv()
             self.auv_position_north = self.auvs_information[self.robot_goal_id][0]
             self.asv_position_north = self.asv_north
             self.auv_position_east = self.auvs_information[self.robot_goal_id][1]
@@ -682,8 +684,8 @@ class ASVRobot:
         self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
 
     def tracking_strategy(self):
-        constant_linear_velocity = 4
-        constant_angular_velocity = 2 
+        constant_linear_velocity = 3
+        constant_angular_velocity = 1.5 
 
         if (self.radius<self.tracking_radius and self.radius>self.adrift_radius):
             self.velocity_adjustment = (self.radius-(self.adrift_radius))/(self.tracking_radius-(self.adrift_radius))
@@ -718,6 +720,14 @@ class ASVRobot:
         bvr.twist.angular.y    = 0.0
         bvr.twist.angular.z    = corrected_angular_z
         bvr.goal.priority      = 60
+        # PRIORITY DEFINITIONS
+        # uint32 PRIORITY_TELEOPERATION_LOW = 0
+        # uint32 PRIORITY_SAFETY_LOW = 5
+        # uint32 PRIORITY_NORMAL = 10
+        # uint32 PRIORITY_SAFETY = 30
+        # uint32 PRIORITY_TELEOPERATION = 40
+        # uint32 PRIORITY_SAFETY_HIGH  = 50
+        # uint32 PRIORITY_TELEOPERATION_HIGH = 60
         self.corrected_bvr.publish(bvr)
     
     def transit_to(self,pose):    

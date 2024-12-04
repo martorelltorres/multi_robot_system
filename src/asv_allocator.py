@@ -40,10 +40,10 @@ class ASVAllocator:
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.section_action = self.get_param('section_action','/robot6/pilot/world_section_req') 
         self.section_result = self.get_param('section_result','/robot6/pilot/world_section_req/result') 
+        self.pickle_path = self.get_param('pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
         self.repulsion_radius = self.get_param("repulsion_radius",20)
         self.adrift_radius = self.get_param("adrift_radius",30)
         self.tracking_radius = self.get_param("tracking_radius",50)
-        self.dutsbin_timer = self.get_param("dutsbin_timer",1)
         self.alpha = self.get_param("alpha",1)
         self.beta = self.get_param("beta",1)
         # self.gamma = self.get_param("gamma",1)
@@ -248,7 +248,7 @@ class ASVAllocator:
 
     def read_area_info(self):
         # Open the pickle file in binary mode
-        with open('/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle', 'rb') as file:
+        with open(self.pickle_path, 'rb') as file:
             # Load the data from the file
             data = pickle.load(file)
 
