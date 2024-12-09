@@ -1,53 +1,21 @@
 <launch>
   <arg name="enableRviz" default="false"/>
-  <arg name="mrs" default="false"/>
-  <arg name="stonefish_simulator" default="true"/>
-  <arg name="cola2_architecture" default="false"/>
+  <arg name="mrs" default="true"/>
+  <arg name="cola2_architecture" default="true"/>
 
   <!-- General robots information -->
   <arg name="robot_0" default="robot0"/>  <!--AUV0-->
   <arg name="robot_1" default="robot1"/>  <!--AUV1-->
   <arg name="robot_2" default="robot2"/>  <!--AUV2-->
   <arg name="robot_3" default="robot3"/>  <!--AUV3-->
-  <!-- <arg name="robot_4" default="robot4"/>  -->
-
-  <!-- Static transform -->
-  <node name="world2ned" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 3.1415 world world_ned 100"/>
-
-  <!-- STONEFISH SIMULATOR -->
-  <group if="$(arg stonefish_simulator)">
-    <!-- load the multi_robot_system.yaml parameters file -->
-    <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
-
-    <include file="$(find cola2_stonefish)/launch/AUV.launch">
-        <arg name="robot_name" value="$(arg robot_0)"/>
-    </include>
-
-    <include file="$(find cola2_stonefish)/launch/AUV.launch">
-        <arg name="robot_name" value="$(arg robot_1)"/>
-    </include>
-
-    <include file="$(find cola2_stonefish)/launch/AUV.launch">
-        <arg name="robot_name" value="$(arg robot_2)"/>
-    </include>
-
-    <include file="$(find cola2_stonefish)/launch/AUV.launch">
-        <arg name="robot_name" value="$(arg robot_3)"/>
-    </include>
-
-    <!-- Run Simulator -->
-    <include file="$(find stonefish_ros)/launch/simulator.launch">
-        <arg name="simulation_data" value="$(find cola2_stonefish)/data"/>
-        <arg name="scenario_description" value="$(find cola2_stonefish)/scenarios/MRS.scn"/>
-        <arg name="simulation_rate" value="300.0"/>
-        <arg name="graphics_resolution" value="1200 800"/>
-        <arg name="graphics_quality" value="high"/>
-    </include>
-  </group>
+  <arg name="robot_4" default="robot4"/>  <!--ASV1-->
 
 
    <!-- COLA2 ARCHITECTURE -->
   <group if="$(arg cola2_architecture)">
+
+    <!-- Static transform -->
+    <node name="world2ned" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 3.1415 world world_ned 100"/>
 
     <include file="$(find cola2_turbot)/launch/sim_start.launch">
         <arg name="robot_name" value="$(arg robot_0)"/>
