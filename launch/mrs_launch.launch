@@ -1,7 +1,7 @@
 <launch>
   <arg name="enableRviz" default="false"/>
   <arg name="mrs" default="true"/>
-  <arg name="cola2_architecture" default="true"/>
+  <arg name="cola2_architecture" default="false"/>
 
   <!-- General robots information -->
   <arg name="robot_0" default="robot0"/>  <!--AUV0-->
@@ -62,21 +62,21 @@
       <node name="AUV_$(arg robot_1)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="1"/>
         <param name="robot_name" value="$(arg robot_1)"/>
-        <param name="navigation_depth" value="7"/>
+        <param name="navigation_depth" value="5"/>
       </node>
 
       <!-- Robot 2 -->
       <node name="AUV_$(arg robot_2)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="2"/>
         <param name="robot_name" value= "$(arg robot_2)"/>
-        <param name="navigation_depth" value="9"/>
+        <param name="navigation_depth" value="5"/>
       </node>
 
       <!-- Robot 3 -->
       <node name="AUV_$(arg robot_3)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="3"/>
         <param name="robot_name" value= "$(arg robot_3)"/>
-        <param name="navigation_depth" value="11"/>
+        <param name="navigation_depth" value="5"/>
       </node>
 
       <!-- ACOUSTIC COMMUNICATIONS -->
