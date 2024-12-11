@@ -1,7 +1,7 @@
 <launch>
-  <arg name="enableRviz" default="false"/>
+  <arg name="enableRviz" default="true"/>
   <arg name="mrs" default="true"/>
-  <arg name="cola2_architecture" default="false"/>
+  <arg name="cola2_architecture" default="true"/>
 
   <!-- General robots information -->
   <arg name="robot_0" default="robot0"/>  <!--AUV0-->

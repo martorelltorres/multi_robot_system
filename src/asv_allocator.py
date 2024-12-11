@@ -11,7 +11,7 @@ import pickle
 import actionlib
 import message_filters       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16MultiArray, Bool, Int16
+from std_msgs.msg import Float64MultiArray, Bool, Int16
 from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
@@ -49,12 +49,12 @@ class ASVAllocator:
         # self.gamma = self.get_param("gamma",1)
         # self.test = self.get_param("test",0)
         self.n = self.get_param("n",1)
-        self.optimization_model = self.get_param("optimization_model",1)
+        self.aggregation_model = self.get_param("aggregation_model",1)
         self.w1 = self.get_param("w1",1)
         self.w2 = self.get_param("w2",1)
         self.w3 = self.get_param("w3",1)
         self.w4 = self.get_param("w4",1)
-        self.optimization_strategy = self.get_param("optimization_strategy",1)
+     
         
         # Initialize some variables
         self.acoustic_time = [0,0,0,0]
@@ -124,7 +124,7 @@ class ASVAllocator:
             self.asvs_init = np.append(self.asvs_init,False)
             self.asvs_positions.append([0,0,0])
         # Set the number of stimulus depending of the optimization strategy
-        if(self.optimization_model==1):
+        if(self.aggregation_model==1):
             self.number_of_stimulus=2
         else:
             self.number_of_stimulus=3
@@ -186,7 +186,7 @@ class ASVAllocator:
         
         for asv in range(self.number_of_asvs):
             rospy.Subscriber('/mrs/asv'+str(asv)+'_elapsed_time',
-                            Int16MultiArray,    
+                            Float64MultiArray,    
                             self.update_elapsed_time,
                             asv,
                             queue_size=1)
@@ -231,7 +231,7 @@ class ASVAllocator:
                                         queue_size=2)
         
         self.pub_elapsed_time = rospy.Publisher('allocator_elapsed_time',
-                                                 Int16MultiArray,
+                                                 Float64MultiArray,
                                                 queue_size=2)
         
         self.communication_latency_pub = rospy.Publisher('allocator_communication_latency',
@@ -268,7 +268,7 @@ class ASVAllocator:
         self.sync_elapsed_time = self.times[asv]
 
         # Publish information
-        msg = Int16MultiArray()
+        msg = Float64MultiArray()
         msg.data = self.sync_elapsed_time
         self.pub_elapsed_time.publish(msg)
 
@@ -463,10 +463,10 @@ class ASVAllocator:
         # set at minimum value the robots that have completed their work 
         if(self.robot_to_remove!=999 and self.remove_robot==True):
             for element in range(len(self.removed_robots)):
-                if(self.optimization_model==1):
+                if(self.aggregation_model==1):
                     self.stimulus_variables[self.removed_robots[element]] = [0,0] #number of stimulus
                     self.normalized_values[self.removed_robots[element]] = [0,0] 
-                elif(self.optimization_model==2):
+                elif(self.aggregation_model==2):
                     self.stimulus_variables[self.removed_robots[element]] = [0,0]
                     self.normalized_values[self.removed_robots[element]] = [0,0]
             self.remove_robot=False  

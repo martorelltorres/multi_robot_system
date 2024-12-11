@@ -30,7 +30,7 @@ class MultiRobotSystem:
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID')   
         self.number_of_robots = self.get_param('number_of_robots')
-        self.offset_polygon_distance = self.get_param('offset_polygon_distance')
+        self.offset_coverage_distance = self.get_param('offset_coverage_distance')
         self.pickle_path = self.get_param('pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
         self.actual_sections = []
         self.actual_section = 0
@@ -41,7 +41,7 @@ class MultiRobotSystem:
         self.send_following_section = False
         self.points = []
         self.goal_section_point = [0,0]
-        self.threshold_detection_distance = self.offset_polygon_distance*1.2
+        self.threshold_detection_distance = self.offset_coverage_distance/2
         self.simulation_task_times = []
         self.task_monitoring = []
         self.section_cancelled = False

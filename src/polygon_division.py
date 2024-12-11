@@ -18,10 +18,9 @@ import xml.etree.ElementTree as ET
 class polygon_division:
 
     def __init__(self, name):
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/multi_robot_system/missions/mission.xml") 
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/missions/60000.xml") 
         self.number_of_robots = get_param(self,'number_of_robots',4)
-        self.pickle_path = get_param(self,'pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
-        self.robot_ID = get_param(self,'~robot_ID',0) 
+        self.pickle_path = get_param(self,'pickle_path','/home/uib/MMRS_ws/src/multi_robot_system/missions/pickle/60000.pickle')
         self.ned_origin_lat = 39.543330
         self.ned_origin_lon = 2.377940
         self.regular_objects_number = 20

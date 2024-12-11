@@ -11,7 +11,7 @@ import pickle
 import actionlib
 import tf       
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int16, Bool, Int16MultiArray
+from std_msgs.msg import Int16, Bool, Float64MultiArray
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
@@ -49,7 +49,7 @@ class ASVRobot:
         self.beta = self.get_param("beta",1)
         self.gamma = self.get_param("gamma",1)
         self.n = self.get_param("n",1)
-        self.optimization_model = self.get_param("optimization_model",1)
+        self.aggregation_model = self.get_param("aggregation_model",1)
 
         self.w1 = self.get_param("w1",1)
         self.w2 = self.get_param("w2",1)
@@ -118,10 +118,10 @@ class ASVRobot:
         self.goal_settled= False
 
         # Set the number of stimulus depending of the optimization strategy
-        if(self.optimization_model==1):
-            self.number_of_stimulus=3
+        if(self.aggregation_model==1):
+            self.number_of_stimulus=2
         else:
-            self.number_of_stimulus=4
+            self.number_of_stimulus=3
 
         self.read_area_info()
         # intialize the variables
@@ -220,7 +220,7 @@ class ASVRobot:
         
         self.pub_object = rospy.Publisher('object_point', PointStamped, queue_size=2)
 
-        self.pub_elapsed_time = rospy.Publisher('asv'+str(self.asv_ID)+'_elapsed_time', Int16MultiArray, queue_size=2)
+        self.pub_elapsed_time = rospy.Publisher('asv'+str(self.asv_ID)+'_elapsed_time', Float64MultiArray, queue_size=2)
 
         self.markerPub_repulsion = rospy.Publisher('asv'+str(self.asv_ID)+'repulsion_radius',
                                                     Marker,
@@ -656,7 +656,7 @@ class ASVRobot:
                 self.elapsed_time[auv]= time
 
         # Publish information
-        msg = Int16MultiArray()
+        msg = Float64MultiArray()
         msg.data = self.elapsed_time
         self.pub_elapsed_time.publish(msg)
         return(time)
