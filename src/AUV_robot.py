@@ -64,7 +64,7 @@ class MultiRobotSystem:
         self.section_ended = False
 
         # initialize the robots variables
-        for i in range(self.number_of_robots):
+        for i in range(self.number_of_robots-1):
             self.robot_initialization = np.append(self.robot_initialization,False) 
             self.actual_sections.append([i,0])
             self.robots_information.append (self.robot_data)
@@ -72,9 +72,6 @@ class MultiRobotSystem:
             self.explored_priority_objects_index.append(np.array([]))
             self.coverage_start.append(False)
         
-        print("***********INITIALIZATION**********")
-        print(self.robot_initialization)
-
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
@@ -234,7 +231,7 @@ class MultiRobotSystem:
         # wait 7 seconds in order to initialize the different robot architectures
         rospy.sleep(7)
         if np.all(self.robot_initialization == False):
-            for robot in range(self.number_of_robots):
+            for robot in range(self.number_of_robots-1):
                 self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
 
         print("             *************************")
@@ -277,6 +274,7 @@ class MultiRobotSystem:
         msg.time = rospy.Time.now()
         msg.robot_id = self.robot_ID
         self.start_coverage_time.publish(msg)
+
 
         for section in range(len(self.robot_sections)):
             # get points from sections

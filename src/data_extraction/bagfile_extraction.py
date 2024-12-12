@@ -42,7 +42,7 @@ class DataExtraction:
 
         self.simulation_count = -1
         self.aggregation_model = 1
-        self.data_path = '/home/uib/MRS_data/NN/40000/4AUVs/'
+        self.data_path = '/home/uib/MRS_data/NN/1000/4AUVs/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'

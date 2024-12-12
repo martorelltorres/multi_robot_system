@@ -41,8 +41,8 @@ class ASVRobot:
         self.tolerance = self.get_param('tolerance',2)
         self.surge_velocity = self.get_param('surge_velocity',0.5)
         self.repulsion_radius = self.get_param("repulsion_radius",10)
-        self.adrift_radius = self.get_param("adrift_radius",17)
-        self.tracking_radius = self.get_param("tracking_radius",20)
+        self.adrift_radius = self.get_param("adrift_radius",20)
+        self.tracking_radius = self.get_param("tracking_radius",50)
         self.pickle_path = self.get_param('pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
 
         self.alpha = self.get_param("alpha",1)
@@ -101,7 +101,7 @@ class ASVRobot:
         self.explorer_robots = []
         self.senses = []
         self.number_of_stimulus = 4
-        self.active_robots = self.number_of_robots
+        self.active_robots = self.number_of_robots-1
         self.robot_to_remove = 999
         self.removed_robots= []
         self.regular_communication_latency = []
@@ -132,7 +132,7 @@ class ASVRobot:
             self.scaled_senses.append(self.senses)
 
         # initialize the robots variables
-        for robot_ in range(self.number_of_robots):
+        for robot_ in range(self.number_of_robots-1):
             self.regular_objects_info = np.append(self.regular_objects_info,[0])
             self.priority_objects_info = np.append(self.priority_objects_info,[0])
             self.regular_objects_transmitted = np.append(self.regular_objects_transmitted,[0])
@@ -167,7 +167,7 @@ class ASVRobot:
         rospy.loginfo('[%s]: initialized', self.name)
 
         #Subscribers 
-        for robot_id in range(self.number_of_robots):
+        for robot_id in range(self.number_of_robots-1):
             rospy.Subscriber('/robot'+str(robot_id)+'/acoustic_communication',
                             PoseWithCovarianceStamped,
                             self.update_acoustic_info,
@@ -205,13 +205,7 @@ class ASVRobot:
         rospy.Subscriber('/mrs/exploration_finished',
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
-                            queue_size=1)  
-        
-        # rospy.Subscriber('/asv'+str(self.asv_ID)+'/tracking',
-        #         Bool,    
-        #         self.update_tracking_status,
-        #         queue_size=1)
-        
+                            queue_size=1)          
 
         #Publishers
         self.corrected_bvr = rospy.Publisher('/robot'+str(self.robot_ID)+'/controller/body_velocity_req',
@@ -285,6 +279,24 @@ class ASVRobot:
             rospy.logerr('%s: error creating client to disable_all_and_set_idle service',
                          self.name)
             rospy.signal_shutdown('Error creating client to disable_all_and_set_idle service')
+
+        try:
+            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/controller/enable_thrusters', 20)
+            self.enable_thrusters_srv = rospy.ServiceProxy(
+                        '/robot'+str(self.robot_ID)+'/controller/enable_thrusters', Trigger)
+        except rospy.exceptions.ROSException:
+            rospy.logerr('%s: error creating client to controller/enable_thrusters',
+                         self.name)
+            rospy.signal_shutdown('Error creating client to controller/enable_thrusters')
+
+        try:
+            rospy.wait_for_service('/robot'+str(self.robot_ID)+'/controller/disable_thrusters', 20)
+            self.disable_thrusters_srv = rospy.ServiceProxy(
+                        '/robot'+str(self.robot_ID)+'/controller/disable_thrusters', Trigger)
+        except rospy.exceptions.ROSException:
+            rospy.logerr('%s: error creating client to controller/disable_thrusters',
+                         self.name)
+            rospy.signal_shutdown('Error creating client to controller/disable_thrusters')
 
         # section
         try:
@@ -441,9 +453,9 @@ class ASVRobot:
         self.asv_yaw = msg.orientation.yaw
         self.asv_init = True
 
-        if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
-            self.transit_to(self.main_polygon_centroid)
-            self.robot_at_center = True
+        # if (self.robot_at_center == False and self.asv_init == True and self.process_time>6 ):
+        #     self.transit_to(self.main_polygon_centroid)
+        #     self.robot_at_center = True
     
     def update_acoustic_info(self, msg, robot_agent):
         # tranform from quaternion to euler angles
@@ -492,8 +504,8 @@ class ASVRobot:
     def check_dustbin_robot(self):
         if(np.size(self.robots_id)==0):
             self.enable_tracking = False
-            if(self.asv_init == True):
-                self.goto_central_area()
+            # if(self.asv_init == True):
+            #     self.goto_central_area()
                   
     def goto_central_area(self):
         self.transit_to(self.main_polygon_centroid)
@@ -502,10 +514,10 @@ class ASVRobot:
     def get_lateral_position(self):
         yaw_rad = math.radians(self.auv_yaw)
         # Obtain lateral positiona at predefined distance
-        lateral_pos_1_x = self.auv_position_north + self.adrift_radius * math.cos(yaw_rad + math.pi / 2)
-        lateral_pos_1_y = self.auv_position_east + self.adrift_radius * math.sin(yaw_rad + math.pi / 2)
-        lateral_pos_2_x = self.auv_position_north + self.adrift_radius * math.cos(yaw_rad - math.pi / 2)
-        lateral_pos_2_y = self.auv_position_east + self.adrift_radius * math.sin(yaw_rad - math.pi / 2)
+        lateral_pos_1_x = self.auv_position_north + self.adrift_radius*math.cos(yaw_rad + math.pi / 2)
+        lateral_pos_1_y = self.auv_position_east +  self.adrift_radius*math.sin(yaw_rad + math.pi / 2)
+        lateral_pos_2_x = self.auv_position_north + self.adrift_radius*math.cos(yaw_rad - math.pi / 2)
+        lateral_pos_2_y = self.auv_position_east + self.adrift_radius*math.sin(yaw_rad - math.pi / 2)
         # find the closest position
         dist_1 = self.get_euclidean_distance(self.asv_position_north,self.asv_position_east,lateral_pos_1_x,lateral_pos_1_y)
         dist_2 = self.get_euclidean_distance(self.asv_position_north,self.asv_position_east,lateral_pos_2_x,lateral_pos_2_y)
@@ -522,6 +534,7 @@ class ASVRobot:
         return(distance)
 
     def tracking(self):
+            self.enable_thrusters_srv()
             # disable all and sed IDLE
             self.disable_all_and_set_idle_srv()
             self.auv_position_north = self.auvs_information[self.robot_goal_id][0]
@@ -684,23 +697,37 @@ class ASVRobot:
         self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
 
     def tracking_strategy(self):
-        constant_linear_velocity = 3
+        constant_linear_velocity = 2
         constant_angular_velocity = 1.5 
 
         if (self.radius<self.tracking_radius and self.radius>self.adrift_radius):
             self.velocity_adjustment = (self.radius-(self.adrift_radius))/(self.tracking_radius-(self.adrift_radius))
+            linear_velocity = self.velocity_adjustment * constant_linear_velocity
+            alpha_ref = atan2(self.y_lateral_distance,self.x_lateral_distance)
+            angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
+            self.angular_velocity = constant_angular_velocity * angle_error
+            self.xr = linear_velocity*cos(angle_error)
+            self.yr = linear_velocity*sin(angle_error)
+            if(self.xr < 0 ):
+                self.xr = 0
+            self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
+
+        elif (self.repulsion_radius < self.radius < self.adrift_radius):  
+            self.disable_thrusters_srv()
+
         else:
             self.velocity_adjustment = 1  
+            linear_velocity = self.velocity_adjustment * constant_linear_velocity
+            alpha_ref = atan2(self.y_lateral_distance,self.x_lateral_distance)
+            angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
+            self.angular_velocity = constant_angular_velocity * angle_error
+            self.xr = linear_velocity*cos(angle_error)
+            self.yr = linear_velocity*sin(angle_error)
+            if(self.xr < 0 ):
+                self.xr = 0
+            self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
 
-        linear_velocity = self.velocity_adjustment * constant_linear_velocity
-        alpha_ref = atan2(self.y_lateral_distance,self.x_lateral_distance)
-        angle_error = atan2(sin(alpha_ref-self.asv_yaw), cos(alpha_ref-self.asv_yaw))
-        self.angular_velocity = constant_angular_velocity * angle_error
-        self.xr = linear_velocity*cos(angle_error)
-        self.yr = linear_velocity*sin(angle_error)
-        if(self.xr < 0 ):
-            self.xr = 0
-        self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
+        
     
     def corrected_bvr_pusblisher(self,corrected_velocity_x,corrected_velocity_y,corrected_angular_z):
         bvr = BodyVelocityReq()
@@ -748,7 +775,7 @@ class ASVRobot:
         # uint64 DEPTH=0
         # uint64 ALTITUDE=1
         # uint64 BOTH=2
-        section_req.surge_velocity = self.surge_velocity
+        section_req.surge_velocity = self.surge_velocity*1.2
         
         section_req.tolerance_xy = self.tolerance
         section_req.no_altitude_goes_up = False
