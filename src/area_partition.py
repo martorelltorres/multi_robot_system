@@ -47,7 +47,7 @@ class area_partition:
         self.ned_origin_lat = get_param(self,'ned_origin_lat',39.543330)
         self.ned_origin_lon = get_param(self,'ned_origin_lon',2.377940)
         self.offset_polygon_distance = get_param(self,'offset_polygon_distance',5)
-        self.offset_coverage_distance = get_param(self,'offset_coverage_distance',10)
+        self.offset_coverage_distance = get_param(self,'offset_coverage_distance',5)
         self.surge_velocity = get_param(self,'surge_velocity',0.8)
         self.number_of_robots = get_param(self,'number_of_robots',6)
         self.pickle_path = get_param(self,'pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
@@ -270,7 +270,11 @@ class area_partition:
     def find_intersection_points(self, polygon,line):
         points = line.intersection(polygon)
         # the intersection_points array stores the diferent goal points
-        self.intersection_points.append(list(points.coords))
+        if hasattr(points, 'geoms'):  
+            for sub_geom in points.geoms:
+                self.intersection_points.append(list(sub_geom.coords))
+        else:  
+            self.intersection_points.append(list(points.coords))
    
     def distance_point_to_line(self,line,polygon):
         x,y = polygon.exterior.coords.xy

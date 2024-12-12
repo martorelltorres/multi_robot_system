@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from cola2.utils.ned import NED
-from shapely.geometry import Polygon,LineString,Point
+from shapely.geometry import Polygon,LineString,Point, MultiPolygon
 from std_msgs.msg import Float32MultiArray, Header
 from random import uniform
 from scipy.spatial import Voronoi, voronoi_plot_2d
@@ -18,9 +18,9 @@ import xml.etree.ElementTree as ET
 class polygon_division:
 
     def __init__(self, name):
-        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/missions/60000.xml") 
+        self.exploration_area = get_param(self,'exploration_area',"/home/uib/MMRS_ws/src/multi_robot_system/missions/test.xml") 
         self.number_of_robots = get_param(self,'number_of_robots',4)
-        self.pickle_path = get_param(self,'pickle_path','/home/uib/MMRS_ws/src/multi_robot_system/missions/pickle/60000.pickle')
+        self.pickle_path = get_param(self,'pickle_path','/home/uib/MMRS_ws/src/multi_robot_system/missions/pickle/test.pickle')
         self.ned_origin_lat = 39.543330
         self.ned_origin_lon = 2.377940
         self.regular_objects_number = 20
@@ -213,7 +213,17 @@ class polygon_division:
             # Clipping polygon
             sub_polygons = Polygon(polygon)
             sub_polygons = sub_polygons.intersection(self.main_polygon)
-            polygon = [p for p in sub_polygons.exterior.coords]
+            # polygon = [p for p in sub_polygons.exterior.coords]
+            # -------------------------------------------------------------------------------
+            if isinstance(sub_polygons, MultiPolygon):  # Verifica si es un MultiPolygon
+                polygon = []
+                for poly in sub_polygons.geoms:  # Itera sobre cada polígono en el MultiPolygon
+                    polygon.extend([p for p in poly.exterior.coords])  # Accede a las coordenadas de su exterior
+            elif isinstance(sub_polygons, Polygon):  # Si es un solo Polígono
+                polygon = [p for p in sub_polygons.exterior.coords]
+            else:
+                raise TypeError(f"Geometry type not supported: {type(sub_polygons)}")
+
             # save the differents points of the subpolygon in voronoi_polygons as a polygon object and in voronoi_polygons_points as a polygon points
             polygon_coords = polygon
             self.voronoi_polygons.append(sub_polygons)

@@ -8,17 +8,17 @@ ned_origin_lat: 39.543330
 ned_origin_lon: 2.377940
 
 # Exploration area
-pickle_path: '/home/uib/MMRS_ws/src/multi_robot_system/missions/pickle/10000.pickle'
-offset_polygon_distance: 5 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
-offset_coverage_distance: 5 # The offset_coverage_distance set the distance between the coverage lines path
+pickle_path: '/home/uib/MMRS_ws/src/multi_robot_system/missions/pickle/40000.pickle'
+offset_polygon_distance: 4 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
+offset_coverage_distance: 4 # The offset_coverage_distance set the distance between the coverage lines path
 
 aggregation_model: 1
 # aggregation_model=1 ARTM
 # aggregation_model=2 OWA
 
 # Section strategy parameters
-surge_velocity: 2
-tolerance: 2
+surge_velocity: 1.5
+tolerance: 1
 
 task_allocation: 1
 # task_allocator==1 --> Split the tasks depending of the number of robots
