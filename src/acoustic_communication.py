@@ -54,7 +54,7 @@ class acoustic_communication:
         
   
         #Subscribers 
-        for auv in range(self.number_of_robots-1):        
+        for auv in range(self.number_of_robots):        
             rospy.Subscriber('/robot'+str(auv)+'/navigator/navigation',
                             NavSts,
                             self.update_auv_position,
