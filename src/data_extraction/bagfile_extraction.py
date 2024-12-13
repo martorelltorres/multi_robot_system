@@ -42,7 +42,7 @@ class DataExtraction:
 
         self.simulation_count = -1
         self.aggregation_model = 1
-        self.data_path = '/home/uib/MRS_data/NN/1000/4AUVs/'
+        self.data_path = '/home/uib/MRS_data/NN/10000/4AUVs/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
@@ -139,39 +139,56 @@ class DataExtraction:
         if not os.path.exists(self.owa_csv):
             os.makedirs(self.owa_csv)
 
-
-    def start_launch_file(self):
-        # print("Starting launch file: {self.launch_file}")
-        self.run = subprocess.Popen(['roslaunch', self.package_name, self.launch_file])
-
-    def stop_launch_file(self):
-        if self.run:
-            print("Sending SIGINT to stop the launch file...")
-            self.run.send_signal(signal.SIGINT)
-            self.run.wait()
-            os.system('sudo killall roscore')
-            time.sleep(5)
-            print("Launch file stopped.")
-
     def check_if_proces_end(self):
+        # Get the list of ROS nodes
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
-        list_output = list_cmd.stdout.read()
+        list_output = list_cmd.stdout.read()  # Read the command output
         retcode = list_cmd.wait()
-        assert retcode == 0, "List command returned %d" % retcode
-        for str in list_output.split("\n"):
-            if (str.startswith('/record_')==False):
+        assert retcode == 0, f"List command returned {retcode}"
+        
+        # Decode the output and process it
+        for line in list_output.decode('utf-8').split("\n"):
+            if not line.startswith('/record_'):  # Check if the node name does not start with '/record_'
+                # # Terminate rosmaster
+                subprocess.run(["pkill", "-f", "rosmaster"], check=True)
+                # # Terminate roscore
+                # subprocess.run(["pkill", "-f", "roscore"], check=True)
+                # Kill all running ROS nodes
+                os.system("rosnode kill -a")
+                time.sleep(20)
                 print("_____________________________")
                 print("PROCESS KILLED CORRECTLY!!!!")
                 print("_____________________________")
-                os.system('killall rosmaster')
-                os.system('killall roscore')
-                time.sleep(10)
-
-            if(self.simulation_count<len(self.combinations)):
+        
+            # Proceed to the next step in the simulation
+            if self.simulation_count < len(self.combinations):
+                print("22222222222222222")
                 self.process()
             else:
-                self.aggregation_model=2
+                self.aggregation_model = 2
                 self.process()
+
+
+
+    # def check_if_proces_end(self):
+    #     list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+    #     list_output = list_cmd.stdout.read()
+    #     retcode = list_cmd.wait()
+    #     assert retcode == 0, "List command returned %d" % retcode
+    #     for str in list_output.split("\n"):
+    #         if (str.startswith('/record_')==False):
+    #             print("_____________________________")
+    #             print("PROCESS KILLED CORRECTLY!!!!")
+    #             print("_____________________________")
+    #             os.system('killall rosmaster')
+    #             os.system('killall roscore')
+    #             time.sleep(10)
+
+    #         if(self.simulation_count<len(self.combinations)):
+    #             self.process()
+    #         else:
+    #             self.aggregation_model=2
+    #             self.process()
                 
 
     def set_parameters(self):  

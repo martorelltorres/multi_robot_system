@@ -399,26 +399,23 @@ class ASVAllocator:
                     self.stimulus_variables[auv]=[0,0]
 
             # check if there are data to transmit, if not stop the tracking
-            if(np.array_equal(self.stimulus_variables, self.compare)):
+            if np.all(self.stimulus_variables == 0):
                 # send the order to stop the tracking process
                 # print("INNNN")
                 msg = Bool()
                 msg.data = False
                 self.pub_tracking_control_asv0.publish(msg)
+            else:
+                # normalize the stimulus values
+                normalized_values = self.min_max_scale(self.stimulus_variables)
 
-            print("____________ STIMULUS_________")
-            print(self.stimulus_variables)
+                print("NORMALIZED VALUES")
+                print(normalized_values)
 
-            # normalize the stimulus values
-            normalized_values = self.min_max_scale(self.stimulus_variables)
-
-            print("NORMALIZED VALUES")
-            print(normalized_values)
-
-        # obtain the sorted goal id's for each ASV using OWA
-        self.OWA()
-        # print("__________SORTED IDs__________")
-        # print(self.robot_goal_id)
+                # obtain the sorted goal id's for each ASV using OWA
+                self.OWA()
+                # print("__________SORTED IDs__________")
+                # print(self.robot_goal_id)
           
     def get_goal_AUV(self):
         return(self.robot_goal_id)

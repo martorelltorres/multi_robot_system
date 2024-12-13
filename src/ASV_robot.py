@@ -481,21 +481,27 @@ class ASVRobot:
         # set the flag to start to count the transmission time
         self.set_transmission_init_time=True        
     
-    def kill_the_process(self,msg):
-        # update area explored
+
+    def kill_the_process(self, msg):
+        # Update area explored
         self.exploration_tasks_update[msg.explored_sub_area] = True
         print("__________TASK UPDATE__________")
         print(self.exploration_tasks_update)
-        # check if the area is fully explored 
-        if all(self.exploration_tasks_update):
+        
+        # Check if the area is fully explored
+        if all(self.exploration_tasks_update == True):
             print("____________________The target area is totally explored____________________")
+            
+            # Get the list of ROS nodes
             list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
-            list_output = list_cmd.stdout.read()
+            list_output = list_cmd.stdout.read()  # Read the command output
             retcode = list_cmd.wait()
-            assert retcode == 0, "List command returned %d" % retcode
-            for str in list_output.split("\n"):
-                if (str.startswith('/record_')):
-                    os.system("rosnode kill " + str)
+            assert retcode == 0, f"List command returned {retcode}"
+            
+            # Decode the output and process it
+            for line in list_output.decode('utf-8').split("\n"):
+                if line.startswith('/record_'):
+                    os.system("rosnode kill " + line)
 
     def remove_robot_from_dustbin_goals(self,msg):
         self.allocator_handler.set_dustbin_robots(msg)
@@ -578,7 +584,7 @@ class ASVRobot:
             self.communication_time =  self.communication_time + (normalized_RSSI/10)
             if(self.storage_disk[self.robot_goal_id]>0):
                  
-                print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
+                # print("Robot"+str(self.robot_goal_id)+" Time: "+str(self.communication_time)+ " waiting time: "+str(self.storage_disk[self.robot_goal_id]))
                 
                 if(self.communication_time > self.transmission_time):
                     # ----------- update buffered data --------------

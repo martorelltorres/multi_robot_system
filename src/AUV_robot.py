@@ -310,7 +310,7 @@ class MultiRobotSystem:
         msg.header.frame_id = "exploration_area"
         msg.header.stamp = rospy.Time.now()
         msg.robot_id = self.robot_ID 
-        msg.explored_sub_area = self.goals[self.robot_ID][1]
+        msg.explored_sub_area = int(self.goals[self.robot_ID][1])
         self.exploration_update_pub.publish(msg)
 
         # advise the robot_id of the robot that finishes ALL the tasks
