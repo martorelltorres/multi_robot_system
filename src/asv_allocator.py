@@ -94,7 +94,8 @@ class ASVAllocator:
         self.explorer_robots = []
         self.senses = []
         self.number_of_stimulus = 2
-        self.active_robots = self.number_of_robots-1
+        self.number_of_asvs= 1
+        self.active_robots = self.number_of_robots-self.number_of_asvs
         self.robot_to_remove = 999
         self.removed_robots= []
         self.bussy_auvs = np.array([999,999])
@@ -106,7 +107,6 @@ class ASVAllocator:
         self.data_gather_time = []
         self.start_recording_time = []
         self.start_data_gathering = True
-        self.number_of_asvs= 1
         self.asvs_positions= []
         self.asvs_init = np.array([])
         self.init=False
@@ -140,7 +140,7 @@ class ASVAllocator:
             self.transmission_time.append(0)
 
         # initialize the robots variables
-        for robot_ in range(self.number_of_robots):
+        for robot_ in range(self.number_of_auvs):
             self.exploration_tasks_update = np.append(self.exploration_tasks_update,False)
             self.robot_initialization = np.append(self.robot_initialization,False) # self.robot_initialization = [False,False;False]
             self.robots.append(robot_)  
@@ -164,14 +164,14 @@ class ASVAllocator:
             self.owa.append(0)
         
         robots_sense = np.zeros(2)
-        self.stimulus_variables = np.tile(robots_sense, (self.number_of_robots-1, 1))
+        self.stimulus_variables = np.tile(robots_sense, (self.number_of_auvs, 1))
 
         self.times = np.vstack((self.elapsed_time,self.elapsed_time))
         # Show initialization message
         rospy.loginfo('[%s]: initialized', self.name)
 
         #Subscribers       
-        for robot_agent in range(self.number_of_robots):
+        for robot_agent in range(self.number_of_auvs):
             rospy.Subscriber('/robot'+str(robot_agent)+'/acoustic_communication',
                             PoseWithCovarianceStamped,
                             self.update_acoustic_info,
@@ -386,7 +386,7 @@ class ASVAllocator:
     def update_stimulus_matrix(self):
         # get the information from the AUVs and create the matrix stimulus
         for asv in range(self.number_of_asvs):
-            for auv in range(self.active_robots-1):
+            for auv in range(self.active_robots):
                 # obtain the amount of data to be transferred
                 self.stimulus_variables[auv][0] = self.acquired_data[auv]
                 

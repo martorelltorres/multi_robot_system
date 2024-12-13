@@ -130,12 +130,16 @@ class acoustic_communication:
 
         if(auv==0):
             self.auv0_pose_covariance_pub.publish(msg)
+            self.get_comm_freq(0,0)
         elif(auv==1):
             self.auv1_pose_covariance_pub.publish(msg)
+            self.get_comm_freq(0,1)
         elif(auv==2):
             self.auv2_pose_covariance_pub.publish(msg)
+            self.get_comm_freq(0,2)
         elif(auv==3):
             self.auv3_pose_covariance_pub.publish(msg)
+            self.get_comm_freq(0,3)
 
         self.rate.sleep()
       

@@ -101,7 +101,9 @@ class ASVRobot:
         self.explorer_robots = []
         self.senses = []
         self.number_of_stimulus = 4
-        self.active_robots = self.number_of_robots-1
+        self.number_of_asvs = 1
+        self.number_of_auvs= self.number_of_robots-self.number_of_asvs
+        self.active_robots = self.number_of_auvs
         self.robot_to_remove = 999
         self.removed_robots= []
         self.regular_communication_latency = []
@@ -132,7 +134,7 @@ class ASVRobot:
             self.scaled_senses.append(self.senses)
 
         # initialize the robots variables
-        for robot_ in range(self.number_of_robots-1):
+        for robot_ in range(self.number_of_auvs):
             self.regular_objects_info = np.append(self.regular_objects_info,[0])
             self.priority_objects_info = np.append(self.priority_objects_info,[0])
             self.regular_objects_transmitted = np.append(self.regular_objects_transmitted,[0])
@@ -167,7 +169,7 @@ class ASVRobot:
         rospy.loginfo('[%s]: initialized', self.name)
 
         #Subscribers 
-        for robot_id in range(self.number_of_robots-1):
+        for robot_id in range(self.number_of_auvs):
             rospy.Subscriber('/robot'+str(robot_id)+'/acoustic_communication',
                             PoseWithCovarianceStamped,
                             self.update_acoustic_info,
@@ -665,7 +667,7 @@ class ASVRobot:
         self.start_recording_time[robot_id] = rospy.Time.now().secs
 
     def send_elapsed_time(self,event):
-        for auv in range(self.number_of_robots):
+        for auv in range(self.number_of_auvs):
             # if the AUV does not start the coverage
             if(self.start_dustbin_strategy[auv]== False):
                 time = 0
