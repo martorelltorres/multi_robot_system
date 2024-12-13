@@ -1,125 +1,103 @@
+#!/usr/bin/env python3
 import rosbag
 import csv
-import matplotlib.pyplot as plt
-import pandas as pd
 import os
 import numpy as np
+import pandas as pd
 import argparse
-import time
 
-# Parameters to set
-bagfile_path = "/home/uib/MRS_data/new_architecture/test_4/owa/bagfiles"
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description="Process ROS bag files and extract data.")
+parser.add_argument(
+    "--bagfile_path",
+    type=str,
+    required=True,
+    help="Path to the folder containing the ROS bag files."
+)
+args = parser.parse_args()
 
-# extracted_data_path = "/home/uib/MRS_data/response_threshold/bagfiles"
-topics_of_interest = [  "/mrs/allocator_communication_latency",
-                        "/mrs/asv_travelled_distance",
-                        "/mrs/allocator_data_transmited",
-                        "/mrs/allocator_data_buffered",
-                        '/mrs/asv0_priority_communication_latency',
-                        '/mrs/asv0_regular_communication_latency'
-                        ]
+# Use the input argument for the bagfile path
+bagfile_path = args.bagfile_path
+
+topics_of_interest = ["/mrs/allocator_communication_latency",
+                      "/mrs/asv_travelled_distance",
+                      "/mrs/allocator_data_transmited",
+                      "/mrs/allocator_data_buffered",
+                      "/mrs/asv0_priority_communication_latency",
+                      "/mrs/asv0_regular_communication_latency"]
 
 all_files = os.listdir(bagfile_path)
-# Get a list of all bag files in the folder
 bag_files = [os.path.join(bagfile_path, filename) for filename in all_files if filename.endswith('.bag')]
-print ("I found "+str(len(bag_files))+" bagfiles!!")
-# Extract data from each bag file one by one
+
+print(f"I found {len(bag_files)} bagfiles!!")
+
+# Consolidate all data
+all_data = []
+
 for bag_file in range(len(bag_files)):
-    # Open the bag file
-    bag = rosbag.Bag(bagfile_path+"/results_"+str(bag_file)+".bag")
-    # Get the start time of the bag file
+    bag = rosbag.Bag(bagfile_path + f"/results_{bag_file}.bag")
     start_time = bag.get_start_time()
 
-
-    # Extract data from the specified topics and write to the CSV file
-    reg_latency_values = np.array([]) 
+    reg_latency_values = np.array([])
     reg_time_latency_values = np.array([])
-    prior_latency_values = np.array([]) 
+    prior_latency_values = np.array([])
     prior_time_latency_values = np.array([])
 
-    prior_objects = []
-    reg_objects = []
+    sum_data = sum_prior_objects = sum_reg_objects = travelled_distance = 0
 
     for topic, msg, t in bag.read_messages(topics=topics_of_interest):
-        init_time = msg.header.stamp.secs
-        
         if "/mrs/asv0_regular_communication_latency" in topic:
-            reg_latency = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
-            reg_time_latency = (msg.header.stamp.secs-start_time)/60
-            sum_reg_latency = sum(reg_latency)
-            reg_latency_values= np.append(reg_latency_values,sum_reg_latency)
-            reg_time_latency_values = np.append(reg_time_latency_values,reg_time_latency)
-        
+            reg_latency = msg.comm_latency
+            reg_time_latency = (msg.header.stamp.secs - start_time) / 60
+            reg_latency_values = np.append(reg_latency_values, sum(reg_latency))
+            reg_time_latency_values = np.append(reg_time_latency_values, reg_time_latency)
+
         if "/mrs/asv0_priority_communication_latency" in topic:
-            prior_latency = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
-            prior_time_latency = (msg.header.stamp.secs-start_time)/60
-            sum_prior_latency = sum(prior_latency)
-            prior_latency_values= np.append(prior_latency_values,sum_prior_latency)
-            prior_time_latency_values = np.append(prior_time_latency_values,prior_time_latency)
-                      
+            prior_latency = msg.comm_latency
+            prior_time_latency = (msg.header.stamp.secs - start_time) / 60
+            prior_latency_values = np.append(prior_latency_values, sum(prior_latency))
+            prior_time_latency_values = np.append(prior_time_latency_values, prior_time_latency)
+
         if "/mrs/asv_travelled_distance" in topic:
-            # time_distance.append(msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9 - start_time)
             travelled_distance = msg.travelled_distance
 
         if "/mrs/allocator_data_transmited" in topic:
-            data_transmited = getattr(msg, 'transmitted_data', (0, 0, 0, 0, 0, 0))
-            regular_objects =  getattr(msg, 'transmitted_regular_objects', (0, 0, 0, 0, 0, 0))
-            priority_objects =  getattr(msg, 'transmitted_priority_objects', (0, 0, 0, 0, 0, 0))
-            # data
-            sum_data = sum(data_transmited)
-            # regular_objects
-            sum_reg_objects = sum(regular_objects)
-            # priority_objects
-            sum_prior_objects = sum(priority_objects)
+            data_transmited = msg.transmitted_data
+            regular_objects = msg.transmitted_regular_objects
+            priority_objects = msg.transmitted_priority_objects
+            sum_data += sum(data_transmited)
+            sum_reg_objects += sum(regular_objects)
+            sum_prior_objects += sum(priority_objects)
 
-    # Close the bag file after extraction
     bag.close()
 
-    # handle REGULAR OBJECTS latency values
-    reg_latency = sum(reg_latency_values)/len(reg_latency_values)
-    print("    ")
-    print("Extracting data from results_"+str(bag_file)+".bag")
-    print("Regular objects latency mean: "+str(reg_latency))
-    reg_std = np.std(reg_latency_values)
-    print("Regular objects standar deviation: "+str(reg_std))
+    # Calculate statistics
+    reg_latency = reg_latency_values.mean() if len(reg_latency_values) > 0 else 0
+    reg_std = reg_latency_values.std() if len(reg_latency_values) > 0 else 0
+    prior_latency = prior_latency_values.mean() if len(prior_latency_values) > 0 else 0
+    prior_std = prior_latency_values.std() if len(prior_latency_values) > 0 else 0
 
-    # handle PRIORITY OBJECTS latency values
-    prior_latency = sum(prior_latency_values)/len(prior_latency_values)
-    print("Priority objects latency mean: "+str(prior_latency))
-    prior_std = np.std(prior_latency_values)
-    print("Prioriry objects standar deviation: "+str(prior_std))
+    # Append data for the current bag file
+    all_data.append({
+        'regular_latency': reg_latency,
+        'reg_std_latency': reg_std,
+        'priority_latency': prior_latency,
+        'prior_std_latency': prior_std,
+        'transmitted_data': sum_data,
+        'priority_objects': sum_prior_objects,
+        'regular_objects': sum_reg_objects,
+        'travelled_distance': travelled_distance,
+        'regular_latency_values': list(reg_latency_values),
+        'regular_time_latency': list(reg_time_latency_values),
+        'priority_latency_values': list(prior_latency_values),
+        'priority_time_latency': list(prior_time_latency_values)
+    })
 
-    # data transmitted
-    print("Total data transmitted: "+str(sum_data))
-    print("Priority objects: "+str(sum_prior_objects))
-    print("Regular objects: "+str(sum_reg_objects))
-    print("Distance travelled by ASV: "+str(travelled_distance))
-    print(" ___________________________________________________")
+    print(f"Extracting data from results_{bag_file}.bag complete.")
 
+# Save all data to a CSV
+output_csv_path = os.path.join(bagfile_path, "data.csv")
+df = pd.DataFrame(all_data)
+df.to_csv(output_csv_path, index=False)
 
-    # SAVE THE DATA INTO A CSV
-    # Create the directory
-    data_folder = bagfile_path
-    # Path to the output CSV file
-    output_csv_path = data_folder+str("data.csv")
-
-    # Create a DataFrame with the new data
-    data = {'regular latency': [reg_latency],
-            'reg_std_latency': [reg_std],
-            'priority latency': [prior_latency],
-            'prior_std_latency': [prior_std],
-            'transmitted_data': [sum_data],
-            'priority_objects' : [sum_prior_objects],
-            'regular_objects' : [sum_reg_objects],
-            'travelled_distance':[travelled_distance],
-            'regular_latency_values': [reg_latency_values],
-            'regular_time_latency': [reg_time_latency_values],
-            'priority_latency_values': [prior_latency_values],
-            'priority_time_latency': [prior_time_latency_values]
-    }
-
-    df = pd.DataFrame(data)
-    df.to_csv(output_csv_path, mode='a', index=False, header=True)
-    
-print("   ")
 print("DATA EXTRACTION PROCESS FINISHED")

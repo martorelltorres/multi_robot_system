@@ -94,7 +94,7 @@ class ASVAllocator:
         self.explorer_robots = []
         self.senses = []
         self.number_of_stimulus = 2
-        self.active_robots = self.number_of_robots
+        self.active_robots = self.number_of_robots-1
         self.robot_to_remove = 999
         self.removed_robots= []
         self.bussy_auvs = np.array([999,999])
@@ -401,7 +401,6 @@ class ASVAllocator:
             # check if there are data to transmit, if not stop the tracking
             if np.all(self.stimulus_variables == 0):
                 # send the order to stop the tracking process
-                # print("INNNN")
                 msg = Bool()
                 msg.data = False
                 self.pub_tracking_control_asv0.publish(msg)
@@ -412,11 +411,11 @@ class ASVAllocator:
                 print("NORMALIZED VALUES")
                 print(normalized_values)
 
-                # obtain the sorted goal id's for each ASV using OWA
-                self.OWA()
-                # print("__________SORTED IDs__________")
-                # print(self.robot_goal_id)
-          
+                if(self.aggregation_model==1):
+                    self.ARTM(normalized_values)
+                elif(self.aggregation_model==2):
+                    self.OWA()
+
     def get_goal_AUV(self):
         return(self.robot_goal_id)
            
@@ -430,8 +429,8 @@ class ASVAllocator:
         # extract the sorted goal robot IDs in descending order
         sorted_goal_ids = np.array([])
         sorted_goal_ids = np.argsort(self.stimulus)[::-1] 
-        return(sorted_goal_ids)
-    
+        self.robot_goal_id = sorted_goal_ids[0]
+       
     # --------------------------------------------------------------------------------------
     def min_max_scale(self,values):
 
@@ -464,8 +463,8 @@ class ASVAllocator:
                     self.stimulus_variables[self.removed_robots[element]] = [0,0] #number of stimulus
                     self.normalized_values[self.removed_robots[element]] = [0,0] 
                 elif(self.aggregation_model==2):
-                    self.stimulus_variables[self.removed_robots[element]] = [0,0]
-                    self.normalized_values[self.removed_robots[element]] = [0,0]
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0]
+                    self.normalized_values[self.removed_robots[element]] = [0,0,0]
             self.remove_robot=False  
         
     def initialization(self,robot_id):

@@ -91,13 +91,13 @@ class DataExtraction:
         if(self.aggregation_model == 1):
             self.bagfiles_folder = self.RTM_bagfiles
             self.params_folder = self.RTM_params
-            self.csv_folder = self.RTM_csv
+            # self.csv_folder = self.RTM_csv
             self.response_threshold_combinations()
 
         elif(self.aggregation_model == 2):
             self.bagfiles_folder = self.owa_bagfiles
             self.params_folder = self.owa_params
-            self.csv_folder = self.owa_csv
+            # self.csv_folder = self.owa_csv
             self.owas_combinations()
 
         # Set the simulation parameters
@@ -120,15 +120,12 @@ class DataExtraction:
         self.check_if_proces_end()
     
     def create_data_folders(self):
-
         if not os.path.exists(self.response_threshold_folder):
             os.makedirs(self.response_threshold_folder)
         if not os.path.exists(self.RTM_bagfiles):
             os.makedirs(self.RTM_bagfiles)
         if not os.path.exists(self.RTM_params):
             os.makedirs(self.RTM_params)
-        if not os.path.exists(self.RTM_csv):
-            os.makedirs(self.RTM_csv)
 
         if not os.path.exists(self.owa_folder):
             os.makedirs(self.owa_folder)
@@ -136,8 +133,6 @@ class DataExtraction:
             os.makedirs(self.owa_bagfiles)
         if not os.path.exists(self.owa_params):
             os.makedirs(self.owa_params)
-        if not os.path.exists(self.owa_csv):
-            os.makedirs(self.owa_csv)
 
     def check_if_proces_end(self):
         # Get the list of ROS nodes
@@ -155,41 +150,17 @@ class DataExtraction:
                 # subprocess.run(["pkill", "-f", "roscore"], check=True)
                 # Kill all running ROS nodes
                 os.system("rosnode kill -a")
-                time.sleep(20)
                 print("_____________________________")
                 print("PROCESS KILLED CORRECTLY!!!!")
                 print("_____________________________")
+                time.sleep(20)
         
             # Proceed to the next step in the simulation
             if self.simulation_count < len(self.combinations):
-                print("22222222222222222")
                 self.process()
             else:
                 self.aggregation_model = 2
-                self.process()
-
-
-
-    # def check_if_proces_end(self):
-    #     list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
-    #     list_output = list_cmd.stdout.read()
-    #     retcode = list_cmd.wait()
-    #     assert retcode == 0, "List command returned %d" % retcode
-    #     for str in list_output.split("\n"):
-    #         if (str.startswith('/record_')==False):
-    #             print("_____________________________")
-    #             print("PROCESS KILLED CORRECTLY!!!!")
-    #             print("_____________________________")
-    #             os.system('killall rosmaster')
-    #             os.system('killall roscore')
-    #             time.sleep(10)
-
-    #         if(self.simulation_count<len(self.combinations)):
-    #             self.process()
-    #         else:
-    #             self.aggregation_model=2
-    #             self.process()
-                
+                self.process()               
 
     def set_parameters(self):  
         data = self.read_yaml()
@@ -198,10 +169,6 @@ class DataExtraction:
                 data['aggregation_model'] = 1
                 data['alpha'] = self.combinations[self.simulation_count][0]  
                 data['beta'] = self.combinations[self.simulation_count][1]  
- 
-            # if all(key in data for key in ['aggregation_model','test']):
-            #     data['aggregation_model'] = 1
-            #     data['test'] = self.combinations[self.simulation_count]  
 
         if(self.aggregation_model==2):
             if all(key in data for key in ['aggregation_model','w1','w2','w3']):
