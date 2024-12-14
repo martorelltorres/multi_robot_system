@@ -30,6 +30,8 @@ class MultiRobotSystem:
          # Get config parameters from the parameter server
         self.robot_ID = self.get_param('~robot_ID')   
         self.number_of_robots = self.get_param('number_of_robots')
+        self.number_of_auvs = self.get_param('number_of_auvs')
+        self.number_of_asvs = self.get_param('number_of_asvs')
         self.offset_coverage_distance = self.get_param('offset_coverage_distance')
         self.pickle_path = self.get_param('pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
         self.actual_sections = []
@@ -64,7 +66,7 @@ class MultiRobotSystem:
         self.section_ended = False
 
         # initialize the robots variables
-        for i in range(self.number_of_robots-1):
+        for i in range(self.number_of_auvs):
             self.robot_initialization = np.append(self.robot_initialization,False) 
             self.actual_sections.append([i,0])
             self.robots_information.append (self.robot_data)
@@ -231,7 +233,7 @@ class MultiRobotSystem:
         # wait 7 seconds in order to initialize the different robot architectures
         rospy.sleep(7)
         if np.all(self.robot_initialization == False):
-            for robot in range(self.number_of_robots-1):
+            for robot in range(self.number_of_auvs):
                 self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
 
         print("             *************************")
@@ -323,7 +325,7 @@ class MultiRobotSystem:
   
     def print_polygon(self,event):
         points = []
-        for polygon in range(self.number_of_robots-1):
+        for polygon in range(self.number_of_auvs):
             polygon_coords_x,polygon_coords_y = self.area_handler.get_polygon_points(polygon)
 
             for coord in range(len(polygon_coords_x)):

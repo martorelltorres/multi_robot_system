@@ -36,6 +36,8 @@ class ASVRobot:
 
         # Get config parameters from the parameter server
         self.number_of_robots = self.get_param('number_of_robots')
+        self.number_of_auvs = self.get_param('number_of_auvs')
+        self.number_of_asvs = self.get_param('number_of_asvs')
         self.robot_ID = self.get_param('~robot_ID',0) 
         self.asv_ID = self.get_param('~asv_ID',0)
         self.tolerance = self.get_param('tolerance',2)
@@ -44,6 +46,7 @@ class ASVRobot:
         self.adrift_radius = self.get_param("adrift_radius",20)
         self.tracking_radius = self.get_param("tracking_radius",50)
         self.pickle_path = self.get_param('pickle_path','/home/uib/MRS_ws/src/multi_robot_system/config/mission.pickle')
+        self.transmission_time  = self.get_param("transmission_time",30)
 
         self.alpha = self.get_param("alpha",1)
         self.beta = self.get_param("beta",1)
@@ -62,9 +65,8 @@ class ASVRobot:
 
         # Initialize some variables
         self.communication_time = 0
-        self.transmission_time = 30
         self.pose = [0,0]
-        self.data_transmited = [0,0,0,0]
+        self.data_transmited = []
         self.regular_objects_info = np.array([])
         self.priority_objects_info = np.array([])
         self.regular_objects_transmitted = np.array([])
@@ -79,12 +81,12 @@ class ASVRobot:
         self.elapsed_time = []
         self.system_init = False
         self.robot_data = [0,0]
-        self.auvs_information = [[None,None,None,None],[None,None,None,None],[None,None,None,None],[None,None,None,None]]
+        self.auvs_information = []
         self.robots = []
         self.robot_initialization = np.array([])
         self.enable_tracking = False
         self.set_end_time = False
-        self.start_dustbin_strategy =np.array([False,False,False,False,False])
+        self.start_dustbin_strategy =np.array([])
         self.exploration_tasks_update = np.array([])
         self.battery_charge= []
         self.distance = []
@@ -101,8 +103,6 @@ class ASVRobot:
         self.explorer_robots = []
         self.senses = []
         self.number_of_stimulus = 4
-        self.number_of_asvs = 1
-        self.number_of_auvs= self.number_of_robots-self.number_of_asvs
         self.active_robots = self.number_of_auvs
         self.robot_to_remove = 999
         self.removed_robots= []
@@ -147,7 +147,7 @@ class ASVRobot:
             self.comm_signal.append(0)
             self.storage_disk.append(0)
             self.data_stimulus.append(0)
-            # self.data_transmited.append(0)
+            self.data_transmited.append(0)
             self.time_init.append(0)
             self.distance.append(0)
             self.start_recording_time.append(0)
@@ -159,6 +159,8 @@ class ASVRobot:
             self.stimulus = np.append(self.stimulus,0)
             self.regular_communication_latency.append(0)
             self.priority_communication_latency.append(0)
+            self.start_dustbin_strategy = np.append(self.start_dustbin_strategy,False)
+            self.auvs_information.append([None,None,None,None])
         
         for stimulus in range(4):
             self.robots_sense = np.append(self.robots_sense,0)

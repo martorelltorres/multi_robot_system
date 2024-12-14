@@ -17,7 +17,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,AcousticData,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,Communication,Distances, Data
+from multi_robot_system.msg import CoverageStartTime,AcousticData,AggregationModelInfo,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,Communication,Distances, Data
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Quaternion,PointStamped
 import tf     
@@ -34,6 +34,8 @@ class ASVAllocator:
 
         # Get config parameters from the parameter server
         self.number_of_robots = self.get_param('number_of_robots')
+        self.number_of_auvs = self.get_param('number_of_auvs')
+        self.number_of_asvs = self.get_param('number_of_asvs')
         self.robot_ID = self.get_param('~robot_ID',0) 
         self.asv_ID = self.get_param('~asv_ID',0)
         self.tolerance = self.get_param('tolerance',2)
@@ -44,8 +46,6 @@ class ASVAllocator:
         self.repulsion_radius = self.get_param("repulsion_radius",20)
         self.adrift_radius = self.get_param("adrift_radius",30)
         self.tracking_radius = self.get_param("tracking_radius",50)
-        self.alpha = self.get_param("alpha",1)
-        self.beta = self.get_param("beta",1)
         # self.gamma = self.get_param("gamma",1)
         # self.test = self.get_param("test",0)
         self.n = self.get_param("n",1)
@@ -54,11 +54,14 @@ class ASVAllocator:
         self.w2 = self.get_param("w2",1)
         self.w3 = self.get_param("w3",1)
         self.w4 = self.get_param("w4",1)
+        self.alpha = self.get_param("alpha",1)
+        self.beta = self.get_param("beta",1)
      
         
         # Initialize some variables
-        self.acoustic_time = [0,0,0,0]
-        self.current_time = [0,0,0,0]
+        self.acoustic_time = []
+        self.current_time = []
+        self.acquired_data = []
         self.first_acoustic_reception = True
         self.qlearning_init = False
         self.first=True
@@ -67,7 +70,6 @@ class ASVAllocator:
         self.get_information = False
         self.start_to_publish = False
         self.robot_at_center = False
-        self.acquired_data = [0,0,0,0]
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
         self.penalty = np.array([])
@@ -78,7 +80,7 @@ class ASVAllocator:
         self.robots = []
         self.robot_initialization = np.array([])
         self.set_end_time = False
-        self.start_dustbin_strategy =np.array([False,False,False,False,False])
+        self.start_dustbin_strategy =np.array([])
         self.exploration_tasks_update = np.array([])
         self.battery_charge= []
         self.distance = []
@@ -94,8 +96,7 @@ class ASVAllocator:
         self.explorer_robots = []
         self.senses = []
         self.number_of_stimulus = 2
-        self.number_of_asvs= 1
-        self.active_robots = self.number_of_robots-self.number_of_asvs
+        self.active_robots = self.number_of_auvs
         self.robot_to_remove = 999
         self.removed_robots= []
         self.bussy_auvs = np.array([999,999])
@@ -112,10 +113,10 @@ class ASVAllocator:
         self.init=False
         self.elapsed_time =np.array([])
         self.asv_id = 100
-        self.latency_data = np.array([[0,0,0,0],[0,0,0,0]])
-        self.transmited_data = np.array([[0,0,0,0],[0,0,0,0]])
+        self.latency_data = np.zeros((self.number_of_asvs, self.number_of_auvs), dtype=int)
+        self.transmited_data = np.zeros((self.number_of_asvs, self.number_of_auvs), dtype=int)
         self.owa=[]
-        self.number_of_auvs = self.number_of_robots-self.number_of_asvs
+        self.latency_init_data=[]
 
         self.zero_stimulus_variables = np.tile(np.zeros(0), (self.number_of_robots, 1))
         # -----------------------------------------------------------------
@@ -138,6 +139,7 @@ class ASVAllocator:
         for i in range(self.active_robots):
             self.scaled_senses.append(self.senses)
             self.transmission_time.append(0)
+        
 
         # initialize the robots variables
         for robot_ in range(self.number_of_auvs):
@@ -162,7 +164,12 @@ class ASVAllocator:
             self.compare.append([0,0]) 
             self.robots_information.append([])
             self.owa.append(0)
+            self.start_dustbin_strategy = np.append(self.start_dustbin_strategy,False)
+            self.acoustic_time.append(0)
+            self.current_time.append(0)
+            self.acquired_data.append(0)
         
+       
         robots_sense = np.zeros(2)
         self.stimulus_variables = np.tile(robots_sense, (self.number_of_auvs, 1))
 
@@ -241,6 +248,22 @@ class ASVAllocator:
         self.data_transmited_pub = rospy.Publisher('allocator_data_transmited',
                                 TransmittedData,
                                 queue_size=1)
+
+        self.aggregation_model_info_pub = rospy.Publisher('aggregation_model_info',
+                        AggregationModelInfo,
+                        queue_size=2)
+
+        # Publish AggregationModelInfo 
+        msg = AggregationModelInfo()
+        msg.header.stamp = rospy.Time.now()
+        msg.aggregation_model = self.aggregation_model
+        msg.alpha = self.alpha
+        msg.beta = self.beta
+        msg.w1 = self.w1
+        msg.w2 = self.w2
+        msg.w3 = self.w3
+        self.aggregation_model_info_pub.publish(msg)    
+            
         
         # Init periodic timers self.distance
         rospy.Timer(rospy.Duration(0.1), self.plot_priority_objects)

@@ -55,7 +55,7 @@ class DataExtraction:
         self.owa_csv = self.data_path+'owa/csv'
 
         self.launchfile = 'roslaunch multi_robot_system mrs.launch'
-        self.yaml_file_path = "/home/uib/MMRS_ws/src/multi_robot_system/config/data_extraction.yaml"
+        self.yaml_file_path = "/home/uib/MRS_ws/src/multi_robot_system/config/data_extraction.yaml"
 
         self.topics = [
                 '/mrs/allocator_communication_latency',
@@ -74,7 +74,8 @@ class DataExtraction:
                 '/mrs/allocator_elapsed_time',
                 '/mrs/asv0_elapsed_time',
                 '/mrs/asv0_priority_communication_latency',
-                '/mrs/asv0_regular_communication_latency'             
+                '/mrs/asv0_regular_communication_latency',
+                '/mrs/aggregation_model_info'
             ]
         
         self.package_name = "multi_robot_system"

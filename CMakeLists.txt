@@ -68,6 +68,7 @@ add_message_files(
   TransmittedData.msg
   NED.msg
   RPY.msg
+  AggregationModelInfo.msg
 )
 
 ## Generate services in the 'srv' folder

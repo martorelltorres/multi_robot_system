@@ -24,7 +24,8 @@ topics_of_interest = ["/mrs/allocator_communication_latency",
                       "/mrs/allocator_data_transmited",
                       "/mrs/allocator_data_buffered",
                       "/mrs/asv0_priority_communication_latency",
-                      "/mrs/asv0_regular_communication_latency"]
+                      "/mrs/asv0_regular_communication_latency",
+                      "/mrs/aggregation_model_info"]
 
 all_files = os.listdir(bagfile_path)
 bag_files = [os.path.join(bagfile_path, filename) for filename in all_files if filename.endswith('.bag')]
@@ -69,6 +70,14 @@ for bag_file in range(len(bag_files)):
             sum_reg_objects += sum(regular_objects)
             sum_prior_objects += sum(priority_objects)
 
+        if "/mrs/aggregation_model_info" in topic:
+            aggregation_model = msg.aggregation_model
+            alpha = msg.alpha
+            beta = msg.beta
+            w1 = msg.w1
+            w2 = msg.w2
+            w3 = msg.w3
+
     bag.close()
 
     # Calculate statistics
@@ -79,6 +88,7 @@ for bag_file in range(len(bag_files)):
 
     # Append data for the current bag file
     all_data.append({
+        'aggregation_info': "model:"+str(aggregation_model) +" alpha: "+ str(alpha)+" beta: "+str(beta) +" w1: "+str(w1) +" w2: " +str(w2)+ " w3: " +str(w3),
         'regular_latency': reg_latency,
         'reg_std_latency': reg_std,
         'priority_latency': prior_latency,
