@@ -134,7 +134,7 @@ class DataExtraction:
             os.makedirs(self.owa_bagfiles)
         if not os.path.exists(self.owa_params):
             os.makedirs(self.owa_params)
-            
+
     def check_if_proces_end(self):
         # Get the list of ROS nodes
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
@@ -145,9 +145,12 @@ class DataExtraction:
         # Decode the output and process it
         for line in list_output.decode('utf-8').split("\n"):
             if not line.startswith('/record_'):  # Check if the node name does not start with '/record_'
-                # Kill all running ROS nodes and terminate processes
-                os.system("rosnode kill -a")
+                # # Terminate rosmaster
                 subprocess.run(["pkill", "-f", "rosmaster"], check=True)
+                # # Terminate roscore
+                # subprocess.run(["pkill", "-f", "roscore"], check=True)
+                # Kill all running ROS nodes
+                os.system("rosnode kill -a")
                 print("_____________________________")
                 print("PROCESS KILLED CORRECTLY!!!!")
                 print("_____________________________")
@@ -155,45 +158,10 @@ class DataExtraction:
         
         # Proceed to the next step in the simulation
         if self.simulation_count < len(self.combinations):
-            # Continue with the current aggregation model
             self.process()
         else:
-            if self.aggregation_model == 1:
-                # Switch to aggregation_model=2
-                self.aggregation_model = 2
-                self.simulation_count = 0  # Reset the counter for the new model
-                self.owas_combinations()  # Generate new combinations for aggregation_model=2
-                self.process()
-            else:
-                print("All simulations completed!")
-
-    # def check_if_proces_end(self):
-    #     # Get the list of ROS nodes
-    #     list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
-    #     list_output = list_cmd.stdout.read()  # Read the command output
-    #     retcode = list_cmd.wait()
-    #     assert retcode == 0, f"List command returned {retcode}"
-        
-    #     # Decode the output and process it
-    #     for line in list_output.decode('utf-8').split("\n"):
-    #         if not line.startswith('/record_'):  # Check if the node name does not start with '/record_'
-    #             # # Terminate rosmaster
-    #             subprocess.run(["pkill", "-f", "rosmaster"], check=True)
-    #             # # Terminate roscore
-    #             # subprocess.run(["pkill", "-f", "roscore"], check=True)
-    #             # Kill all running ROS nodes
-    #             os.system("rosnode kill -a")
-    #             print("_____________________________")
-    #             print("PROCESS KILLED CORRECTLY!!!!")
-    #             print("_____________________________")
-    #             time.sleep(20)
-        
-    #         # Proceed to the next step in the simulation
-    #         if self.simulation_count < len(self.combinations):
-    #             self.process()
-    #         else:
-    #             self.aggregation_model = 2
-    #             self.process()               
+            self.aggregation_model = 2
+            self.process()               
 
     def set_parameters(self):  
         data = self.read_yaml()
