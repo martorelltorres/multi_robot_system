@@ -508,7 +508,7 @@ class ASVRobot:
                     os.system("rosnode kill " + line)
 
     def remove_robot_from_dustbin_goals(self,msg):
-        self.allocator_handler.set_dustbin_robots(msg)
+        # self.allocator_handler.set_dustbin_robots(msg)
         self.check_dustbin_robot()
     
     def check_dustbin_robot(self):

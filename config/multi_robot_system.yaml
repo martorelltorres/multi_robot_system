@@ -10,7 +10,7 @@ ned_origin_lat: 39.543330
 ned_origin_lon: 2.377940
 
 # Exploration area
-pickle_path: '/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/10000.pickle'
+pickle_path: '/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/40000.pickle'
 offset_polygon_distance: 4 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_coverage_distance: 4 # The offset_coverage_distance set the distance between the coverage lines path
 
@@ -18,7 +18,7 @@ tracking_radius: 30
 adrift_radius: 20
 repulsion_radius: 10
 
-aggregation_model: 1 # aggregation_model=1 ARTM aggregation_model=2 OWA
+aggregation_model: 2 # aggregation_model=1 ARTM aggregation_model=2 OWA
 transmission_time: 30 # Time [s] spend to transmit objects information acoustically from AUVs to ASV.
 
 # Section strategy parameters

@@ -1,6 +1,6 @@
 aggregation_model: 1
-alpha: 10
-beta: 0
+alpha: 0
+beta: 10
 w1: 1
 w2: 0
 w3: 0

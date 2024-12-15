@@ -28,67 +28,83 @@ topics_of_interest = ["/mrs/allocator_communication_latency",
                       "/mrs/aggregation_model_info"]
 
 all_files = os.listdir(bagfile_path)
+# Get a list of all bag files in the folder
 bag_files = [os.path.join(bagfile_path, filename) for filename in all_files if filename.endswith('.bag')]
+print("I found " + str(len(bag_files)) + " bagfiles!!")
 
-print(f"I found {len(bag_files)} bagfiles!!")
+# Define parameter combinations
+parameter_combinations = [[0, 10], [2.5, 7.5], [5, 5], [7.5, 2.5], [10, 0]]
 
-# Consolidate all data
+# Create a list to store data from all bag files
 all_data = []
 
+# Extract data from each bag file one by one
 for bag_file in range(len(bag_files)):
-    bag = rosbag.Bag(bagfile_path + f"/results_{bag_file}.bag")
+    # Open the bag file
+    bag = rosbag.Bag(bagfile_path + "/results_" + str(bag_file) + ".bag")
+    # Get the start time of the bag file
     start_time = bag.get_start_time()
 
-    reg_latency_values = np.array([])
+    # Extract data from the specified topics and write to the CSV file
+    reg_latency_values = np.array([]) 
     reg_time_latency_values = np.array([])
-    prior_latency_values = np.array([])
+    prior_latency_values = np.array([]) 
     prior_time_latency_values = np.array([])
 
-    sum_data = sum_prior_objects = sum_reg_objects = travelled_distance = 0
+    prior_objects = []
+    reg_objects = []
+
+    aggregation_model = None
+    parameter_combination = parameter_combinations[bag_file % len(parameter_combinations)]  # Assign parameter combination
 
     for topic, msg, t in bag.read_messages(topics=topics_of_interest):
+        init_time = msg.header.stamp.secs
+
         if "/mrs/asv0_regular_communication_latency" in topic:
-            reg_latency = msg.comm_latency
+            reg_latency = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
             reg_time_latency = (msg.header.stamp.secs - start_time) / 60
-            reg_latency_values = np.append(reg_latency_values, sum(reg_latency))
+            sum_reg_latency = sum(reg_latency)
+            reg_latency_values = np.append(reg_latency_values, sum_reg_latency)
             reg_time_latency_values = np.append(reg_time_latency_values, reg_time_latency)
-
+        
         if "/mrs/asv0_priority_communication_latency" in topic:
-            prior_latency = msg.comm_latency
+            prior_latency = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
             prior_time_latency = (msg.header.stamp.secs - start_time) / 60
-            prior_latency_values = np.append(prior_latency_values, sum(prior_latency))
+            sum_prior_latency = sum(prior_latency)
+            prior_latency_values = np.append(prior_latency_values, sum_prior_latency)
             prior_time_latency_values = np.append(prior_time_latency_values, prior_time_latency)
-
+                        
         if "/mrs/asv_travelled_distance" in topic:
             travelled_distance = msg.travelled_distance
 
         if "/mrs/allocator_data_transmited" in topic:
-            data_transmited = msg.transmitted_data
-            regular_objects = msg.transmitted_regular_objects
-            priority_objects = msg.transmitted_priority_objects
-            sum_data += sum(data_transmited)
-            sum_reg_objects += sum(regular_objects)
-            sum_prior_objects += sum(priority_objects)
+            data_transmited = getattr(msg, 'transmitted_data', (0, 0, 0, 0, 0, 0))
+            regular_objects = getattr(msg, 'transmitted_regular_objects', (0, 0, 0, 0, 0, 0))
+            priority_objects = getattr(msg, 'transmitted_priority_objects', (0, 0, 0, 0, 0, 0))
+            # data
+            sum_data = sum(data_transmited)
+            # regular_objects
+            sum_reg_objects = sum(regular_objects)
+            # priority_objects
+            sum_prior_objects = sum(priority_objects)
 
         if "/mrs/aggregation_model_info" in topic:
-            aggregation_model = msg.aggregation_model
-            alpha = msg.alpha
-            beta = msg.beta
-            w1 = msg.w1
-            w2 = msg.w2
-            w3 = msg.w3
+            aggregation_model = getattr(msg, 'model_name', 'unknown')
 
+    # Close the bag file after extraction
     bag.close()
 
-    # Calculate statistics
-    reg_latency = reg_latency_values.mean() if len(reg_latency_values) > 0 else 0
-    reg_std = reg_latency_values.std() if len(reg_latency_values) > 0 else 0
-    prior_latency = prior_latency_values.mean() if len(prior_latency_values) > 0 else 0
-    prior_std = prior_latency_values.std() if len(prior_latency_values) > 0 else 0
+    # handle REGULAR OBJECTS latency values
+    reg_latency = sum(reg_latency_values) / len(reg_latency_values) if len(reg_latency_values) > 0 else 0
+    reg_std = np.std(reg_latency_values) if len(reg_latency_values) > 0 else 0
 
-    # Append data for the current bag file
+    # handle PRIORITY OBJECTS latency values
+    prior_latency = sum(prior_latency_values) / len(prior_latency_values) if len(prior_latency_values) > 0 else 0
+    prior_std = np.std(prior_latency_values) if len(prior_latency_values) > 0 else 0
+
+    # Append data to all_data list
     all_data.append({
-        'aggregation_info': "model:"+str(aggregation_model) +" alpha: "+ str(alpha)+" beta: "+str(beta) +" w1: "+str(w1) +" w2: " +str(w2)+ " w3: " +str(w3),
+        'parameter_combination': parameter_combination,
         'regular_latency': reg_latency,
         'reg_std_latency': reg_std,
         'priority_latency': prior_latency,
@@ -105,9 +121,10 @@ for bag_file in range(len(bag_files)):
 
     print(f"Extracting data from results_{bag_file}.bag complete.")
 
-# Save all data to a CSV
+# Save all data to a CSV after processing all bag files
 output_csv_path = os.path.join(bagfile_path, "data.csv")
 df = pd.DataFrame(all_data)
 df.to_csv(output_csv_path, index=False)
 
+print("   ")
 print("DATA EXTRACTION PROCESS FINISHED")

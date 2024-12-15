@@ -434,10 +434,10 @@ class ASVAllocator:
                 print("NORMALIZED VALUES")
                 print(normalized_values)
 
-                if(self.aggregation_model==1):
-                    self.ARTM(normalized_values)
-                elif(self.aggregation_model==2):
-                    self.OWA()
+            if(self.aggregation_model==1):
+                self.ARTM(normalized_values)
+            elif(self.aggregation_model==2):
+                self.OWA()
 
     def get_goal_AUV(self):
         return(self.robot_goal_id)
@@ -486,8 +486,8 @@ class ASVAllocator:
                     self.stimulus_variables[self.removed_robots[element]] = [0,0] #number of stimulus
                     self.normalized_values[self.removed_robots[element]] = [0,0] 
                 elif(self.aggregation_model==2):
-                    self.stimulus_variables[self.removed_robots[element]] = [0,0,0]
-                    self.normalized_values[self.removed_robots[element]] = [0,0,0]
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0]
+                    self.normalized_values[self.removed_robots[element]] = [0,0]
             self.remove_robot=False  
         
     def initialization(self,robot_id):
