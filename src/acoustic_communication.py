@@ -51,6 +51,11 @@ class acoustic_communication:
         self.auv3_pose_covariance_pub = rospy.Publisher('/robot3/acoustic_communication',
                                 PoseWithCovarianceStamped,
                                 queue_size=2)
+
+
+        self.auv4_pose_covariance_pub = rospy.Publisher('/robot4/acoustic_communication',
+                        PoseWithCovarianceStamped,
+                        queue_size=2)
         
   
         #Subscribers 
@@ -140,6 +145,9 @@ class acoustic_communication:
         elif(auv==3):
             self.auv3_pose_covariance_pub.publish(msg)
             self.get_comm_freq(0,3)
+        elif(auv==4):
+            self.auv4_pose_covariance_pub.publish(msg)
+            self.get_comm_freq(0,4)
 
         self.rate.sleep()
       

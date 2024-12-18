@@ -117,7 +117,6 @@ class ASVRobot:
         self.set_transmission_init_time=False
         self.process_time = 0
         self.process_flag=True
-        self.goal_settled= False
 
         # Set the number of stimulus depending of the optimization strategy
         if(self.aggregation_model==1):
@@ -472,8 +471,9 @@ class ASVRobot:
         self.in_process=True
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator_handler.get_goal_AUV()
-        self.goal_settled = True
+        print("-------------------------------------------------------")
         print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
+        print("-------------------------------------------------------")
         self.enable_tracking = True
 
         # publish the goal_id
@@ -508,7 +508,7 @@ class ASVRobot:
                     os.system("rosnode kill " + line)
 
     def remove_robot_from_dustbin_goals(self,msg):
-        # self.allocator_handler.set_dustbin_robots(msg)
+        self.allocator_handler.set_dustbin_robots(msg)
         self.check_dustbin_robot()
     
     def check_dustbin_robot(self):
