@@ -42,7 +42,7 @@ class DataExtraction:
 
         self.simulation_count = -1
         self.aggregation_model = 2
-        self.data_path = '/home/uib/MRS_data/NN/10000/5AUVs/'
+        self.data_path = '/home/uib/MRS_data/NN/60000/5AUVs/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'
@@ -154,7 +154,7 @@ class DataExtraction:
                 print("_____________________________")
                 print("PROCESS KILLED CORRECTLY!!!!")
                 print("_____________________________")
-                time.sleep(20)
+                time.sleep(30)
         
             # Proceed to the next step in the simulation
             if self.simulation_count < len(self.combinations):

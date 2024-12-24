@@ -72,8 +72,6 @@ class ASVRobot:
         self.regular_objects_transmitted = np.array([])
         self.priority_objects_transmitted = np.array([])
         self.in_process = False
-        self.get_information = False
-        self.start_to_publish = False
         self.robot_at_center = False
         self.robot_goal_id = None
         self.robots_id = np.array([])
@@ -377,7 +375,7 @@ class ASVRobot:
         # Start the data gathering when the first robot detects an object
         if(self.in_process == False and self.process_flag==True):
             self.process_flag=False
-            self.process()
+            self.recap_information()
 
     def update_priority_object_information(self,msg,robot_id):
         # See https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10244660 for more details.
@@ -405,7 +403,7 @@ class ASVRobot:
         # Start the data gathering when the first robot detects an object
         if(self.in_process == False and self.process_flag==True):
             self.process_flag=False
-            self.process()
+            self.recap_information()
 
     def set_coverage_start_time(self,msg,element):
         self.set_elapsed_time(element)
@@ -466,26 +464,28 @@ class ASVRobot:
         # fill the robots_information array with the robots information received from the PoseWithCovariance 
         self.auvs_information[robot_agent] = [msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z, rpy[2]]
 
-    def process(self):
+    def recap_information(self):
+        self.in_process = True
         rospy.sleep(2)
-        self.in_process=True
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator_handler.get_goal_AUV()
-        print("-------------------------------------------------------")
-        print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
-        print("-------------------------------------------------------")
-        self.enable_tracking = True
+        if(self.robot_goal_id==999):
+            self.recap_information()
+        else:
+            print("-------------------------------------------------------")
+            print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
+            print("-------------------------------------------------------")
+            self.enable_tracking = True
 
-        # publish the goal_id
-        msg = Data()
-        msg.header.stamp = rospy.Time.now()
-        msg.data = self.robot_goal_id
-        self.goal_id_pub.publish(msg)
+            # publish the goal_id
+            msg = Data()
+            msg.header.stamp = rospy.Time.now()
+            msg.data = self.robot_goal_id
+            self.goal_id_pub.publish(msg)
 
-        # set the flag to start to count the transmission time
-        self.set_transmission_init_time=True        
+            # set the flag to start to count the transmission time
+            self.set_transmission_init_time=True        
     
-
     def kill_the_process(self, msg):
         # Update area explored
         self.exploration_tasks_update[msg.explored_sub_area] = True
@@ -544,9 +544,9 @@ class ASVRobot:
         return(distance)
 
     def tracking(self):
-            self.enable_thrusters_srv()
-            # disable all and sed IDLE
             self.disable_all_and_set_idle_srv()
+            self.enable_thrusters_srv()
+
             self.auv_position_north = self.auvs_information[self.robot_goal_id][0]
             self.asv_position_north = self.asv_north
             self.auv_position_east = self.auvs_information[self.robot_goal_id][1]
@@ -656,7 +656,7 @@ class ASVRobot:
                     self.repulsion_strategy(self.x_lateral_distance, self.y_lateral_distance)
             else:
                 self.communication_time=0
-                self.process() 
+                self.recap_information() 
       
     def communicate(self):
         if(self.priority_objects_info[self.robot_goal_id]==0 and self.regular_objects_info[self.robot_goal_id]==0 ):

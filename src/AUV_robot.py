@@ -43,7 +43,7 @@ class MultiRobotSystem:
         self.send_following_section = False
         self.points = []
         self.goal_section_point = [0,0]
-        self.threshold_detection_distance = self.offset_coverage_distance/2
+        self.threshold_detection_distance = (self.offset_coverage_distance*1.5)/2
         self.simulation_task_times = []
         self.task_monitoring = []
         self.section_cancelled = False

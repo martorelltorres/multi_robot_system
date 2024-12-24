@@ -1,7 +1,7 @@
 aggregation_model: 2
 alpha: 10
 beta: 0
-w1: 0.4
-w2: 0.4
-w3: 0.2
+w1: 1
+w2: 0
+w3: 0
 w4: 0

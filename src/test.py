@@ -77,7 +77,6 @@ class ASVAllocator:
         self.robot_data = [0,0]
         self.robots_information = []
         self.compare = []
-        self.robot_goal_id = 999
         self.robots = []
         self.robot_initialization = np.array([])
         self.set_end_time = False
@@ -98,7 +97,7 @@ class ASVAllocator:
         self.senses = []
         self.number_of_stimulus = 2
         self.active_robots = self.number_of_auvs
-        # self.robot_to_remove = 999
+        self.robot_to_remove = 999
         self.removed_robots= []
         self.bussy_auvs = np.array([999,999])
         # self.communication=True
@@ -412,47 +411,39 @@ class ASVAllocator:
         for asv in range(self.number_of_asvs):
             for auv in range(self.active_robots):
                 # obtain the amount of data to be transferred
-                self.stimulus_variables[self.robots_id[auv]][0] = self.acquired_data[auv]
+                self.stimulus_variables[auv][0] = self.acquired_data[auv]
                 
                 # get the distance
                 distance = self.get_distance(asv,auv)
-                self.stimulus_variables[self.robots_id[auv]][1] = distance
+                self.stimulus_variables[auv][1] = distance
 
                 # set the stimulus to 0 if there are no data to transmit
-                if(self.stimulus_variables[self.robots_id[auv]][0] == 0):
-                    self.stimulus_variables[self.robots_id[auv]]=[0,0]
+                if(self.stimulus_variables[auv][0] == 0):
+                    self.stimulus_variables[auv]=[0,0]
 
-            # # check if there are data to transmit, if not stop the tracking
-            # if np.all(self.stimulus_variables == 0):
-            #     # send the order to stop the tracking process
-            #     msg = Bool()
-            #     msg.data = False
-            #     self.pub_tracking_control_asv0.publish(msg)
-            # else:
-            # normalize the stimulus values
-            normalized_values = self.min_max_scale(self.stimulus_variables)
+            # check if there are data to transmit, if not stop the tracking
+            if np.all(self.stimulus_variables == 0):
+                # send the order to stop the tracking process
+                msg = Bool()
+                msg.data = False
+                self.pub_tracking_control_asv0.publish(msg)
+            else:
+                # normalize the stimulus values
+                normalized_values = self.min_max_scale(self.stimulus_variables)
 
-        if(self.aggregation_model==1):
-            print("STIMULUS VARIABLES")
-            print(self.stimulus_variables)
-            print("NORMALIZED VALUES")
-            print(normalized_values)
-            self.ARTM(normalized_values)
-            print("ARTM OUTPUT")
-            print(self.stimulus)
+            if(self.aggregation_model==1):
+                print("NORMALIZED VALUES")
+                print(normalized_values)
+                self.ARTM(normalized_values)
 
-
-        elif(self.aggregation_model==2):
-            self.OWA()
+            elif(self.aggregation_model==2):
+                self.OWA()
 
     def get_goal_AUV(self):
-        if(self.robot_goal_id==999):
-            return(self.robot_goal_id)
-        else:
-            return(self.robot_goal_id)
+        return(self.robot_goal_id)
            
     def ARTM(self,normalized_values):
-        for robot in range(self.number_of_auvs):
+        for robot in range(self.active_robots):
             self.get_communication_signal(0,robot)
             scaled_values = normalized_values[robot]
             s = self.alpha*scaled_values[0]+self.beta*scaled_values[1]
@@ -462,15 +453,13 @@ class ASVAllocator:
         for robot in self.removed_robots:
             if 0 <= robot < len(self.stimulus):
                 self.stimulus[robot] = 0
-        
-        if np.all(self.stimulus == 0):
-            rospy.sleep(2)
-            self.update_stimulus_matrix()
-        else:
-            # extract the sorted goal robot IDs in descending order
-            sorted_goal_ids = np.argsort(self.stimulus)[::-1] 
-            self.robot_goal_id = sorted_goal_ids[0]
+                
+        # extract the sorted goal robot IDs in descending order
+        sorted_goal_ids = np.array([])
+        sorted_goal_ids = np.argsort(self.stimulus)[::-1] 
+        self.robot_goal_id = sorted_goal_ids[0]
        
+    # --------------------------------------------------------------------------------------
     def min_max_scale(self,values):
 
         self.normalized_values = values
@@ -491,19 +480,20 @@ class ASVAllocator:
          # remove the robot from the dustbin goals
         robot_id = msg.data
         self.robots_id = np.delete(self.robots_id, np.where(self.robots_id == robot_id))
-        # self.robot_to_remove = robot_id
+        self.robot_to_remove = robot_id
+        self.remove_robot=True
         self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1
         # set at minimum value the robots that have completed their work 
-        # if(self.robot_to_remove!=999):
-        #     for element in range(len(self.removed_robots)):
-        #         if(self.aggregation_model==1):
-        #             self.stimulus_variables[self.removed_robots[element]] = [0,0] #number of stimulus
-        #             self.normalized_values[self.removed_robots[element]] = [0,0] 
-        #         elif(self.aggregation_model==2):
-        #             self.stimulus_variables[self.removed_robots[element]] = [0,0]
-        #             self.normalized_values[self.removed_robots[element]] = [0,0]
- 
+        if(self.robot_to_remove!=999 and self.remove_robot==True):
+            for element in range(len(self.removed_robots)):
+                if(self.aggregation_model==1):
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0] #number of stimulus
+                    self.normalized_values[self.removed_robots[element]] = [0,0] 
+                elif(self.aggregation_model==2):
+                    self.stimulus_variables[self.removed_robots[element]] = [0,0]
+                    self.normalized_values[self.removed_robots[element]] = [0,0]
+            self.remove_robot=False  
         
     def initialization(self,robot_id):
         if(self.robots_information[robot_id][0] != 0):

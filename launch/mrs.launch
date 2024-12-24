@@ -12,7 +12,7 @@
   <arg name="robot_5" default="robot5"/>  
 
 
-   <!-- COLA2 ARCHITECTURE -->
+   <!-- COLA2 architecture -->
   <group if="$(arg cola2_architecture)">
 
     <!-- Static transform -->
@@ -20,29 +20,34 @@
 
     <include file="$(find cola2_turbot)/launch/sim_start.launch">
         <arg name="robot_name" value="$(arg robot_0)"/>
+        <arg name="enable_keyboard" value="true"/>
     </include>
 
     <include file="$(find cola2_turbot)/launch/sim_start.launch">
         <arg name="robot_name" value="$(arg robot_1)"/>
+        <arg name="enable_keyboard" value="true"/>
     </include>
 
     <include file="$(find cola2_turbot)/launch/sim_start.launch">
         <arg name="robot_name" value="$(arg robot_2)"/>
+        <arg name="enable_keyboard" value="true"/>
     </include>
 
     <include file="$(find cola2_turbot)/launch/sim_start.launch">
         <arg name="robot_name" value="$(arg robot_3)"/>
+        <arg name="enable_keyboard" value="true"/>
     </include>
 
     <include file="$(find cola2_turbot)/launch/sim_start.launch">
         <arg name="robot_name" value="$(arg robot_4)"/>
+        <arg name="enable_keyboard" value="true"/>
     </include>
 
     <include file="$(find cola2_xiroi)/launch/sim_start.launch">
         <arg name="robot_name" value="$(arg robot_5)"/>
         <arg name="safety" value="false"/>
         <arg name="enable_gui" value="false"/>
-        <arg name="enable_keyboard" value="false"/>
+        <arg name="enable_keyboard" value="true"/>
     </include>
 
   </group>  

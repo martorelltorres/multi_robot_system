@@ -8,7 +8,7 @@ Panels:
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
       Splitter Ratio: 0.5
-    Tree Height: 836
+    Tree Height: 441
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -23,12 +23,158 @@ Visualization Manager:
   Class: ""
   Displays:
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Filter (blacklist): ""
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        robot0/base_link:
+          Value: true
+        robot0/dvl:
+          Value: true
+        robot0/dvl_altitude:
+          Value: true
+        robot0/dynamics:
+          Value: true
+        robot0/gps:
+          Value: true
+        robot0/imu:
+          Value: true
+        robot0/imu_filter:
+          Value: true
+        robot0/modem:
+          Value: true
+        robot0/pressure:
+          Value: true
+        robot0/thruster_0:
+          Value: true
+        robot0/thruster_1:
+          Value: true
+        robot0/thruster_2:
+          Value: true
+        robot1/base_link:
+          Value: true
+        robot1/dvl:
+          Value: true
+        robot1/dvl_altitude:
+          Value: true
+        robot1/dynamics:
+          Value: true
+        robot1/gps:
+          Value: true
+        robot1/imu:
+          Value: true
+        robot1/imu_filter:
+          Value: true
+        robot1/modem:
+          Value: true
+        robot1/pressure:
+          Value: true
+        robot1/thruster_0:
+          Value: true
+        robot1/thruster_1:
+          Value: true
+        robot1/thruster_2:
+          Value: true
+        robot2/base_link:
+          Value: true
+        robot2/dvl:
+          Value: true
+        robot2/dvl_altitude:
+          Value: true
+        robot2/dynamics:
+          Value: true
+        robot2/gps:
+          Value: true
+        robot2/imu:
+          Value: true
+        robot2/imu_filter:
+          Value: true
+        robot2/modem:
+          Value: true
+        robot2/pressure:
+          Value: true
+        robot2/thruster_0:
+          Value: true
+        robot2/thruster_1:
+          Value: true
+        robot2/thruster_2:
+          Value: true
+        robot3/base_link:
+          Value: true
+        robot3/dvl:
+          Value: true
+        robot3/dvl_altitude:
+          Value: true
+        robot3/dynamics:
+          Value: true
+        robot3/gps:
+          Value: true
+        robot3/imu:
+          Value: true
+        robot3/imu_filter:
+          Value: true
+        robot3/modem:
+          Value: true
+        robot3/pressure:
+          Value: true
+        robot3/thruster_0:
+          Value: true
+        robot3/thruster_1:
+          Value: true
+        robot3/thruster_2:
+          Value: true
+        robot4/base_link:
+          Value: true
+        robot4/dvl:
+          Value: true
+        robot4/dvl_altitude:
+          Value: true
+        robot4/dynamics:
+          Value: true
+        robot4/gps:
+          Value: true
+        robot4/imu:
+          Value: true
+        robot4/imu_filter:
+          Value: true
+        robot4/modem:
+          Value: true
+        robot4/pressure:
+          Value: true
+        robot4/thruster_0:
+          Value: true
+        robot4/thruster_1:
+          Value: true
+        robot4/thruster_2:
+          Value: true
+        robot5/base_link:
+          Value: true
+        robot5/dvl:
+          Value: true
+        robot5/dvl_altitude:
+          Value: true
+        robot5/dynamics:
+          Value: true
+        robot5/gps:
+          Value: true
+        robot5/imu:
+          Value: true
+        robot5/imu_filter:
+          Value: true
+        robot5/pressure:
+          Value: true
+        robot5/thruster_1:
+          Value: true
+        robot5/thruster_2:
+          Value: true
+        robot5/usbl:
+          Value: true
+        world:
+          Value: true
+        world_ned:
+          Value: true
       Marker Alpha: 1
       Marker Scale: 2
       Name: tf
@@ -36,9 +182,140 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          world_ned:
+            robot0/base_link:
+              robot0/dvl:
+                robot0/dvl_altitude:
+                  {}
+              robot0/gps:
+                {}
+              robot0/imu:
+                {}
+              robot0/imu_filter:
+                {}
+              robot0/modem:
+                {}
+              robot0/pressure:
+                {}
+              robot0/thruster_0:
+                {}
+              robot0/thruster_1:
+                {}
+              robot0/thruster_2:
+                {}
+            robot0/dynamics:
+              {}
+            robot1/base_link:
+              robot1/dvl:
+                robot1/dvl_altitude:
+                  {}
+              robot1/gps:
+                {}
+              robot1/imu:
+                {}
+              robot1/imu_filter:
+                {}
+              robot1/modem:
+                {}
+              robot1/pressure:
+                {}
+              robot1/thruster_0:
+                {}
+              robot1/thruster_1:
+                {}
+              robot1/thruster_2:
+                {}
+            robot1/dynamics:
+              {}
+            robot2/base_link:
+              robot2/dvl:
+                robot2/dvl_altitude:
+                  {}
+              robot2/gps:
+                {}
+              robot2/imu:
+                {}
+              robot2/imu_filter:
+                {}
+              robot2/modem:
+                {}
+              robot2/pressure:
+                {}
+              robot2/thruster_0:
+                {}
+              robot2/thruster_1:
+                {}
+              robot2/thruster_2:
+                {}
+            robot2/dynamics:
+              {}
+            robot3/base_link:
+              robot3/dvl:
+                robot3/dvl_altitude:
+                  {}
+              robot3/gps:
+                {}
+              robot3/imu:
+                {}
+              robot3/imu_filter:
+                {}
+              robot3/modem:
+                {}
+              robot3/pressure:
+                {}
+              robot3/thruster_0:
+                {}
+              robot3/thruster_1:
+                {}
+              robot3/thruster_2:
+                {}
+            robot3/dynamics:
+              {}
+            robot4/base_link:
+              robot4/dvl:
+                robot4/dvl_altitude:
+                  {}
+              robot4/gps:
+                {}
+              robot4/imu:
+                {}
+              robot4/imu_filter:
+                {}
+              robot4/modem:
+                {}
+              robot4/pressure:
+                {}
+              robot4/thruster_0:
+                {}
+              robot4/thruster_1:
+                {}
+              robot4/thruster_2:
+                {}
+            robot4/dynamics:
+              {}
+            robot5/base_link:
+              robot5/dvl:
+                robot5/dvl_altitude:
+                  {}
+              robot5/gps:
+                {}
+              robot5/imu:
+                {}
+              robot5/imu_filter:
+                {}
+              robot5/pressure:
+                {}
+              robot5/thruster_1:
+                {}
+              robot5/thruster_2:
+                {}
+              robot5/usbl:
+                {}
+            robot5/dynamics:
+              {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz/Axes
       Enabled: false
@@ -907,7 +1184,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 54.2407112121582
+      Distance: 215.95712280273438
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -915,9 +1192,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 7.9974846839904785
-        Y: -5.084242343902588
-        Z: -103.61865234375
+        X: 25.653352737426758
+        Y: -71.17208862304688
+        Z: -104.00666809082031
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: true
