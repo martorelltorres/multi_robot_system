@@ -8,7 +8,7 @@ Panels:
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
       Splitter Ratio: 0.5
-    Tree Height: 441
+    Tree Height: 836
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -163,13 +163,37 @@ Visualization Manager:
           Value: true
         robot5/imu_filter:
           Value: true
+        robot5/modem:
+          Value: true
         robot5/pressure:
+          Value: true
+        robot5/thruster_0:
           Value: true
         robot5/thruster_1:
           Value: true
         robot5/thruster_2:
           Value: true
-        robot5/usbl:
+        robot6/base_link:
+          Value: true
+        robot6/dvl:
+          Value: true
+        robot6/dvl_altitude:
+          Value: true
+        robot6/dynamics:
+          Value: true
+        robot6/gps:
+          Value: true
+        robot6/imu:
+          Value: true
+        robot6/imu_filter:
+          Value: true
+        robot6/pressure:
+          Value: true
+        robot6/thruster_1:
+          Value: true
+        robot6/thruster_2:
+          Value: true
+        robot6/usbl:
           Value: true
         world:
           Value: true
@@ -304,15 +328,37 @@ Visualization Manager:
                 {}
               robot5/imu_filter:
                 {}
+              robot5/modem:
+                {}
               robot5/pressure:
+                {}
+              robot5/thruster_0:
                 {}
               robot5/thruster_1:
                 {}
               robot5/thruster_2:
                 {}
-              robot5/usbl:
-                {}
             robot5/dynamics:
+              {}
+            robot6/base_link:
+              robot6/dvl:
+                robot6/dvl_altitude:
+                  {}
+              robot6/gps:
+                {}
+              robot6/imu:
+                {}
+              robot6/imu_filter:
+                {}
+              robot6/pressure:
+                {}
+              robot6/thruster_1:
+                {}
+              robot6/thruster_2:
+                {}
+              robot6/usbl:
+                {}
+            robot6/dynamics:
               {}
       Update Interval: 0
       Value: true
@@ -778,7 +824,15 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        robot5/modem:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         robot5/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot5/thruster_0:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -790,12 +844,65 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot5/usbl:
+      Name: RobotModel
+      Robot Description: /robot5/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        robot6/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot6/dvl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot6/dvl_altitude:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot6/gps:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot6/imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot6/imu_filter:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot6/pressure:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot6/thruster_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot6/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot6/usbl:
           Alpha: 1
           Show Axes: false
           Show Trail: false
       Name: RobotModel
-      Robot Description: /robot5/robot_description
+      Robot Description: /robot6/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -972,7 +1079,7 @@ Visualization Manager:
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /robot5/navigator/odometry_throttle
+      Topic: /robot6/navigator/odometry_throttle
       Unreliable: false
       Value: true
     - Class: rviz/Marker
@@ -1184,7 +1291,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 215.95712280273438
+      Distance: 61.936214447021484
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1192,9 +1299,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 25.653352737426758
-        Y: -71.17208862304688
-        Z: -104.00666809082031
+        X: 0.6187759637832642
+        Y: -16.337230682373047
+        Z: -106.67391967773438
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: true

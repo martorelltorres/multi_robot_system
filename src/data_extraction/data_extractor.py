@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import argparse
 
-alpha, beta, gamma, delta, epsilon = 0.5, 0.5, 0.3, 0.3, 0.4  # Example values
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Process ROS bag files and extract data.")
 parser.add_argument(
@@ -132,10 +131,10 @@ for column in columns_to_normalize:
 
 # Define constants for R and C
 # Calculate R and C using normalized values
-df['R'] = alpha * df['priority_latency_inv_normalized'] + beta * df['regular_latency_inv_normalized']
-df['C'] = (gamma * df['prior_std_latency_normalized'] +
-           delta * df['reg_std_latency_normalized'] +
-           epsilon * df['travelled_distance_normalized'])
+alpha, beta, gamma, delta, epsilon = 0.3, 0.1, 0.6, 0.5, 0.5  # Example values
+df['R'] = alpha * df['priority_latency_inv_normalized'] + beta * df['regular_latency_inv_normalized']+gamma * df['transmitted_data_normalized']
+df['C'] = (delta * df['prior_std_latency_normalized'] +
+           epsilon * df['reg_std_latency_normalized'] )
 
 # Calculate Utility U = R - C
 df['Utility'] = df['R'] - df['C']

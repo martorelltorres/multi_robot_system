@@ -212,7 +212,6 @@ class MultiRobotSystem:
             self.section_ended = True
         else:
             self.section_ended = False
-
          
     def read_area_info(self):
         # Open the pickle file in binary mode
@@ -302,6 +301,7 @@ class MultiRobotSystem:
             initial_task_time = rospy.Time.now()
             self.restart_exploration_point = final_point
             self.robot_handler.send_section_strategy(initial_point,final_point,self.robot_ID)
+            rospy.sleep(2)
             self.wait_until_section_reached()
 
         final_task_time = rospy.Time.now()

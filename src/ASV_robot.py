@@ -544,7 +544,7 @@ class ASVRobot:
         return(distance)
 
     def tracking(self):
-            self.disable_all_and_set_idle_srv()
+            # self.disable_all_and_set_idle_srv()
             self.enable_thrusters_srv()
 
             self.auv_position_north = self.auvs_information[self.robot_goal_id][0]

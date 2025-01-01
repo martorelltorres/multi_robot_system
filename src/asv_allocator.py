@@ -54,8 +54,8 @@ class ASVAllocator:
         self.w2 = self.get_param("w2",1)
         self.w3 = self.get_param("w3",1)
         self.w4 = self.get_param("w4",1)
-        self.alpha = self.get_param("alpha",1)
-        self.beta = self.get_param("beta",1)
+        self.alpha = self.get_param("alpha",5)
+        self.beta = self.get_param("beta",5)
      
         
         # Initialize some variables
@@ -186,7 +186,7 @@ class ASVAllocator:
                             robot_agent,
                             queue_size=1)
         
-        rospy.Subscriber('/robot4/navigator/navigation',
+        rospy.Subscriber('/robot6/navigator/navigation',
                         NavSts,    
                         self.update_asv_position,
                         self.asv_ID,

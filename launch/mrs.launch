@@ -9,7 +9,8 @@
   <arg name="robot_2" default="robot2"/>  
   <arg name="robot_3" default="robot3"/>  
   <arg name="robot_4" default="robot4"/>
-  <arg name="robot_5" default="robot5"/>  
+  <arg name="robot_5" default="robot5"/>
+  <arg name="robot_6" default="robot6"/>  
 
 
    <!-- COLA2 architecture -->
@@ -43,8 +44,13 @@
         <arg name="enable_keyboard" value="true"/>
     </include>
 
-    <include file="$(find cola2_xiroi)/launch/sim_start.launch">
+    <include file="$(find cola2_turbot)/launch/sim_start.launch">
         <arg name="robot_name" value="$(arg robot_5)"/>
+        <arg name="enable_keyboard" value="true"/>
+    </include>
+
+    <include file="$(find cola2_xiroi)/launch/sim_start.launch">
+        <arg name="robot_name" value="$(arg robot_6)"/>
         <arg name="safety" value="false"/>
         <arg name="enable_gui" value="false"/>
         <arg name="enable_keyboard" value="true"/>
@@ -96,14 +102,21 @@
         <param name="navigation_depth" value="5"/>
       </node>
 
+        <!-- Robot 5 -->
+      <node name="AUV_$(arg robot_5)" pkg="multi_robot_system" type="AUV_robot.py" output="screen" respawn="true">
+        <param name="robot_ID" value="5"/>
+        <param name="robot_name" value= "$(arg robot_5)"/>
+        <param name="navigation_depth" value="5"/>
+      </node>
+
       <!-- ACOUSTIC COMMUNICATIONS -->
       <node name="acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true"/>
 
       <!-- ROBOT 4 ASV -->
-      <node name="asv_$(arg robot_5)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
-        <param name="robot_ID" value="5"/>
+      <node name="asv_$(arg robot_6)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
+        <param name="robot_ID" value="6"/>
         <param name="asv_ID" value="0"/>
-        <remap from="/asv0/navigator/navigation" to="/robot5/navigator/navigation"/>
+        <remap from="/asv0/navigator/navigation" to="/robot6/navigator/navigation"/>
       </node>
     </group>
   </group>

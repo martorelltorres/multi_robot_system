@@ -23,7 +23,8 @@ class acoustic_communication:
         self.asv_init = False
         node_name = rospy.get_name()
         self.number_of_robots = self.get_param('number_of_robots')
-        self.number_of_asvs= 1
+        self.number_of_auvs = self.get_param('number_of_auvs')
+        self.number_of_asvs = self.get_param('number_of_asvs')
         self.auv_position = []
         self.asv_position = [[],[]]
         self.auv_flag = np.array([])
@@ -52,10 +53,13 @@ class acoustic_communication:
                                 PoseWithCovarianceStamped,
                                 queue_size=2)
 
-
         self.auv4_pose_covariance_pub = rospy.Publisher('/robot4/acoustic_communication',
                         PoseWithCovarianceStamped,
                         queue_size=2)
+
+        self.auv5_pose_covariance_pub = rospy.Publisher('/robot5/acoustic_communication',
+                PoseWithCovarianceStamped,
+                queue_size=2)
         
   
         #Subscribers 
@@ -147,6 +151,9 @@ class acoustic_communication:
             self.get_comm_freq(0,3)
         elif(auv==4):
             self.auv4_pose_covariance_pub.publish(msg)
+            self.get_comm_freq(0,4)
+        elif(auv==5):
+            self.auv5_pose_covariance_pub.publish(msg)
             self.get_comm_freq(0,4)
 
         self.rate.sleep()
