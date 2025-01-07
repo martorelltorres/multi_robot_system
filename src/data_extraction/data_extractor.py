@@ -35,10 +35,10 @@ print("I found " + str(len(bag_files)) + " bagfiles!!")
 # Define parameter combinations
 if "owa" in bagfile_path.lower():
     print("The bagfile path contains the word 'owa'.")
-    parameter_combinations = [[4,4,2],[6,2,2],[6,4,0],[8,2,0],[10,0,0]] # OWA
+    parameter_combinations = [[4, 4, 2], [6, 2, 2], [6, 4, 0], [8, 2, 0], [10, 0, 0]]  # OWA
 if "response" in bagfile_path.lower():
     print("The bagfile path contains the word 'response'.")
-    parameter_combinations = [[0, 10], [2.5, 7.5], [5, 5], [7.5, 2.5], [10, 0]] # ARTM
+    parameter_combinations = [[0, 10], [2.5, 7.5], [5, 5], [7.5, 2.5], [10, 0]]  # ARTM
 
 # Create a list to store data from all bag files
 all_data = []
@@ -109,9 +109,22 @@ for bag_file in range(len(bag_files)):
     })
     print(f"Extracting data from results_{bag_file}.bag complete.")
 
-# Save all data to a CSV after processing all bag files
-output_csv_path = os.path.join(bagfile_path, "data.csv")
+# Save all data to a DataFrame
 df = pd.DataFrame(all_data)
+
+# Separate parameter_combination into columns
+if "owa" in bagfile_path.lower():
+    df[['w1', 'w2', 'w3']] = pd.DataFrame(df['parameter_combination'].tolist(), index=df.index)
+    df = df.drop(columns=['parameter_combination'])
+    # Reorder columns to place w1, w2, w3 at the beginning
+    column_order = ['w1', 'w2', 'w3'] + [col for col in df.columns if col not in ['w1', 'w2', 'w3']]
+    df = df[column_order]
+if "response" in bagfile_path.lower():
+    df[['a', 'b']] = pd.DataFrame(df['parameter_combination'].tolist(), index=df.index)
+    df = df.drop(columns=['parameter_combination'])
+    # Reorder columns to place a, b at the beginning
+    column_order = ['a', 'b'] + [col for col in df.columns if col not in ['a', 'b']]
+    df = df[column_order]
 
 # Normalize inversely only the specified columns and insert below original columns
 columns_to_inv_normalize = ['regular_latency', 'priority_latency']
@@ -131,7 +144,7 @@ for column in columns_to_normalize:
 
 # Define constants for R and C
 # Calculate R and C using normalized values
-alpha, beta, gamma, delta, epsilon = 0.3, 0.1, 0.6, 0.5, 0.5  # Example values
+alpha, beta, gamma, delta, epsilon = 0.3, 0.2, 0.5, 0.7, 0.3  # Example values
 df['R'] = alpha * df['priority_latency_inv_normalized'] + beta * df['regular_latency_inv_normalized']+gamma * df['transmitted_data_normalized']
 df['C'] = (delta * df['prior_std_latency_normalized'] +
            epsilon * df['reg_std_latency_normalized'] )
@@ -140,6 +153,7 @@ df['C'] = (delta * df['prior_std_latency_normalized'] +
 df['Utility'] = df['R'] - df['C']
 
 # Save to CSV
+output_csv_path = os.path.join(bagfile_path, "data.csv")
 df.to_csv(output_csv_path, index=False)
 
 print("\nDATA EXTRACTION PROCESS FINISHED")
