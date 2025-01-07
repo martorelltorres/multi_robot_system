@@ -105,12 +105,24 @@ for area in areas:
                 prior_latency = sum(prior_latency_values) / len(prior_latency_values) if len(prior_latency_values) > 0 else 0
                 prior_std = np.std(prior_latency_values) if len(prior_latency_values) > 0 else 0
 
+                # Prepare parameter values based on method
+                if method == "owa":
+                    w1, w2, w3 = parameter_combination
+                    a, b = [0, 0]
+                elif method == "response_threshold":
+                    a, b = parameter_combination
+                    w1, w2, w3 = [0, 0, 0]
+
                 # Append data to folder_data list
                 folder_data.append({
                     'area': area,
                     'auv_count': auv_count,
                     'method': method,
-                    'parameter_combination': parameter_combination,
+                    'w1': w1,
+                    'w2': w2,
+                    'w3': w3,
+                    'a': a,
+                    'b': b,
                     'regular_latency': reg_latency,
                     'reg_std_latency': reg_std,
                     'priority_latency': prior_latency,
