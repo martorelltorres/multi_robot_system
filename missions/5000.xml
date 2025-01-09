@@ -1,0 +1,90 @@
+<mission>
+  <version>2.0</version>
+  <mission_step>
+    <maneuver type="goto">
+      <final_latitude>39.543466417654265</final_latitude>
+      <final_longitude>2.3770306174360023</final_longitude>
+      <final_depth>0.0</final_depth>
+      <final_altitude>1.0</final_altitude>
+      <heave_mode>0</heave_mode>
+      <surge_velocity>0.5</surge_velocity>
+      <tolerance_xy>2.0</tolerance_xy>
+      <no_altitude_goes_up>true</no_altitude_goes_up>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <initial_latitude>39.543466417654265</initial_latitude>
+      <initial_longitude>2.3770306174360023</initial_longitude>
+      <initial_depth>0.0</initial_depth>
+      <final_latitude>39.54349613578013</final_latitude>
+      <final_longitude>2.3775700032372495</final_longitude>
+      <final_depth>0.0</final_depth>
+      <final_altitude>1.0</final_altitude>
+      <heave_mode>0</heave_mode>
+      <surge_velocity>0.5</surge_velocity>
+      <tolerance_xy>2.0</tolerance_xy>
+      <no_altitude_goes_up>true</no_altitude_goes_up>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <initial_latitude>39.54349613578013</initial_latitude>
+      <initial_longitude>2.3775700032372495</initial_longitude>
+      <initial_depth>0.0</initial_depth>
+      <final_latitude>39.54325215392476</final_latitude>
+      <final_longitude>2.3778556405313376</final_longitude>
+      <final_depth>0.0</final_depth>
+      <final_altitude>1.0</final_altitude>
+      <heave_mode>0</heave_mode>
+      <surge_velocity>0.5</surge_velocity>
+      <tolerance_xy>2.0</tolerance_xy>
+      <no_altitude_goes_up>true</no_altitude_goes_up>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <initial_latitude>39.54325215392476</initial_latitude>
+      <initial_longitude>2.3778556405313376</initial_longitude>
+      <initial_depth>0.0</initial_depth>
+      <final_latitude>39.54284795884843</final_latitude>
+      <final_longitude>2.377807523866927</final_longitude>
+      <final_depth>0.0</final_depth>
+      <final_altitude>1.0</final_altitude>
+      <heave_mode>0</heave_mode>
+      <surge_velocity>0.5</surge_velocity>
+      <tolerance_xy>2.0</tolerance_xy>
+      <no_altitude_goes_up>true</no_altitude_goes_up>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <initial_latitude>39.54284795884843</initial_latitude>
+      <initial_longitude>2.377807523866927</initial_longitude>
+      <initial_depth>0.0</initial_depth>
+      <final_latitude>39.54274633788315</final_latitude>
+      <final_longitude>2.3772962674970817</final_longitude>
+      <final_depth>0.0</final_depth>
+      <final_altitude>1.0</final_altitude>
+      <heave_mode>0</heave_mode>
+      <surge_velocity>0.5</surge_velocity>
+      <tolerance_xy>2.0</tolerance_xy>
+      <no_altitude_goes_up>true</no_altitude_goes_up>
+    </maneuver>
+  </mission_step>
+  <mission_step>
+    <maneuver type="section">
+      <initial_latitude>39.54274633788315</initial_latitude>
+      <initial_longitude>2.3772962674970817</initial_longitude>
+      <initial_depth>0.0</initial_depth>
+      <final_latitude>39.5430081720694</final_latitude>
+      <final_longitude>2.376963023987312</final_longitude>
+      <final_depth>0.0</final_depth>
+      <final_altitude>1.0</final_altitude>
+      <heave_mode>0</heave_mode>
+      <surge_velocity>0.5</surge_velocity>
+      <tolerance_xy>2.0</tolerance_xy>
+      <no_altitude_goes_up>true</no_altitude_goes_up>
+    </maneuver>
+  </mission_step>
+</mission>

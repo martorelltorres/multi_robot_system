@@ -1,8 +1,8 @@
 # ---------------------------------------------------------
 #             MULTI ROBOT SYSTEM CONFIGURATION FILE            
 # ---------------------------------------------------------
-number_of_robots: 7 #TOTAL number of robots (AUVs+ASVs)
-number_of_auvs: 6
+number_of_robots: 4 #TOTAL number of robots (AUVs+ASVs)
+number_of_auvs: 3
 number_of_asvs: 1
 
 # NED origin definition
@@ -10,7 +10,7 @@ ned_origin_lat: 39.543330
 ned_origin_lon: 2.377940
 
 # Exploration area
-pickle_path: '/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/6AUVs/60000.pickle'
+pickle_path: '/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/3AUVs/5000.pickle'
 offset_polygon_distance: 4 # The offset_polygon_distance set the offset distance in order to ensure an enought coverage area between the polygons
 offset_coverage_distance: 5 # The offset_coverage_distance set the distance between the coverage lines path
 

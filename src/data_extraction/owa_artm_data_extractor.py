@@ -28,8 +28,9 @@ parameter_combinations_map = {
     "response_threshold": [[0, 10], [2.5, 7.5], [5, 5], [7.5, 2.5], [10, 0]]  # ARTM
 }
 
-# Create a list to store all data
-all_data = []
+# Create lists to store OWA and response threshold data
+owa_data = []
+response_threshold_data = []
 
 # Iterate over all combinations of area, AUVs, and aggregation methods
 for area in areas:
@@ -60,12 +61,9 @@ for area in areas:
 
                 # Arrays to store latency values
                 reg_latency_values = np.array([])
-                reg_time_latency_values = np.array([])
                 prior_latency_values = np.array([])
-                prior_time_latency_values = np.array([])
 
                 sum_data, sum_reg_objects, sum_prior_objects, travelled_distance = 0, 0, 0, 0
-                aggregation_model = None
                 parameter_combination = parameter_combinations[bag_file_index % len(parameter_combinations)]
 
                 for topic, msg, t in bag.read_messages(topics=topics_of_interest):
@@ -74,64 +72,59 @@ for area in areas:
                         reg_time_latency = (msg.header.stamp.secs - start_time) / 60
                         sum_reg_latency = sum(reg_latency)
                         reg_latency_values = np.append(reg_latency_values, sum_reg_latency)
-                        reg_time_latency_values = np.append(reg_time_latency_values, reg_time_latency)
 
                     if "/mrs/asv0_priority_communication_latency" in topic:
                         prior_latency = getattr(msg, 'comm_latency', (0, 0, 0, 0, 0, 0))
-                        prior_time_latency = (msg.header.stamp.secs - start_time) / 60
                         sum_prior_latency = sum(prior_latency)
                         prior_latency_values = np.append(prior_latency_values, sum_prior_latency)
-                        prior_time_latency_values = np.append(prior_time_latency_values, prior_time_latency)
 
                     if "/mrs/asv_travelled_distance" in topic:
                         travelled_distance = msg.travelled_distance
 
                     if "/mrs/allocator_data_transmited" in topic:
-                        data_transmited = getattr(msg, 'transmitted_data', (0, 0, 0, 0, 0, 0))
+                        data_transmitted = getattr(msg, 'transmitted_data', (0, 0, 0, 0, 0, 0))
                         regular_objects = getattr(msg, 'transmitted_regular_objects', (0, 0, 0, 0, 0, 0))
                         priority_objects = getattr(msg, 'transmitted_priority_objects', (0, 0, 0, 0, 0, 0))
-                        sum_data = sum(data_transmited)
+                        sum_data = sum(data_transmitted)
                         sum_reg_objects = sum(regular_objects)
                         sum_prior_objects = sum(priority_objects)
-
-                    if "/mrs/aggregation_model_info" in topic:
-                        aggregation_model = getattr(msg, 'model_name', 'unknown')
 
                 bag.close()
 
                 # Calculate latency and standard deviation values
-                reg_latency = sum(reg_latency_values) / len(reg_latency_values) if len(reg_latency_values) > 0 else 0
-                reg_std = np.std(reg_latency_values) if len(reg_latency_values) > 0 else 0
-                prior_latency = sum(prior_latency_values) / len(prior_latency_values) if len(prior_latency_values) > 0 else 0
-                prior_std = np.std(prior_latency_values) if len(prior_latency_values) > 0 else 0
+                reg_latency = np.mean(reg_latency_values) if len(reg_latency_values) > 0 else 0
+                prior_latency = np.mean(prior_latency_values) if len(prior_latency_values) > 0 else 0
 
                 # Prepare parameter values based on method
                 if method == "owa":
                     w1, w2, w3 = parameter_combination
-                    a, b = [0, 0]
+                    # Append data to folder_data list
+                    folder_data.append({
+                        'area': int(area),
+                        'auv_count': int(auv_count.replace('AUVs', '')),
+                        'method': method,
+                        'w1': float(w1),
+                        'w2': float(w2),
+                        'w3': float(w3),
+                        'regular_latency': reg_latency,
+                        'priority_latency': prior_latency,
+                        'transmitted_data': sum_data,
+                        'travelled_distance': travelled_distance
+                    })
                 elif method == "response_threshold":
                     a, b = parameter_combination
-                    w1, w2, w3 = [0, 0, 0]
-
-                # Append data to folder_data list
-                folder_data.append({
-                    'area': int(area),
-                    'auv_count': int(auv_count.replace('AUVs', '')),  # Proper conversion
-                    'method': float(1) if method == 'owa' else float(0),
-                    'w1': float(w1),  # Ensure float conversion
-                    'w2': float(w2),
-                    'w3': float(w3),
-                    'a': float(a),
-                    'b': float(b),
-                    'regular_latency': reg_latency,
-                    'reg_std_latency': reg_std,
-                    'priority_latency': prior_latency,
-                    'prior_std_latency': prior_std,
-                    'transmitted_data': sum_data,
-                    'regular_objects': sum_reg_objects,
-                    'priority_objects': sum_prior_objects,
-                    'travelled_distance': travelled_distance
-                })
+                    # Append data to folder_data list
+                    folder_data.append({
+                        'area': int(area),
+                        'auv_count': int(auv_count.replace('AUVs', '')),
+                        'method': method,
+                        'a': float(a),
+                        'b': float(b),
+                        'regular_latency': reg_latency,
+                        'priority_latency': prior_latency,
+                        'transmitted_data': sum_data,
+                        'travelled_distance': travelled_distance
+                    })
 
             # Convert folder data to DataFrame and normalize columns
             df_folder = pd.DataFrame(folder_data)
@@ -144,7 +137,7 @@ for area in areas:
                 normalized_column = 1 - (df_folder[column] - min_val) / (max_val - min_val)
                 df_folder[column + '_inv_normalized'] = normalized_column
 
-            columns_to_normalize = ['reg_std_latency', 'prior_std_latency', 'transmitted_data', 'travelled_distance']
+            columns_to_normalize = ['transmitted_data', 'travelled_distance']
             for column in columns_to_normalize:
                 min_val = df_folder[column].min()
                 max_val = df_folder[column].max()
@@ -152,31 +145,29 @@ for area in areas:
                 df_folder[column + '_normalized'] = normalized_column
 
             # Define constants for R and C
-            alpha, beta, gamma, delta, epsilon = 0.3, 0.2, 0.5, 0.7, 0.3  # Example values
+            alpha, beta, gamma, delta, epsilon = 0.3, 0.2, 0.5, 0.7, 0.3
             df_folder['R'] = (alpha * df_folder['priority_latency_inv_normalized'] +
                               beta * df_folder['regular_latency_inv_normalized'] +
                               gamma * df_folder['transmitted_data_normalized'])
-            df_folder['C'] = (delta * df_folder['prior_std_latency_normalized'] +
-                              epsilon * df_folder['reg_std_latency_normalized'])
-            if method == "owa":                  
-                df_folder['owa_utility'] = df_folder['R'] - df_folder['C']
-                df_folder['artm_utility'] = -1
-            else:
-                df_folder['artm_utility'] = df_folder['R'] - df_folder['C']
-                df_folder['owa_utility'] = -1
+            df_folder['C'] = (delta * df_folder['priority_latency_inv_normalized'] +
+                              epsilon * df_folder['regular_latency_inv_normalized'])
+            df_folder['utility'] = df_folder['R'] - df_folder['C']
 
-            df_folder['owa_utility'] = df_folder['owa_utility'].astype(float)
-            df_folder['artm_utility'] = df_folder['artm_utility'].astype(float)   
+            # Append folder data to the respective method's list
+            if method == "owa":
+                owa_data.extend(df_folder.to_dict('records'))
+            elif method == "response_threshold":
+                response_threshold_data.extend(df_folder.to_dict('records'))
 
+# Convert the OWA and response threshold data to separate DataFrames
+owa_df = pd.DataFrame(owa_data)
+response_threshold_df = pd.DataFrame(response_threshold_data)
 
-            # Append folder DataFrame to all_data
-            all_data.append(df_folder)
+# Save the DataFrames to separate CSV files
+owa_csv_path = os.path.join(base_path, "owa_data.csv")
+response_threshold_csv_path = os.path.join(base_path, "response_threshold_data.csv")
 
-# Concatenate all data into a single DataFrame
-final_df = pd.concat(all_data, ignore_index=True)
+owa_df.to_csv(owa_csv_path, index=False)
+response_threshold_df.to_csv(response_threshold_csv_path, index=False)
 
-# Save to a single CSV file
-output_csv_path = os.path.join(base_path, "consolidated_data.csv")
-final_df.to_csv(output_csv_path, index=False)
-
-print("\nALL DATA EXTRACTION AND CONSOLIDATION FINISHED")
+print("\nOWA and Response Threshold Data Extraction Finished")
