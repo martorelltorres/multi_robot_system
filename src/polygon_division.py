@@ -19,8 +19,8 @@ class polygon_division:
 
     def __init__(self, name):
         self.exploration_area = get_param(self,'exploration_area',"/home/uib/MRS_ws/src/multi_robot_system/missions/30000.xml") 
-        self.number_of_robots = get_param(self,'number_of_robots',6)
-        self.pickle_path = get_param(self,'pickle_path','/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/6AUVs/30000.pickle')
+        self.number_of_robots = get_param(self,'number_of_robots',3)
+        self.pickle_path = get_param(self,'pickle_path','/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/3AUVs/30000.pickle')
         self.ned_origin_lat = 39.543330
         self.ned_origin_lon = 2.377940
         self.regular_objects_number = 30
@@ -152,104 +152,113 @@ class polygon_division:
         plt.yticks(())
         # plt.show()
 
-    def divide_polygon(self):
-            #obtain the global_points (lat,long) of the polygon
-            self.global_points=[]
-            self.global_coords=[]
-            for i in range(len(self.latitude)):
-                self.global_points.append([self.latitude[i],self.longitude[i]])
-            self.global_coords.append(self.global_points[i])
+    # def divide_polygon(self):
+    #         #obtain the global_points (lat,long) of the polygon
+    #         self.global_points=[]
+    #         self.global_coords=[]
+    #         for i in range(len(self.latitude)):
+    #             self.global_points.append([self.latitude[i],self.longitude[i]])
+    #         self.global_coords.append(self.global_points[i])
 
-            #obtain the local_points (lat,long) of the polygon
-            for i in range(len(self.north_position)):
-                self.local_points.append([self.north_position[i],self.east_position[i]])
+    #         #obtain the local_points (lat,long) of the polygon
+    #         for i in range(len(self.north_position)):
+    #             self.local_points.append([self.north_position[i],self.east_position[i]])
 
-            # Define the main polygon object
-            self.main_polygon = Polygon(self.local_points)
-            self.main_polygon_centroid = self.main_polygon.centroid
-            self.polygon_points = self.local_points
-            self.regular_objects = self.generate_random_points_within_polygon(self.main_polygon,self.regular_objects_number)
-            self.priority_objects = self.generate_random_points_within_polygon(self.main_polygon,self.priority_objects_number)
+    #         # Define the main polygon object
+    #         self.main_polygon = Polygon(self.local_points)
+    #         self.main_polygon_centroid = self.main_polygon.centroid
+    #         self.polygon_points = self.local_points
+    #         self.regular_objects = self.generate_random_points_within_polygon(self.main_polygon,self.regular_objects_number)
+    #         self.priority_objects = self.generate_random_points_within_polygon(self.main_polygon,self.priority_objects_number)
             
-            # .........................................................................
-            # Generate random points within the polygon
-            num_points = 500
+    #         # .........................................................................
+    #         # Generate random points within the polygon
+    #         num_points = 500
         
-            while len(self.centroid_points) < num_points:
-                # Generate random coordinates within the polygon's bounds
-                x = uniform(self.main_polygon.bounds[0], self.main_polygon.bounds[2])
-                y = uniform(self.main_polygon.bounds[1], self.main_polygon.bounds[3])
-                # Create a point object
-                point = Point(x,y)
-                # Check if the point is within the polygon
-                if self.main_polygon.contains(point):
-                    self.centroid_points.append([x,y])
-            self.points = np.array(self.centroid_points)
+    #         while len(self.centroid_points) < num_points:
+    #             # Generate random coordinates within the polygon's bounds
+    #             x = uniform(self.main_polygon.bounds[0], self.main_polygon.bounds[2])
+    #             y = uniform(self.main_polygon.bounds[1], self.main_polygon.bounds[3])
+    #             # Create a point object
+    #             point = Point(x,y)
+    #             # Check if the point is within the polygon
+    #             if self.main_polygon.contains(point):
+    #                 self.centroid_points.append([x,y])
+    #         self.points = np.array(self.centroid_points)
 
-            self.clustering()
-            self.conpute_voronoi_tesselation()
-            
+    #         self.clustering()
+    #         self.conpute_voronoi_tesselation()
+    def divide_polygon(self):
+        # Obtain the global points (lat, long) of the polygon
+        self.global_points = []
+        self.global_coords = []
+        for i in range(len(self.latitude)):
+            self.global_points.append([self.latitude[i], self.longitude[i]])
+        self.global_coords.append(self.global_points[i])
+
+        # Obtain the local points (north, east) of the polygon
+        for i in range(len(self.north_position)):
+            self.local_points.append([self.north_position[i], self.east_position[i]])
+
+        # Define the main polygon object
+        self.main_polygon = Polygon(self.local_points)
+        self.main_polygon_centroid = self.main_polygon.centroid
+        self.polygon_points = self.local_points
+        self.regular_objects = self.generate_random_points_within_polygon(
+            self.main_polygon, self.regular_objects_number)
+        self.priority_objects = self.generate_random_points_within_polygon(
+            self.main_polygon, self.priority_objects_number)
+
+        # Generate random points within the polygon
+        num_points = 500
+        while len(self.centroid_points) < num_points:
+            x = uniform(self.main_polygon.bounds[0], self.main_polygon.bounds[2])
+            y = uniform(self.main_polygon.bounds[1], self.main_polygon.bounds[3])
+            point = Point(x, y)
+            if self.main_polygon.contains(point):
+                self.centroid_points.append([x, y])
+        self.points = np.array(self.centroid_points)
+
+        # Perform clustering and compute Voronoi tessellation
+        self.clustering()
+        self.conpute_voronoi_tesselation()
+
     def conpute_voronoi_tesselation(self):
-        # compute Voronoi tesselation
         voronoi_regions = Voronoi(self.cluster_centroids)
         regions, vertices = self.voronoi_finite_polygons_2d(voronoi_regions)
         voronoi_plot_2d(voronoi_regions)
-        min_x = voronoi_regions.min_bound[0] - 10
-        max_x = voronoi_regions.max_bound[0] + 10
-        min_y = voronoi_regions.min_bound[1] - 10
-        max_y = voronoi_regions.max_bound[1] + 10
+        plt.figure(figsize=(10, 10))
 
-        mins = np.tile((min_x, min_y), (vertices.shape[0], 1))
-        bounded_vertices = np.max((vertices, mins), axis=0)
-        maxs = np.tile((max_x, max_y), (vertices.shape[0], 1))
-        bounded_vertices = np.min((bounded_vertices, maxs), axis=0)
+        # Plot the main polygon
+        plt.plot(*zip(*self.polygon_points), label="Main Polygon", color="black", lw=2)
 
-        # colorize
+        # Plot each Voronoi region
         self.voronoi_polygons = []
-        self.voronoi_polygons_points = []
         for region in regions:
             polygon = vertices[region]
-            # Clipping polygon
-            sub_polygons = Polygon(polygon)
-            sub_polygons = sub_polygons.intersection(self.main_polygon)
-            # polygon = [p for p in sub_polygons.exterior.coords]
-            # -------------------------------------------------------------------------------
-            if isinstance(sub_polygons, MultiPolygon):  # Verifica si es un MultiPolygon
-                polygon = []
-                for poly in sub_polygons.geoms:  # Itera sobre cada polígono en el MultiPolygon
-                    polygon.extend([p for p in poly.exterior.coords])  # Accede a las coordenadas de su exterior
-            elif isinstance(sub_polygons, Polygon):  # Si es un solo Polígono
-                polygon = [p for p in sub_polygons.exterior.coords]
-            else:
-                raise TypeError(f"Geometry type not supported: {type(sub_polygons)}")
+            sub_polygon = Polygon(polygon).intersection(self.main_polygon)
 
-            # save the differents points of the subpolygon in voronoi_polygons as a polygon object and in voronoi_polygons_points as a polygon points
-            polygon_coords = polygon
-            self.voronoi_polygons.append(sub_polygons)
-            self.voronoi_polygons_points.append(polygon_coords)
-            plt.fill(*zip(*polygon), alpha=0.4)
-        
-        self.voronoy_polygons_settled = True
-        
-        plt.plot(*zip(*self.polygon_points))
-        # Discfretization points
-        plt.plot(self.reduced_data[:, 0], self.reduced_data[:, 1], "k.", markersize=2)
-        # Plot the centroids as a red dot
-        plt.scatter(
-            self.cluster_centroids[:, 0],
-            self.cluster_centroids[:, 1],
-            marker=".",
-            s=169,
-            linewidths=3,
-            color="r",
-            zorder=10,
-        )
+            if isinstance(sub_polygon, MultiPolygon):  # Handle MultiPolygon
+                for poly in sub_polygon.geoms:
+                    x, y = poly.exterior.xy
+                    plt.fill(x, y, alpha=0.4, label="Voronoi Sub-Area")
+            elif isinstance(sub_polygon, Polygon):  # Single Polygon
+                x, y = sub_polygon.exterior.xy
+                plt.fill(x, y, alpha=0.4, label="Voronoi Sub-Area")
 
-        plt.axis('equal')
+            self.voronoi_polygons.append(sub_polygon)
+
+        # Plot regular and priority objects
+        for obj in self.regular_objects:
+            plt.plot(obj.x, obj.y, 'bo', label="Regular Object")
+        for obj in self.priority_objects:
+            plt.plot(obj.x, obj.y, 'ro', label="Priority Object")
+
+        plt.axis("equal")
         plt.xlabel("X distance [m]")
         plt.ylabel("Y distance [m]")
-        plt.xlim(-170,70)
-        plt.ylim(-170,70)
+        plt.legend(loc="upper right")
+        plt.title("Polygon with Sub-Areas and Objects")
         plt.show()
     
     def define_voronoi_offset_polygons(self,offset):

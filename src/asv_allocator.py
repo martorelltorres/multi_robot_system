@@ -170,6 +170,8 @@ class ASVAllocator:
             self.current_time.append(0)
             self.acquired_data.append(0)
         
+        print("ROBOTS ID: "+str(self.robots_id))
+        
        
         robots_sense = np.zeros(2)
         self.stimulus_variables = np.tile(robots_sense, (self.number_of_auvs, 1))
@@ -412,25 +414,21 @@ class ASVAllocator:
         for asv in range(self.number_of_asvs):
             for auv in range(self.active_robots):
                 # obtain the amount of data to be transferred
-                self.stimulus_variables[self.robots_id[auv]][0] = self.acquired_data[auv]
+                self.stimulus_variables[self.robots_id[auv]][0] = self.acquired_data[self.robots_id[auv]]
                 
                 # get the distance
                 distance = self.get_distance(asv,auv)
+                # print(distance)
                 self.stimulus_variables[self.robots_id[auv]][1] = distance
+                print(self.stimulus_variables[self.robots_id[auv]][1])
 
                 # set the stimulus to 0 if there are no data to transmit
                 if(self.stimulus_variables[self.robots_id[auv]][0] == 0):
                     self.stimulus_variables[self.robots_id[auv]]=[0,0]
-
-            # # check if there are data to transmit, if not stop the tracking
-            # if np.all(self.stimulus_variables == 0):
-            #     # send the order to stop the tracking process
-            #     msg = Bool()
-            #     msg.data = False
-            #     self.pub_tracking_control_asv0.publish(msg)
-            # else:
+                               
             # normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
+ 
 
         if(self.aggregation_model==1):
             print("STIMULUS VARIABLES")

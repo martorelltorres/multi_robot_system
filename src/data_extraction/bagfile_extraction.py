@@ -41,8 +41,8 @@ class DataExtraction:
         self.w_range = [i / 10 for i in range(11)]
 
         self.simulation_count = -1
-        self.aggregation_model = 2
-        self.data_path = '/home/uib/MRS_data/NN/5000/3AUVs/'
+        self.aggregation_model = 1
+        self.data_path = '/home/uib/MRS_data/NN/30000/6AUVs/'
 
         self.response_threshold_folder = self.data_path+'response_threshold'
         self.RTM_bagfiles = self.data_path+'response_threshold/bagfiles'

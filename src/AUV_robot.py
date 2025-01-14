@@ -13,7 +13,7 @@ from shapely.geometry import Polygon,Point
 from geometry_msgs.msg  import PointStamped
 from std_srvs.srv import Empty
 from geometry_msgs.msg import  PolygonStamped, Point32, Polygon
-from cola2_msgs.msg import  NavSts, CaptainStateFeedback
+from cola2_msgs.msg import  NavSts, CaptainStateFeedback, PilotActionResult
 from multi_robot_system.msg import CoverageStartTime, ExplorationUpdate, RegularObjectInformation,PriorityObjectInformation 
 from std_msgs.msg import Int16, Bool
 
@@ -88,10 +88,14 @@ class MultiRobotSystem:
             Bool,
             self.object_exploration_flag) 
         
-        rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/state_feedback',
-                CaptainStateFeedback,    
-                self.update_section_result,
-                queue_size=1)
+        # rospy.Subscriber('/robot'+str(self.robot_ID)+'/captain/state_feedback',
+        #         CaptainStateFeedback,    
+        #         self.update_section_result,
+        #         queue_size=1)
+        rospy.Subscriber('/robot'+str(self.robot_ID)+'/pilot/actionlib/result',
+                         PilotActionResult,    
+                         self.update_section_result,
+                         queue_size=1)
         
         #Publishers
         self.polygon_pub = rospy.Publisher("voronoi_polygons",
@@ -208,7 +212,7 @@ class MultiRobotSystem:
         self.robot_position_east = msg.position.east           
 
     def update_section_result(self,msg):
-        if(msg.state==1):
+        if(msg.result.state==0):
             self.section_ended = True
         else:
             self.section_ended = False
@@ -229,8 +233,7 @@ class MultiRobotSystem:
         self.priority_objects = data['array7']
 
     def initialization(self): 
-        # wait 7 seconds in order to initialize the different robot architectures
-        rospy.sleep(7)
+        rospy.sleep(5)
         if np.all(self.robot_initialization == False):
             for robot in range(self.number_of_auvs):
                 self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
