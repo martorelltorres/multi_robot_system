@@ -466,7 +466,7 @@ class ASVRobot:
 
     def recap_information(self):
         self.in_process = True
-        rospy.sleep(2)
+        rospy.sleep(1)
         # obtain the goal_auv from the allocator
         self.robot_goal_id = self.allocator_handler.get_goal_AUV()
         if(self.robot_goal_id==999):
@@ -546,7 +546,6 @@ class ASVRobot:
     def tracking(self):
             # self.disable_all_and_set_idle_srv()
             self.enable_thrusters_srv()
-
             self.auv_position_north = self.auvs_information[self.robot_goal_id][0]
             self.asv_position_north = self.asv_north
             self.auv_position_east = self.auvs_information[self.robot_goal_id][1]
@@ -735,9 +734,7 @@ class ASVRobot:
             self.yr = linear_velocity*sin(angle_error)
             if(self.xr < 0 ):
                 self.xr = 0
-            self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)
-
-        
+            self.corrected_bvr_pusblisher(self.xr, self.yr,self.angular_velocity)      
     
     def corrected_bvr_pusblisher(self,corrected_velocity_x,corrected_velocity_y,corrected_angular_z):
         bvr = BodyVelocityReq()

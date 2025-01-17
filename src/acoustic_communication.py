@@ -108,15 +108,15 @@ class acoustic_communication:
 
     def get_comm_freq(self,asv,auv):
         self.distance = self.get_distance(self.auv_position[auv][0],self.auv_position[auv][1],self.auv_position[auv][2],self.asv_position[asv][0],self.asv_position[asv][1])
-        communication_freq = 0.848371 - 0.01412292*self.distance + 0.00007763495*self.distance**2
+        # communication_freq = 0.848371 - 0.01412292*self.distance + 0.00007763495*self.distance**2
+        communication_freq = 0.67 - 0.0039*self.distance + 0.0000057*self.distance**2
         # Add noise
         noise = np.random.normal(0, 0.2)
         freq_with_noise = communication_freq + noise
         # Create a rate
         self.rate = rospy.Rate(freq_with_noise)
-        return(freq_with_noise)
+        return(communication_freq)
 
-    
     def communication_process(self,asv,auv):
         self.get_comm_freq(asv,auv)
         self.distance = self.get_distance(self.auv_position[auv][0],self.auv_position[auv][1],self.auv_position[auv][2],self.asv_position[asv][0],self.asv_position[asv][1])

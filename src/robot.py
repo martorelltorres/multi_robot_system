@@ -165,7 +165,7 @@ class Robot:
         goto_req.priority = 11
         goto_req.reference = 0 #REFERENCE_NED=0  REFERENCE_GLOBAL=1 REFERENCE_VEHICLE=2
         self.goto_srv(goto_req)
-        rospy.sleep(1.0)
+        # rospy.sleep(1.0)
 
     # PRIORITY DEFINITIONS
     # uint32 PRIORITY_TELEOPERATION_LOW = 0

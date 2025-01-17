@@ -200,23 +200,21 @@ class MultiRobotSystem:
         self.robot_handler.send_section_strategy(point_a1,point_b1,self.robot_ID)
             
     def wait_until_section_reached(self):
-        while self.section_ended==False:
-            rospy.sleep(1)  
-
-        if(self.section_ended==True):
+        if(self.final_status==0):
             self.actual_sections[self.robot_ID][1] = self.actual_sections[self.robot_ID][1]+1
             self.actual_section = self.actual_sections[self.robot_ID][1]
+            self.send_folowing_section = True
+
+        elif(self.final_status!=0): 
+            self.send_folowing_section = False
                                    
     def update_robot_position(self, msg):
         self.robot_position_north = msg.position.north
         self.robot_position_east = msg.position.east           
 
     def update_section_result(self,msg):
-        if(msg.result.state==0):
-            self.section_ended = True
-        else:
-            self.section_ended = False
-         
+            self.final_status=msg.result.state
+
     def read_area_info(self):
         # Open the pickle file in binary mode
         with open(self.pickle_path, 'rb') as file:
@@ -233,7 +231,7 @@ class MultiRobotSystem:
         self.priority_objects = data['array7']
 
     def initialization(self): 
-        rospy.sleep(5)
+        rospy.sleep(6)
         if np.all(self.robot_initialization == False):
             for robot in range(self.number_of_auvs):
                 self.robot_initialization[robot] = self.robot_handler.is_robot_alive(robot)
@@ -304,7 +302,7 @@ class MultiRobotSystem:
             initial_task_time = rospy.Time.now()
             self.restart_exploration_point = final_point
             self.robot_handler.send_section_strategy(initial_point,final_point,self.robot_ID)
-            rospy.sleep(2)
+            rospy.sleep(1)
             self.wait_until_section_reached()
 
         final_task_time = rospy.Time.now()

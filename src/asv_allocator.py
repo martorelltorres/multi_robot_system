@@ -462,7 +462,7 @@ class ASVAllocator:
                 self.stimulus[robot] = 0
         
         if np.all(self.stimulus == 0):
-            rospy.sleep(2)
+            rospy.sleep(1)
             self.update_stimulus_matrix()
         else:
             # extract the sorted goal robot IDs in descending order
