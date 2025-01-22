@@ -89,6 +89,7 @@ class ASVAllocator:
         self.time_init = []
         self.storage_disk =[]
         self.max_value = 1
+        self.goal_id_set = False
         self.min_value = 0
         self.comm_signal = []
         self.stimulus = np.array([])
@@ -111,6 +112,7 @@ class ASVAllocator:
         self.start_data_gathering = True
         self.asvs_positions= []
         self.asvs_init = np.array([])
+        self.robots_id_rr = np.array([])
         self.init=False
         self.elapsed_time =np.array([])
         self.asv_id = 100
@@ -170,8 +172,7 @@ class ASVAllocator:
             self.current_time.append(0)
             self.acquired_data.append(0)
         
-        print("ROBOTS ID: "+str(self.robots_id))
-        
+        self.robots_id_rr = self.robots_id    
        
         robots_sense = np.zeros(2)
         self.stimulus_variables = np.tile(robots_sense, (self.number_of_auvs, 1))
@@ -401,7 +402,7 @@ class ASVAllocator:
         yaw = float(msg.orientation.yaw)
 
         if asv not in self.asvs_positions:
-            self.asvs_positions[asv] = [0.0, 0.0, 0.0]  # Initialize if not already present
+            self.asvs_positions[asv] = [0.0, 0.0, 0.0]  
         
         self.asvs_positions[asv] = [north, east, yaw]
         self.asvs_init[asv] = True
@@ -417,37 +418,46 @@ class ASVAllocator:
                 self.stimulus_variables[self.robots_id[auv]][0] = self.acquired_data[self.robots_id[auv]]
                 
                 # get the distance
-                distance = self.get_distance(asv,auv)
-                # print(distance)
+                distance = self.get_distance(asv, auv)
                 self.stimulus_variables[self.robots_id[auv]][1] = distance
-                print(self.stimulus_variables[self.robots_id[auv]][1])
 
                 # set the stimulus to 0 if there are no data to transmit
-                if(self.stimulus_variables[self.robots_id[auv]][0] == 0):
-                    self.stimulus_variables[self.robots_id[auv]]=[0,0]
-                               
-            # normalize the stimulus values
+                if self.stimulus_variables[self.robots_id[auv]][0] == 0:
+                    self.stimulus_variables[self.robots_id[auv]] = [0, 0]
+
+            if np.all(self.stimulus_variables == 0):
+                rospy.loginfo("All elements in STIMULUS are zero. Terminating method.")
+                return
+
+            # Normalize the stimulus values
             normalized_values = self.min_max_scale(self.stimulus_variables)
- 
 
-        if(self.aggregation_model==1):
-            print("STIMULUS VARIABLES")
-            print(self.stimulus_variables)
-            print("NORMALIZED VALUES")
-            print(normalized_values)
+            if np.isnan(normalized_values).any() or np.isinf(normalized_values).any():
+                rospy.logerr("STIMULUS contains invalid values (NaN or Inf). Terminating method.")
+                return
+
+        if self.aggregation_model == 1:
             self.ARTM(normalized_values)
-            print("ARTM OUTPUT")
-            print(self.stimulus)
+            print("STIMULUS: " + str(self.stimulus_variables))
+            print("ARTM OUTPUT :" + str(self.stimulus))
 
-
-        elif(self.aggregation_model==2):
+        elif self.aggregation_model == 2:
             self.OWA()
-
+        
+        elif (self.aggregation_model == 3 and not self.goal_id_set): 
+            print(self.robots_id_rr)
+            self.robot_goal_id = self.robots_id_rr[0]
+            self.robots_id_rr = np.roll(self.robots_id_rr, -1)
+        
     def get_goal_AUV(self):
-        if(self.robot_goal_id==999):
-            return(self.robot_goal_id)
-        else:
-            return(self.robot_goal_id)
+        self.goal_id_set = True
+        return(self.robot_goal_id)
+    
+    def reset_goal_id(self):
+        self.goal_id_set = False
+        if(self.aggregation_model==3):
+            rospy.sleep(1)
+            self.update_stimulus_matrix()
            
     def ARTM(self,normalized_values):
         for robot in range(self.number_of_auvs):
@@ -461,9 +471,6 @@ class ASVAllocator:
             if 0 <= robot < len(self.stimulus):
                 self.stimulus[robot] = 0
         
-        if np.all(self.stimulus == 0):
-            rospy.sleep(1)
-            self.update_stimulus_matrix()
         else:
             # extract the sorted goal robot IDs in descending order
             sorted_goal_ids = np.argsort(self.stimulus)[::-1] 
@@ -489,6 +496,7 @@ class ASVAllocator:
          # remove the robot from the dustbin goals
         robot_id = msg.data
         self.robots_id = np.delete(self.robots_id, np.where(self.robots_id == robot_id))
+        self.robots_id_rr = np.delete(self.robots_id_rr, np.where(self.robots_id_rr == robot_id))
         # self.robot_to_remove = robot_id
         self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1

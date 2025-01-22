@@ -154,7 +154,7 @@ class acoustic_communication:
             self.get_comm_freq(0,4)
         elif(auv==5):
             self.auv5_pose_covariance_pub.publish(msg)
-            self.get_comm_freq(0,4)
+            self.get_comm_freq(0,5)
 
         self.rate.sleep()
       

@@ -92,14 +92,17 @@ class DataExtraction:
         if(self.aggregation_model == 1):
             self.bagfiles_folder = self.RTM_bagfiles
             self.params_folder = self.RTM_params
-            # self.csv_folder = self.RTM_csv
             self.response_threshold_combinations()
 
         elif(self.aggregation_model == 2):
             self.bagfiles_folder = self.owa_bagfiles
             self.params_folder = self.owa_params
-            # self.csv_folder = self.owa_csv
             self.owas_combinations()
+        
+        elif(self.aggregation_model == 3):
+            self.bagfiles_folder = self.rr_bagfiles
+            self.params_folder = self.rr_params
+
 
         # Set the simulation parameters
         self.set_parameters()
@@ -121,12 +124,12 @@ class DataExtraction:
         self.check_if_proces_end()
     
     def create_data_folders(self):
-        if not os.path.exists(self.response_threshold_folder):
-            os.makedirs(self.response_threshold_folder)
-        if not os.path.exists(self.RTM_bagfiles):
-            os.makedirs(self.RTM_bagfiles)
-        if not os.path.exists(self.RTM_params):
-            os.makedirs(self.RTM_params)
+        if not os.path.exists(self.artm_folder):
+            os.makedirs(self.artm_folder)
+        if not os.path.exists(self.artm_bagfiles):
+            os.makedirs(self.artm_bagfiles)
+        if not os.path.exists(self.artm_params):
+            os.makedirs(self.artm_params)
 
         if not os.path.exists(self.owa_folder):
             os.makedirs(self.owa_folder)
@@ -134,6 +137,13 @@ class DataExtraction:
             os.makedirs(self.owa_bagfiles)
         if not os.path.exists(self.owa_params):
             os.makedirs(self.owa_params)
+        
+        if not os.path.exists(self.rr_folder):
+            os.makedirs(self.rr_folder)
+        if not os.path.exists(self.rr_bagfiles):
+            os.makedirs(self.rr_bagfiles)
+        if not os.path.exists(self.rr_params):
+            os.makedirs(self.rr_params)
 
     def check_if_proces_end(self):
         # Get the list of ROS nodes
@@ -178,6 +188,11 @@ class DataExtraction:
                 data['w1'] = self.combinations[self.simulation_count][0]  
                 data['w2'] = self.combinations[self.simulation_count][1] 
                 data['w3'] = self.combinations[self.simulation_count][2]
+        
+        if(self.aggregation_model==3):
+            if all(key in data for key in ['aggregation_model']):
+                # for combination in self.combinations:
+                data['aggregation_model'] = 3
 
         self.write_yaml(data)
 

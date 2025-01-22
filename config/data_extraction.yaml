@@ -1,6 +1,10 @@
 aggregation_model: 1
 alpha: 0
 beta: 10
+number_of_asvs: 1
+number_of_auvs: 3
+number_of_robots: 4
+pickle_path: /home/uib/MRS_ws/src/multi_robot_system/missions/pickle//3AUVs/10000.pickle
 w1: 1
 w2: 0
 w3: 0
