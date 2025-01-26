@@ -206,7 +206,12 @@ class ASVRobot:
         rospy.Subscriber('/mrs/exploration_finished',
                             Int16,    
                             self.remove_robot_from_dustbin_goals,
-                            queue_size=1)          
+                            queue_size=1)  
+
+        rospy.Subscriber('/asv0/tracking',
+                        Bool,    
+                        self.update_tracking_status,
+                        queue_size=1)            
 
         #Publishers
         self.corrected_bvr = rospy.Publisher('/robot'+str(self.robot_ID)+'/controller/body_velocity_req',
@@ -322,9 +327,12 @@ class ASVRobot:
     def update_tracking_status(self,msg):
         if(msg.data==False):
             # print("ASV"+str(self.asv_ID)+" STOPPED!")
+            self.disable_all_and_set_idle_srv()
             self.enable_tracking = False
         elif(msg.data==True):
+            self.enable_thrusters_srv()
             # print("ASV"+str(self.asv_ID)+" RUNNING!")
+            rospy.sleep(2)
             self.enable_tracking = True
 
     def update_process_time(self,event):
@@ -360,10 +368,10 @@ class ASVRobot:
 
         # Publish the buffered data
         msg = BufferedData()
-        print(self.storage_disk)
-        print(self.data_stimulus)
-        print(self.regular_objects_info)
-        print(self.priority_objects_info)
+        print("storage disk: " +str(self.storage_disk))
+        print("data stimulus: " +str(self.data_stimulus))
+        # print(self.regular_objects_info)
+        # print(self.priority_objects_info)
 
         msg.header.stamp = rospy.Time.now()
         msg.storage = self.storage_disk
@@ -388,8 +396,8 @@ class ASVRobot:
         # Publish the buffered data
         msg = BufferedData()
 
-        print(self.storage_disk)
-        print(self.data_stimulus)
+        print("storage disk: " +str(self.storage_disk))
+        print("data stimulus: " +str(self.data_stimulus))
         print(self.regular_objects_info)
         print(self.priority_objects_info)
 
@@ -472,9 +480,9 @@ class ASVRobot:
         if(self.robot_goal_id==999):
             self.recap_information()
         else:
-            print("-------------------------------------------------------")
+            print("************************************************************")
             print("The ASV"+str(self.asv_ID)+" AUV goal id is:"+str(self.robot_goal_id))
-            print("-------------------------------------------------------")
+            print("************************************************************")
             self.enable_tracking = True
 
             # publish the goal_id

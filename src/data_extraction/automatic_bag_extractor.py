@@ -4,6 +4,8 @@ import subprocess
 import time
 from itertools import product
 import yaml
+import sys
+import subprocess
 
 class DataExtraction:
     def __init__(self):
@@ -16,16 +18,13 @@ class DataExtraction:
         self.w2 = [0, 0.2, 0.4, 0.6, 0.8, 1]
         self.w3 = [0, 0.2, 0.4, 0.6, 0.8, 1]
 
-        # Configuración general
         self.simulation_count = 0
         self.aggregation_model = 1
         self.yaml_file_path = "/home/uib/MRS_ws/src/multi_robot_system/config/data_extraction.yaml"
         self.launchfile = 'roslaunch multi_robot_system mrs.launch'
-
-        # Nuevos parámetros para simulaciones dinámicas
-        self.number_of_asvs = 1  # Siempre 1
-        self.auv_range = range(3, 7)  # Número de AUVs de 3 a 6
-        self.area_range = range(10000, 70000, 10000)  # Área de exploración de 10000 a 60000
+        self.number_of_asvs = 1  
+        self.auv_range = range(3, 7)  
+        self.area_range = range(10000, 70000, 10000)  
         self.base_pickle_path = "/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/"
         self.base_data_path = "/home/uib/MRS_data/simulation_data/"
 
@@ -93,7 +92,7 @@ class DataExtraction:
         time.sleep(5)
 
     def run_simulations(self):
-        for model in range(1, 4):  # ARTM (1), OWA (2), RR (3)
+        for model in range(1, 4):  
             self.aggregation_model = model
 
             for num_auvs in self.auv_range:
@@ -130,12 +129,54 @@ class DataExtraction:
 
         # Finalizar nodos de ROS
         self.terminate_ros_nodes()
-
+    
     def terminate_ros_nodes(self):
-        subprocess.run("rosnode kill -a", shell=True, check=True)
-        subprocess.run("pkill -f roscore", shell=True, check=True)
-        subprocess.run("pkill -f rosmaster", shell=True, check=True)
-        time.sleep(25)
+        # Obtener la lista de nodos activos
+        list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+        list_output = list_cmd.stdout.read().decode('utf-8')  # Leer la salida del comando
+        retcode = list_cmd.wait()
+        if retcode != 0:
+            print("Error al listar los nodos de ROS.")
+            return
+
+        # Filtrar nodos que no deben ser eliminados
+        protected_nodes = ['/roscore', '/roslaunch', '/rosmaster']
+        nodes_to_kill = []
+
+        for line in list_output.split("\n"):
+            if line.strip() and line.strip() not in protected_nodes:
+                nodes_to_kill.append(line.strip())
+
+        # Matar únicamente los nodos filtrados
+        for node in nodes_to_kill:
+            try:
+                subprocess.run(["rosnode", "kill", node], check=True)
+                print(f"Nodo {node} terminado correctamente.")
+            except subprocess.CalledProcessError as e:
+                print(f"Error al intentar terminar el nodo {node}: {e}")
+
+        print("_____________________________")
+        print("Nodos terminados correctamente (excepto los protegidos).")
+        print("_____________________________")
+
+    # def terminate_ros_nodes(self):
+    #     # Get the list of ROS nodes
+    #     list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
+    #     list_output = list_cmd.stdout.read()  # Read the command output
+    #     retcode = list_cmd.wait()
+    #     assert retcode == 0, f"List command returned {retcode}"
+        
+    #     # Decode the output and process it
+    #     for line in list_output.decode('utf-8').split("\n"):
+    #         if not line.startswith('/record_'):  # Check if the node name does not start with '/record_'
+    #             # # Terminate rosmaster
+    #             subprocess.run(["pkill", "-f", "rosmaster"], check=True)
+    #             # Kill all running ROS nodes
+    #             os.system("rosnode kill -a")
+    #             print("_____________________________")
+    #             print("PROCESS KILLED CORRECTLY!!!!")
+    #             print("_____________________________")
+    #             time.sleep(30)
 
     def get_model_folder(self, model):
         if model == 1:

@@ -126,7 +126,6 @@ class MultiRobotSystem:
 
         self.pub_points = rospy.Publisher('section_points_robot'+str(self.robot_ID), PointStamped, queue_size=2)
        
-        
         self.read_area_info()   
 
         rospy.Timer(rospy.Duration(1), self.print_polygon)
@@ -240,7 +239,7 @@ class MultiRobotSystem:
         for task in range(len(self.goals)):
             self.task_monitoring.append(0)
 
-        self.goal_polygons = self.goals[self.robot_ID][1] #sub area asigned to each robot
+        self.goal_polygons = self.goals[self.robot_ID][1] 
 
         print("Robot"+str(self.robot_ID)+" is exploring the subarea:" +str( self.goal_polygons))
 

@@ -17,7 +17,7 @@ from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
 from cola2_msgs.srv import Goto, GotoRequest
-from multi_robot_system.msg import CoverageStartTime,AcousticData,AggregationModelInfo,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,Communication,Distances, Data
+from multi_robot_system.msg import PriorityObjectInformation,RegularObjectInformation, CoverageStartTime,AcousticData,AggregationModelInfo,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,Communication,Distances, Data
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Quaternion,PointStamped
 import tf     
@@ -143,7 +143,6 @@ class ASVAllocator:
             self.scaled_senses.append(self.senses)
             self.transmission_time.append(0)
         
-
         # initialize the robots variables
         for robot_ in range(self.number_of_auvs):
             self.exploration_tasks_update = np.append(self.exploration_tasks_update,False)
@@ -188,6 +187,16 @@ class ASVAllocator:
                             self.update_acoustic_info,
                             robot_agent,
                             queue_size=1)
+
+            rospy.Subscriber("robot"+str(robot_agent)+"_priority_object_info",
+                            PriorityObjectInformation,    
+                            self.update_tracking_status,
+                            queue_size=1)
+
+            rospy.Subscriber("robot"+str(robot_agent)+"_regular_object_info",
+                            RegularObjectInformation,    
+                            self.update_tracking_status,
+                            queue_size=1)
         
         rospy.Subscriber('/robot6/navigator/navigation',
                         NavSts,    
@@ -219,6 +228,8 @@ class ASVAllocator:
                         self.update_transmitted_data,
                         asv,
                         queue_size=1)
+
+
 
         #Publishers
         self.pub_priority_object = rospy.Publisher('priority_object_point', PointStamped, queue_size=2)
@@ -314,12 +325,12 @@ class ASVAllocator:
         msg.buffered_priority_objects = priority
         self.buffered_data_pub.publish(msg)
         self.update_stimulus_matrix()
-        
+
+    def update_tracking_status(self,msg):
         # enable tracking
         msg = Bool()
         msg.data = True
         self.pub_tracking_control_asv0.publish(msg)
-      
     
     def update_transmitted_data(self, msg, asv_id):
         self.transmited_data[asv_id]= msg.transmitted_data
@@ -438,8 +449,8 @@ class ASVAllocator:
 
         if self.aggregation_model == 1:
             self.ARTM(normalized_values)
-            print("STIMULUS: " + str(self.stimulus_variables))
-            print("ARTM OUTPUT :" + str(self.stimulus))
+            # print("STIMULUS: " + str(self.stimulus_variables))
+            # print("ARTM OUTPUT :" + str(self.stimulus))
 
         elif self.aggregation_model == 2:
             self.OWA()

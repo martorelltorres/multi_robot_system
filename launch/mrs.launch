@@ -1,16 +1,11 @@
 <launch>
-  <!-- <rosparam command="load" file="/home/uib/MRS_ws/src/multi_robot_system/config/data_extraction.yaml"/> -->
+  <!-- Load parameters from the YAML file -->
+  <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/>
   <arg name="enableRviz" default="true"/>
   <arg name="mrs" default="true"/>
   <arg name="cola2_architecture" default="true"/>
-  <arg name="number_of_auvs" default="3" />
 
-  <!-- Load parameters from the YAML file -->
-  <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/>
-
-
-
-  <!-- Robot name arguments -->
+   <!-- Robot name arguments -->
   <arg name="robot_0" default="robot0"/>
   <arg name="robot_1" default="robot1"/>      
   <arg name="robot_2" default="robot2"/>  
@@ -138,7 +133,7 @@
         <remap from="/asv0/navigator/navigation" to="$(arg asv_navigation_remap)"/>
       </node>
     </group>
-  </group>º
+  </group>
 
   <!-- RViz -->
   <node if="$(arg enableRviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find multi_robot_system)/scene/MRS.rviz"/>
