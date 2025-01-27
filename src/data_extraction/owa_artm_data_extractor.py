@@ -6,10 +6,11 @@ import numpy as np
 import pandas as pd
 
 # Define paths and parameters
-base_path = "/home/uib/MRS_data/NN"
-areas = [10000, 20000, 40000, 60000]  # Exploration areas
+base_path = "/home/uib/MRS_data/simulation_data"
+# areas = [10000, 20000, 40000, 60000]  # Exploration areas
+areas = [ 60000]  # Exploration areas
 auv_counts = ["3AUVs", "4AUVs", "5AUVs", "6AUVs"]  # Number of AUVs
-aggregation_methods = ["owa", "response_threshold"]  # Aggregation methods
+aggregation_methods = ["owa", "artm"]  # Aggregation methods
 
 # Topics of interest
 topics_of_interest = [
@@ -25,7 +26,7 @@ topics_of_interest = [
 # Define parameter combinations for each method
 parameter_combinations_map = {
     "owa": [[4, 4, 2], [6, 2, 2], [6, 4, 0], [8, 2, 0], [10, 0, 0]],  # OWA
-    "response_threshold": [[0, 10], [2.5, 7.5], [5, 5], [7.5, 2.5], [10, 0]]  # ARTM
+    "artm": [[0, 10], [2.5, 7.5], [5, 5], [7.5, 2.5], [10, 0]]  # ARTM
 }
 
 # Create lists to store OWA and response threshold data
@@ -111,7 +112,7 @@ for area in areas:
                         'transmitted_data': sum_data,
                         'travelled_distance': travelled_distance
                     })
-                elif method == "response_threshold":
+                elif method == "artm":
                     a, b = parameter_combination
                     # Append data to folder_data list
                     folder_data.append({
@@ -156,7 +157,7 @@ for area in areas:
             # Append folder data to the respective method's list
             if method == "owa":
                 owa_data.extend(df_folder.to_dict('records'))
-            elif method == "response_threshold":
+            elif method == "artm":
                 response_threshold_data.extend(df_folder.to_dict('records'))
 
 # Convert the OWA and response threshold data to separate DataFrames
@@ -165,7 +166,7 @@ response_threshold_df = pd.DataFrame(response_threshold_data)
 
 # Save the DataFrames to separate CSV files
 owa_csv_path = os.path.join(base_path, "owa_data.csv")
-response_threshold_csv_path = os.path.join(base_path, "response_threshold_data.csv")
+response_threshold_csv_path = os.path.join(base_path, "artm_data.csv")
 
 owa_df.to_csv(owa_csv_path, index=False)
 response_threshold_df.to_csv(response_threshold_csv_path, index=False)

@@ -18,12 +18,12 @@ import tf
 class acoustic_communication:
 
     def __init__(self, name):
-
+        # rospy.sleep(4)
         self.name = name
         self.asv_init = False
         node_name = rospy.get_name()
         self.number_of_robots = self.get_param('number_of_robots')
-        self.number_of_auvs = self.get_param('number_of_auvs')
+        self.number_of_auvs = self.get_param('number_of_auvs',3)
         self.number_of_asvs = self.get_param('number_of_asvs')
         self.tracking_radius = self.get_param("tracking_radius",50)
         self.auv_position = []
@@ -37,36 +37,13 @@ class acoustic_communication:
         for robot_ in range(self.number_of_robots):
           self.auv_flag = np.append(self.auv_flag,False)
           self.auv_position.append([])
+
         #Publishers   
         self.auv_publishers = [
             rospy.Publisher(f"/robot{i}/acoustic_communication", PoseWithCovarianceStamped, queue_size=10)
-            for i in range(6)
+            for i in range(self.number_of_robots)
         ]   
-        # self.auv0_pose_covariance_pub = rospy.Publisher('/robot0/acoustic_communication',
-        #                         PoseWithCovarianceStamped,
-        #                         queue_size=2)
-        
-        # self.auv1_pose_covariance_pub = rospy.Publisher('/robot1/acoustic_communication',
-        #                         PoseWithCovarianceStamped,
-        #                         queue_size=2)
-        
-        # self.auv2_pose_covariance_pub = rospy.Publisher('/robot2/acoustic_communication',
-        #                         PoseWithCovarianceStamped,
-        #                         queue_size=2)
-        
-        # self.auv3_pose_covariance_pub = rospy.Publisher('/robot3/acoustic_communication',
-        #                         PoseWithCovarianceStamped,
-        #                         queue_size=2)
-
-        # self.auv4_pose_covariance_pub = rospy.Publisher('/robot4/acoustic_communication',
-        #                 PoseWithCovarianceStamped,
-        #                 queue_size=2)
-
-        # self.auv5_pose_covariance_pub = rospy.Publisher('/robot5/acoustic_communication',
-        #         PoseWithCovarianceStamped,
-        #         queue_size=2)
-        
-  
+       
         #Subscribers 
         for auv in range(self.number_of_robots):        
             rospy.Subscriber('/robot'+str(auv)+'/navigator/navigation',
@@ -128,12 +105,9 @@ class acoustic_communication:
 
     def communication_process(self,asv,auv):
         self.distance = self.get_distance(self.auv_position[auv][0],self.auv_position[auv][1],self.auv_position[auv][2],self.asv_position[asv][0],self.asv_position[asv][1])
-        # obtain the accuracy from the experimental characterization curve
         frequency = self.get_comm_freq(asv, auv)
         rate = rospy.Rate(frequency)
-
         accuracy = (8.9157*10**-6*self.distance**2)+(0.0061121*self.distance)-0.06835
-        # create PoseWithCovarianceStamped message
         msg = PoseWithCovarianceStamped()
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = 'robot'+str(auv)+'/odom'
@@ -150,30 +124,7 @@ class acoustic_communication:
         
         # Publish the message for the corresponding AUV
         self.auv_publishers[auv].publish(msg)
-
-        # Sleep to maintain the desired rate
         rate.sleep()
-
-        # if(auv==0):
-        #     self.auv0_pose_covariance_pub.publish(msg)
-        #     self.get_comm_freq(0,0)
-        # elif(auv==1):
-        #     self.auv1_pose_covariance_pub.publish(msg)
-        #     self.get_comm_freq(0,1)
-        # elif(auv==2):
-        #     self.auv2_pose_covariance_pub.publish(msg)
-        #     self.get_comm_freq(0,2)
-        # elif(auv==3):
-        #     self.auv3_pose_covariance_pub.publish(msg)
-        #     self.get_comm_freq(0,3)
-        # elif(auv==4):
-        #     self.auv4_pose_covariance_pub.publish(msg)
-        #     self.get_comm_freq(0,4)
-        # elif(auv==5):
-        #     self.auv5_pose_covariance_pub.publish(msg)
-        #     self.get_comm_freq(0,5)
-
-        # self.rate.sleep()
       
     def reset_values(self,msg):
         self.storage_disk[msg.data] = 1
