@@ -24,8 +24,8 @@ class DataExtraction:
         self.w3 = [0, 0.2, 0.4, 0.6, 0.8, 1]
 
         self.simulation_count = -1
-        self.aggregation_model = 2
-        self.data_path = f'/home/uib/MRS_data/simulation_data/{area_exploration}/{number_of_auvs}AUVs/'
+        self.aggregation_model = 1
+        self.data_path = '/home/uib/MRS_data/simulation_data/'+ str(self.area_exploration)+'/'+str(self.number_of_auvs)+'AUVs/'
 
         self.response_threshold_folder = os.path.join(self.data_path, 'artm')
         self.RTM_bagfiles = os.path.join(self.response_threshold_folder, 'bagfiles')
@@ -127,7 +127,6 @@ class DataExtraction:
         data['number_of_asvs'] = self.number_of_asvs
         data['number_of_robots'] = self.number_of_robots
         data['pickle_path'] =  f'/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/{number_of_auvs}AUVs/{area_exploration}.pickle'
-       
 
         if self.aggregation_model == 1:
             data['aggregation_model'] = 1

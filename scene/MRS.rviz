@@ -115,85 +115,13 @@ Visualization Manager:
           Value: true
         robot3/imu_filter:
           Value: true
-        robot3/modem:
-          Value: true
         robot3/pressure:
-          Value: true
-        robot3/thruster_0:
           Value: true
         robot3/thruster_1:
           Value: true
         robot3/thruster_2:
           Value: true
-        robot4/base_link:
-          Value: true
-        robot4/dvl:
-          Value: true
-        robot4/dvl_altitude:
-          Value: true
-        robot4/dynamics:
-          Value: true
-        robot4/gps:
-          Value: true
-        robot4/imu:
-          Value: true
-        robot4/imu_filter:
-          Value: true
-        robot4/modem:
-          Value: true
-        robot4/pressure:
-          Value: true
-        robot4/thruster_0:
-          Value: true
-        robot4/thruster_1:
-          Value: true
-        robot4/thruster_2:
-          Value: true
-        robot5/base_link:
-          Value: true
-        robot5/dvl:
-          Value: true
-        robot5/dvl_altitude:
-          Value: true
-        robot5/dynamics:
-          Value: true
-        robot5/gps:
-          Value: true
-        robot5/imu:
-          Value: true
-        robot5/imu_filter:
-          Value: true
-        robot5/modem:
-          Value: true
-        robot5/pressure:
-          Value: true
-        robot5/thruster_0:
-          Value: true
-        robot5/thruster_1:
-          Value: true
-        robot5/thruster_2:
-          Value: true
-        robot6/base_link:
-          Value: true
-        robot6/dvl:
-          Value: true
-        robot6/dvl_altitude:
-          Value: true
-        robot6/dynamics:
-          Value: true
-        robot6/gps:
-          Value: true
-        robot6/imu:
-          Value: true
-        robot6/imu_filter:
-          Value: true
-        robot6/pressure:
-          Value: true
-        robot6/thruster_1:
-          Value: true
-        robot6/thruster_2:
-          Value: true
-        robot6/usbl:
+        robot3/usbl:
           Value: true
         world:
           Value: true
@@ -284,81 +212,15 @@ Visualization Manager:
                 {}
               robot3/imu_filter:
                 {}
-              robot3/modem:
-                {}
               robot3/pressure:
-                {}
-              robot3/thruster_0:
                 {}
               robot3/thruster_1:
                 {}
               robot3/thruster_2:
                 {}
+              robot3/usbl:
+                {}
             robot3/dynamics:
-              {}
-            robot4/base_link:
-              robot4/dvl:
-                robot4/dvl_altitude:
-                  {}
-              robot4/gps:
-                {}
-              robot4/imu:
-                {}
-              robot4/imu_filter:
-                {}
-              robot4/modem:
-                {}
-              robot4/pressure:
-                {}
-              robot4/thruster_0:
-                {}
-              robot4/thruster_1:
-                {}
-              robot4/thruster_2:
-                {}
-            robot4/dynamics:
-              {}
-            robot5/base_link:
-              robot5/dvl:
-                robot5/dvl_altitude:
-                  {}
-              robot5/gps:
-                {}
-              robot5/imu:
-                {}
-              robot5/imu_filter:
-                {}
-              robot5/modem:
-                {}
-              robot5/pressure:
-                {}
-              robot5/thruster_0:
-                {}
-              robot5/thruster_1:
-                {}
-              robot5/thruster_2:
-                {}
-            robot5/dynamics:
-              {}
-            robot6/base_link:
-              robot6/dvl:
-                robot6/dvl_altitude:
-                  {}
-              robot6/gps:
-                {}
-              robot6/imu:
-                {}
-              robot6/imu_filter:
-                {}
-              robot6/pressure:
-                {}
-              robot6/thruster_1:
-                {}
-              robot6/thruster_2:
-                {}
-              robot6/usbl:
-                {}
-            robot6/dynamics:
               {}
       Update Interval: 0
       Value: true
@@ -484,7 +346,7 @@ Visualization Manager:
       Marker Topic: /robot3/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /robot3/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -492,7 +354,7 @@ Visualization Manager:
       Marker Topic: /robot4/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /robot4/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -500,7 +362,7 @@ Visualization Manager:
       Marker Topic: /robot5/pilot/waypoint_marker
       Name: Marker
       Namespaces:
-        /robot5/pilot: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -721,15 +583,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        robot3/modem:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         robot3/pressure:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot3/thruster_0:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -738,6 +592,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
         robot3/thruster_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot3/usbl:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -757,51 +615,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        robot4/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot4/dvl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/dvl_altitude:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/gps:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/imu_filter:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/modem:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/pressure:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/thruster_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/thruster_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot4/thruster_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
       Name: RobotModel
       Robot Description: robot4/robot_description
       TF Prefix: ""
@@ -818,51 +631,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        robot5/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot5/dvl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/dvl_altitude:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/gps:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/imu_filter:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/modem:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/pressure:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/thruster_0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/thruster_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot5/thruster_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
       Name: RobotModel
       Robot Description: /robot5/robot_description
       TF Prefix: ""
@@ -879,47 +647,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        robot6/base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        robot6/dvl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot6/dvl_altitude:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot6/gps:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot6/imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot6/imu_filter:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot6/pressure:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot6/thruster_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot6/thruster_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        robot6/usbl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
       Name: RobotModel
       Robot Description: /robot6/robot_description
       TF Prefix: ""
@@ -1106,7 +833,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0adrift_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 1
       Value: true
     - Class: rviz/Marker
@@ -1114,7 +841,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0repulsion_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 1
       Value: true
     - Class: rviz/Marker
@@ -1122,7 +849,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0tracking_radius
       Name: Marker
       Namespaces:
-        {}
+        mrs: true
       Queue Size: 1
       Value: true
     - Alpha: 1
