@@ -8,8 +8,9 @@ import rospy
 
 
 class DataExtraction:
-    def __init__(self, number_of_auvs, area_exploration):
+    def __init__(self, number_of_auvs, area_exploration,aggregation_model):
         self.number_of_auvs = number_of_auvs
+        self.aggregation_model = aggregation_model
         self.number_of_asvs = 1
         self.number_of_robots = self.number_of_auvs + self.number_of_asvs
         self.area_exploration = area_exploration
@@ -24,7 +25,7 @@ class DataExtraction:
         self.w3 = [0, 0.2, 0.4, 0.6, 0.8, 1]
 
         self.simulation_count = -1
-        self.aggregation_model = 1
+
         self.data_path = '/home/uib/MRS_data/simulation_data/'+ str(self.area_exploration)+'/'+str(self.number_of_auvs)+'AUVs/'
 
         self.response_threshold_folder = os.path.join(self.data_path, 'artm')
@@ -35,7 +36,7 @@ class DataExtraction:
         self.owa_bagfiles = os.path.join(self.owa_folder, 'bagfiles')
         self.owa_params = os.path.join(self.owa_folder, 'params')
 
-        self.yaml_file_path = "/home/uib/MRS_ws/src/multi_robot_system/config/data_extraction.yaml"
+        self.yaml_file_path = "/home/uib/MMRS_ws/src/MMRS_stack/multi_robot_system/config/data_extraction.yaml"
 
         self.topics = [
             '/mrs/allocator_communication_latency',
@@ -126,7 +127,7 @@ class DataExtraction:
         data['area_exploration'] = self.area_exploration
         data['number_of_asvs'] = self.number_of_asvs
         data['number_of_robots'] = self.number_of_robots
-        data['pickle_path'] =  f'/home/uib/MRS_ws/src/multi_robot_system/missions/pickle/{number_of_auvs}AUVs/{area_exploration}.pickle'
+        data['pickle_path'] =  f'/home/uib/MMRS_ws/src/MMRS_stack/multi_robot_system/missions/pickle/{number_of_auvs}AUVs/{area_exploration}.pickle'
 
         if self.aggregation_model == 1:
             data['aggregation_model'] = 1
@@ -164,4 +165,5 @@ class DataExtraction:
 if __name__ == "__main__":
     number_of_auvs = int(input("Enter the number of AUVs: "))
     area_exploration = input("Enter the area of exploration: ")
-    DataExtraction(number_of_auvs, area_exploration)
+    aggregation_model = input("Enter the aggregation model 1--> ARTM   2--> OWA: ")
+    DataExtraction(number_of_auvs, area_exploration,aggregation_model)

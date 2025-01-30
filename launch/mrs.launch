@@ -4,6 +4,7 @@
   <arg name="enableRviz" default="true"/>
   <arg name="mrs" default="true"/>
   <arg name="cola2_architecture" default="true"/>
+  <!-- <arg name="number_of_auvs" default="6"/> -->
 
    <!-- Robot name arguments -->
   <arg name="robot_0" default="robot0"/>
