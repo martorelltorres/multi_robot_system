@@ -26,7 +26,8 @@ class DataExtraction:
 
         self.simulation_count = -1
 
-        self.data_path = '/home/uib/MRS_data/simulation_data/'+ str(self.area_exploration)+'/'+str(self.number_of_auvs)+'AUVs/'
+        # self.data_path = '/home/uib/MRS_data/simulation_data/'+ str(self.area_exploration)+'/'+str(self.number_of_auvs)+'AUVs/'
+        self.data_path = f'/home/uib/MRS_data/simulation_data/{area_exploration}/{number_of_auvs}AUVs/'
 
         self.response_threshold_folder = os.path.join(self.data_path, 'artm')
         self.RTM_bagfiles = os.path.join(self.response_threshold_folder, 'bagfiles')
@@ -60,7 +61,7 @@ class DataExtraction:
         ]
 
         self.launch_file = "mrs.launch"
-        self.launch_command = f"roslaunch multi_robot_system {self.launch_file} number_of_auvs:={self.number_of_auvs}"
+        self.launch_command = f"roslaunch multi_robot_system {self.launch_file} number_of_auvs:={number_of_auvs}"
         self.process()
 
     def process(self):
@@ -164,6 +165,6 @@ class DataExtraction:
 
 if __name__ == "__main__":
     number_of_auvs = int(input("Enter the number of AUVs: "))
-    area_exploration = input("Enter the area of exploration: ")
-    aggregation_model = input("Enter the aggregation model 1--> ARTM   2--> OWA: ")
+    area_exploration = int(input("Enter the area of exploration: "))
+    aggregation_model = int(input("Enter the aggregation model 1--> ARTM   2--> OWA: "))
     DataExtraction(number_of_auvs, area_exploration,aggregation_model)

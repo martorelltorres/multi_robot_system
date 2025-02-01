@@ -1,6 +1,6 @@
 aggregation_model: 1
 alpha: 0
-area_exploration: '10000'
+area_exploration: 10000
 beta: 10
 number_of_asvs: 1
 number_of_auvs: 3

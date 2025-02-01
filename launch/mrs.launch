@@ -1,5 +1,7 @@
 <launch>
   <!-- Load parameters from the YAML file -->
+  <!-- Load configuration files -->
+  <rosparam command="load" file="$(find multi_robot_system)/config/multi_robot_system.yaml"/>
   <rosparam command="load" file="$(find multi_robot_system)/config/data_extraction.yaml"/>
   <arg name="enableRviz" default="true"/>
   <arg name="mrs" default="true"/>
