@@ -7,7 +7,7 @@ import pandas as pd
 
 # Define paths and parameters
 base_path = "/home/uib/MRS_data/simulation_data"
-areas = [10000, 30000, 40000, 60000]  # Exploration areas
+areas = [10000,30000,40000,60000]  # Exploration areas
 # areas = [ 60000]  # Exploration areas
 auv_counts = ["3AUVs", "4AUVs", "5AUVs", "6AUVs"]  # Number of AUVs
 aggregation_methods = ["owa", "artm"]  # Aggregation methods
@@ -162,8 +162,8 @@ for area in areas:
             # df_folder['C'] = (delta * df_folder['priority_latency_inv_normalized'] +
             #                   epsilon * df_folder['regular_latency_inv_normalized'])
             # df_folder['utility'] = df_folder['R'] - df_folder['C']
-            df_folder['priority'] = df_folder['priority_objects_normalized'] /(1+ df_folder['priority_latency_normalized']+df_folder['priority_std_normalized'] )
-            df_folder['regular'] = 0.5 * df_folder['regular_objects_normalized'] /(1+ df_folder['regular_latency_normalized']+df_folder['regular_std_normalized'] )
+            df_folder['priority'] = df_folder['priority_objects_normalized'] /(1+ df_folder['priority_latency_normalized']+df_folder['priority_std_normalized'] )**2
+            df_folder['regular'] = 0.5 * df_folder['regular_objects_normalized'] /(1+ df_folder['regular_latency_normalized']+df_folder['regular_std_normalized'] )**2
             df_folder['distance'] = 1/(1+df_folder['travelled_distance_normalized'])
             df_folder['utility'] = df_folder['priority']+ df_folder['regular'] + df_folder['distance']
             # Append folder data to the respective method's list

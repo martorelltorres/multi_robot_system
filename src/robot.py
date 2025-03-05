@@ -284,7 +284,7 @@ class Robot:
 if __name__ == '__main__':
     try:
         rospy.init_node('robot')
-        robot = robot(rospy.get_name())
+        robot = Robot(rospy.get_name())
         rospy.spin()
         
     except rospy.ROSInterruptException:

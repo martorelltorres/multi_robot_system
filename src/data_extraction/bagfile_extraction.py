@@ -27,7 +27,7 @@ class DataExtraction:
         self.simulation_count = -1
 
         # self.data_path = '/home/uib/MRS_data/simulation_data/'+ str(self.area_exploration)+'/'+str(self.number_of_auvs)+'AUVs/'
-        self.data_path = f'/home/uib/MRS_data/data_test/{area_exploration}/{number_of_auvs}AUVs/'
+        self.data_path = f'/home/uib/MRS_data/simulation_data/{area_exploration}/{number_of_auvs}AUVs/'
 
         self.response_threshold_folder = os.path.join(self.data_path, 'artm')
         self.RTM_bagfiles = os.path.join(self.response_threshold_folder, 'bagfiles')
@@ -65,19 +65,19 @@ class DataExtraction:
         self.process()
 
     def process(self):
-        self.combinations = [(6.72,2.46,0.81)]
+        self.combinations = []
         self.create_data_folders()
         self.simulation_count += 1
 
         if self.aggregation_model == 1:
             self.bagfiles_folder = self.RTM_bagfiles
             self.params_folder = self.RTM_params
-            # self.response_threshold_combinations()
+            self.response_threshold_combinations()
 
         elif self.aggregation_model == 2:
             self.bagfiles_folder = self.owa_bagfiles
             self.params_folder = self.owa_params
-            # self.owas_combinations()
+            self.owas_combinations()
 
         self.set_parameters()
         rospy.sleep(1)
