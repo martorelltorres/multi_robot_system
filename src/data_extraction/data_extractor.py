@@ -126,16 +126,8 @@ if "response" in bagfile_path.lower():
     column_order = ['a', 'b'] + [col for col in df.columns if col not in ['a', 'b']]
     df = df[column_order]
 
-# Normalize inversely only the specified columns and insert below original columns
-columns_to_inv_normalize = ['regular_latency', 'priority_latency']
-for column in columns_to_inv_normalize:
-    min_val = df[column].min()
-    max_val = df[column].max()
-    normalized_column = 1 - (df[column] - min_val) / (max_val - min_val)
-    df.insert(df.columns.get_loc(column) + 1, column + '_inv_normalized', normalized_column)
-
 # Normalize and insert below original columns
-columns_to_normalize = ['reg_std_latency', 'prior_std_latency','transmitted_data','travelled_distance']
+columns_to_normalize = ['regular_latency','reg_std_latency', 'priority_latency', 'prior_std_latency','transmitted_data','travelled_distance','regular_objects','priority_objects']
 for column in columns_to_normalize:
     min_val = df[column].min()
     max_val = df[column].max()
@@ -144,13 +136,12 @@ for column in columns_to_normalize:
 
 # Define constants for R and C
 # Calculate R and C using normalized values
-alpha, beta, gamma, delta, epsilon = 0.3, 0.2, 0.5, 0.7, 0.3  # Example values
-df['R'] = alpha * df['priority_latency_inv_normalized'] + beta * df['regular_latency_inv_normalized']+gamma * df['transmitted_data_normalized']
-df['C'] = (delta * df['prior_std_latency_normalized'] +
-           epsilon * df['reg_std_latency_normalized'] )
 
-# Calculate Utility U = R - C
-df['Utility'] = df['R'] - df['C']
+df['priority_objects'] = df['priority_objects_normalized']/(1+df['prior_std_latency_normalized']+df['priority_latency_normalized'])
+df['regular_objects'] = (0.5*df['regular_objects_normalized'])/(1+df['reg_std_latency_normalized']+df['regular_latency_normalized'])
+df['distance'] = 1/(1+df['travelled_distance_normalized'])
+
+df['utility'] = df['priority_objects'] + df['regular_objects'] + df['distance']    
 
 # Save to CSV
 output_csv_path = os.path.join(bagfile_path, "data.csv")

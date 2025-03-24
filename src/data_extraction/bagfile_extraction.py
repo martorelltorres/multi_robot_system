@@ -27,7 +27,7 @@ class DataExtraction:
         self.simulation_count = -1
 
         # self.data_path = '/home/uib/MRS_data/simulation_data/'+ str(self.area_exploration)+'/'+str(self.number_of_auvs)+'AUVs/'
-        self.data_path = f'/home/uib/MRS_data/simulation_data/{area_exploration}/{number_of_auvs}AUVs/'
+        self.data_path = f'/home/uib/MRS_data/proves/{area_exploration}/{number_of_auvs}AUVs/'
 
         self.response_threshold_folder = os.path.join(self.data_path, 'artm')
         self.RTM_bagfiles = os.path.join(self.response_threshold_folder, 'bagfiles')

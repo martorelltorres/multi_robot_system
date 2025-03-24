@@ -7,8 +7,10 @@ Panels:
         - /tf1/Frames1
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
+        - /Map1/Position1
+        - /Map1/Orientation1
       Splitter Ratio: 0.5
-    Tree Height: 441
+    Tree Height: 836
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -29,6 +31,8 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        map:
+          Value: true
         robot0/base_link:
           Value: true
         robot0/dvl:
@@ -136,6 +140,8 @@ Visualization Manager:
       Tree:
         world:
           world_ned:
+            map:
+              {}
             robot0/base_link:
               robot0/dvl:
                 robot0/dvl_altitude:
@@ -833,7 +839,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0adrift_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 1
       Value: true
     - Class: rviz/Marker
@@ -841,7 +847,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0repulsion_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 1
       Value: true
     - Class: rviz/Marker
@@ -849,7 +855,7 @@ Visualization Manager:
       Marker Topic: /mrs/asv0tracking_radius
       Name: Marker
       Namespaces:
-        mrs: true
+        {}
       Queue Size: 1
       Value: true
     - Alpha: 1
@@ -1022,6 +1028,16 @@ Visualization Manager:
       Topic: /robot3/acoustic_communication
       Unreliable: false
       Value: false
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /utility_gridmap
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 114; 159; 207
@@ -1046,10 +1062,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 4.615567684173584
+      Scale: 1.254814624786377
       Target Frame: turbot/base_link
-      X: -56.455230712890625
-      Y: -23.849512100219727
+      X: -50.28075408935547
+      Y: 56.842777252197266
     Saved:
       - Class: rviz/Orbit
         Distance: 150.83807373046875
@@ -1073,13 +1089,13 @@ Visualization Manager:
         Yaw: 0
 Window Geometry:
   Displays:
-    collapsed: true
+    collapsed: false
   Height: 1016
-  Hide Left Dock: true
+  Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd0000000200000000000001560000039efc0200000003fc0000003d0000039e0000000000fffffffaffffffff0100000002fb000000100044006900730070006c0061007900730000000000ffffffff0000015600fffffffb0000000a005600690065007700730000000000000001a90000010000fffffffb0000000c00430061006d0065007200610000000041000000160000000000000000fb00000012007300650067006d0065006e00740065006400000002af0000013500000000000000000000000100000244000003ccfc0200000003fb000000120069006d006100670065005f0072006100770000000016000003cc0000000000000000fb000000120069006d006100670065005f0072006100770000000206000001dc0000000000000000fb0000000a0049006d00610067006500000001f90000017f00000000000000000000039c0000039e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000200000000000001560000039efc0200000003fc0000003d0000039e000000e60100001cfa000000000100000002fb000000100044006900730070006c0061007900730100000000ffffffff0000015600fffffffb0000000a005600690065007700730100000000000001a90000010000fffffffb0000000c00430061006d0065007200610000000041000000160000000000000000fb00000012007300650067006d0065006e00740065006400000002af0000013500000000000000000000000100000244000003ccfc0200000003fb000000120069006d006100670065005f0072006100770000000016000003cc0000000000000000fb000000120069006d006100670065005f0072006100770000000206000001dc0000000000000000fb0000000a0049006d00610067006500000001f90000017f0000000000000000000002600000039e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
-    collapsed: true
-  Width: 924
-  X: 996
+    collapsed: false
+  Width: 956
+  X: 72
   Y: 27

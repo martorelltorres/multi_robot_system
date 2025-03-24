@@ -13,7 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
   geometry_msgs
+  # grid_map_ros
+  # grid_map_core
 )
+# find_package(grid_map_ros REQUIRED)
+# find_package(grid_map_core REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -122,6 +126,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
+  CATKIN_DEPENDS message_runtime
 #  INCLUDE_DIRS include
 #  LIBRARIES link_quality
 #  CATKIN_DEPENDS roscpp rospy std_msgs
@@ -137,6 +142,8 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  # ${grid_map_ros_INCLUDE_DIRS}
+  # ${grid_map_core_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -167,6 +174,11 @@ include_directories(
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
+# )
+# target_link_libraries(multi_robot_system
+#   ${catkin_LIBRARIES}
+#   ${grid_map_ros_LIBRARIES}
+#   ${grid_map_core_LIBRARIES}
 # )
 
 #############
@@ -223,3 +235,6 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+# add_executable(utility_gridmap_node src/utility_grid_map.cpp)
+# target_link_libraries(utility_gridmap_node ${catkin_LIBRARIES})

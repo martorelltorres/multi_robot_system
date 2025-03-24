@@ -6,7 +6,7 @@ number_of_asvs: 1
 number_of_auvs: 4
 number_of_robots: 5
 pickle_path: /home/uib/MMRS_ws/src/MMRS_stack/multi_robot_system/missions/pickle/4AUVs/20000.pickle
-w1: 1
-w2: 0
+w1: 0.6
+w2: 0.4
 w3: 0
 w4: 0

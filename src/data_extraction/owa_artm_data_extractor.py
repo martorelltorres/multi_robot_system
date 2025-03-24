@@ -141,30 +141,30 @@ for area in areas:
             # Convert folder data to DataFrame and normalize columns
             df_folder = pd.DataFrame(folder_data)
 
-            columns_to_normalize = ['regular_latency','priority_latency','priority_std','regular_std','transmitted_data','travelled_distance']
+            columns_to_normalize = ['regular_latency','priority_latency','priority_std','regular_std','travelled_distance']
             for column in columns_to_normalize:
                 min_val = df_folder[column].min()
                 max_val = df_folder[column].max()
                 normalized_column = (df_folder[column] - min_val) / (max_val - min_val)
                 df_folder[column + '_normalized'] = normalized_column
             
-            columns_to_normalize = ['priority_objects','regular_objects']
+            columns_to_normalize = ['priority_objects','regular_objects','transmitted_data']
             for column in columns_to_normalize:
                 min_val = df_folder[column].min()
                 max_val = df_folder[column].max()
                 df_folder[column + '_normalized'] = df_folder[column]/max_val
+            
+            # df_folder['priority'] = df_folder['priority_objects_normalized'] /(1+ df_folder['priority_latency_normalized']+df_folder['priority_std_normalized'])**2
+            # df_folder['regular'] = df_folder['regular_objects_normalized'] /(1+ df_folder['regular_latency_normalized']+df_folder['regular_std_normalized'])**2
+            # df_folder['distance'] = 1/(1+df_folder['travelled_distance_normalized'])
+            alpha = 1
+            beta = 1
+            gamma = 1
 
-            # Define constants for R and C
-            # alpha, beta, gamma, delta, epsilon = 0.3, 0.2, 0.5, 0.7, 0.3
-            # df_folder['R'] = (alpha * df_folder['priority_latency_inv_normalized'] +
-            #                   beta * df_folder['regular_latency_inv_normalized'] +
-            #                   gamma * df_folder['transmitted_data_normalized'])
-            # df_folder['C'] = (delta * df_folder['priority_latency_inv_normalized'] +
-            #                   epsilon * df_folder['regular_latency_inv_normalized'])
-            # df_folder['utility'] = df_folder['R'] - df_folder['C']
-            df_folder['priority'] = df_folder['priority_objects_normalized'] /(1+ df_folder['priority_latency_normalized']+df_folder['priority_std_normalized'] )**2
-            df_folder['regular'] = 0.5 * df_folder['regular_objects_normalized'] /(1+ df_folder['regular_latency_normalized']+df_folder['regular_std_normalized'] )**2
-            df_folder['distance'] = 1/(1+df_folder['travelled_distance_normalized'])
+            df_folder['priority'] = (df_folder['priority_objects_normalized'] / (1 + np.exp(alpha * (df_folder['priority_latency_normalized'] + df_folder['priority_std_normalized']))))
+            df_folder['regular'] = (df_folder['regular_objects_normalized'] / (1 + np.exp(beta * (df_folder['regular_latency_normalized'] + df_folder['regular_std_normalized']))))
+            df_folder['distance'] = np.exp(-gamma * df_folder['travelled_distance_normalized'])
+
             df_folder['utility'] = df_folder['priority']+ df_folder['regular'] + df_folder['distance']
             # Append folder data to the respective method's list
             if method == "owa":
