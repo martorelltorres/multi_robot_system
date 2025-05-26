@@ -315,7 +315,7 @@ class ASVRobot:
             rospy.signal_shutdown('Error creating client to Section service')
         
         # Init periodic timers self.distance
-        rospy.Timer(rospy.Duration(1.0), self.update_travelled_distance)
+        rospy.Timer(rospy.Duration(10), self.update_travelled_distance)
         rospy.Timer(rospy.Duration(1.0), self.send_elapsed_time)
         rospy.Timer(rospy.Duration(1.0), self.update_process_time)
         rospy.Timer(rospy.Duration(0.1), self.AUV_tracking)

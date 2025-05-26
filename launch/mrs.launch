@@ -124,13 +124,13 @@
       <node name="acoustic_communication" pkg="multi_robot_system" type="acoustic_communication.py" output="screen" respawn="true"/>
 
       <!-- Precompute the ASV node name -->
-      <arg name="asv_node_name" default="asv_robot_$(arg number_of_auvs)"/>
+      <arg name="asv_node_name" default="asv_robot$(arg number_of_auvs)"/>
 
       <!-- Precompute the dynamic remap target -->
       <arg name="asv_navigation_remap" default="/robot$(arg number_of_auvs)/navigator/navigation"/>
 
       <!-- ASV -->
-      <node name="$(arg asv_node_name)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true" if="$(eval int(arg('number_of_auvs')) >= 2)">
+      <node name="$(arg asv_node_name)" pkg="multi_robot_system" type="ASV_robot.py" output="screen" respawn="true">
         <param name="robot_ID" value="$(arg number_of_auvs)"/>
         <param name="asv_ID" value="0"/>
         <remap from="/asv0/navigator/navigation" to="$(arg asv_navigation_remap)"/>

@@ -18,7 +18,7 @@ class DataExtraction:
         # ARTM parameters
         self.alpha = [0, 2.5, 5, 7.5, 10]
         self.beta = [0, 2.5, 5, 7.5, 10]
-
+      
         # OWA parameters
         self.w1 = [0, 0.2, 0.4, 0.6, 0.8, 1]
         self.w2 = [0, 0.2, 0.4, 0.6, 0.8, 1]
@@ -27,7 +27,7 @@ class DataExtraction:
         self.simulation_count = -1
 
         # self.data_path = '/home/uib/MRS_data/simulation_data/'+ str(self.area_exploration)+'/'+str(self.number_of_auvs)+'AUVs/'
-        self.data_path = f'/home/uib/MRS_data/simulation_data/{area_exploration}/{number_of_auvs}AUVs/'
+        self.data_path = f'/home/uib/MRS_data/svr_predictions/{area_exploration}/{number_of_auvs}AUVs/'
 
         self.response_threshold_folder = os.path.join(self.data_path, 'artm')
         self.RTM_bagfiles = os.path.join(self.response_threshold_folder, 'bagfiles')
@@ -77,7 +77,37 @@ class DataExtraction:
         elif self.aggregation_model == 2:
             self.bagfiles_folder = self.owa_bagfiles
             self.params_folder = self.owa_params
-            self.owas_combinations()
+            # self.owas_combinations()
+            self.combinations=[(0.5992, 0.2972, 0.1037)] 
+
+        # 15000 4 --> 0.8161,0.0915,0.0924
+        # 15000 5--> 0.6288,0.2653,0.1059
+        # 15000 6 --> 0.5990,0.2973,0.1036
+
+        # 25000
+        # 6--> 0.6163, 0.2813,0.1024
+        # 5--> 0.6845,0.2124,0.1032
+        # 4--> 0.7693,0.1364,0.0944
+        # 3--> 0.5765,0.3176,0.1059
+
+        # 35000
+        # 3-->0.5901, 0.3074,0.1025
+        # 4--> 0.7094, 0.1938,0.0969
+        # 5--> 0.7096, 0.1904, 0.1000
+        # 6--> 0.6226,0.2755,0.1019
+
+        # 45000
+        # 6-->0.6163,0.2813,0.1024
+        # 5-->0.7012,0.2018,0.0970
+        # 4-->0.6462,0.2543,0.0995
+        # 3-->0.6063,0.2953,0.0984
+
+        # 55000
+        # 3: 0.6224,0.2832,0.0944
+        # 4: 0.5917,0.3065, 0.1018
+        # 5: 0.6666,0.2387, 0.0947
+        # 6: 0.5992, 0.2972, 0.1037
+
 
         self.set_parameters()
         rospy.sleep(1)

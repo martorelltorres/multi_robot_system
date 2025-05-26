@@ -152,42 +152,6 @@ class polygon_division:
         plt.yticks(())
         # plt.show()
 
-    # def divide_polygon(self):
-    #         #obtain the global_points (lat,long) of the polygon
-    #         self.global_points=[]
-    #         self.global_coords=[]
-    #         for i in range(len(self.latitude)):
-    #             self.global_points.append([self.latitude[i],self.longitude[i]])
-    #         self.global_coords.append(self.global_points[i])
-
-    #         #obtain the local_points (lat,long) of the polygon
-    #         for i in range(len(self.north_position)):
-    #             self.local_points.append([self.north_position[i],self.east_position[i]])
-
-    #         # Define the main polygon object
-    #         self.main_polygon = Polygon(self.local_points)
-    #         self.main_polygon_centroid = self.main_polygon.centroid
-    #         self.polygon_points = self.local_points
-    #         self.regular_objects = self.generate_random_points_within_polygon(self.main_polygon,self.regular_objects_number)
-    #         self.priority_objects = self.generate_random_points_within_polygon(self.main_polygon,self.priority_objects_number)
-            
-    #         # .........................................................................
-    #         # Generate random points within the polygon
-    #         num_points = 500
-        
-    #         while len(self.centroid_points) < num_points:
-    #             # Generate random coordinates within the polygon's bounds
-    #             x = uniform(self.main_polygon.bounds[0], self.main_polygon.bounds[2])
-    #             y = uniform(self.main_polygon.bounds[1], self.main_polygon.bounds[3])
-    #             # Create a point object
-    #             point = Point(x,y)
-    #             # Check if the point is within the polygon
-    #             if self.main_polygon.contains(point):
-    #                 self.centroid_points.append([x,y])
-    #         self.points = np.array(self.centroid_points)
-
-    #         self.clustering()
-    #         self.conpute_voronoi_tesselation()
     def divide_polygon(self):
         # Obtain the global points (lat, long) of the polygon
         self.global_points = []
