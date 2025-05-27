@@ -27,7 +27,7 @@ class DataExtraction:
         self.simulation_count = -1
 
         # self.data_path = '/home/uib/MRS_data/simulation_data/'+ str(self.area_exploration)+'/'+str(self.number_of_auvs)+'AUVs/'
-        self.data_path = f'/home/uib/MRS_data/svr_predictions/{area_exploration}/{number_of_auvs}AUVs/'
+        self.data_path = f'/home/uib/MRS_data/random_strategies/{area_exploration}/{number_of_auvs}AUVs/'
 
         self.response_threshold_folder = os.path.join(self.data_path, 'artm')
         self.RTM_bagfiles = os.path.join(self.response_threshold_folder, 'bagfiles')
@@ -36,6 +36,10 @@ class DataExtraction:
         self.owa_folder = os.path.join(self.data_path, 'owa')
         self.owa_bagfiles = os.path.join(self.owa_folder, 'bagfiles')
         self.owa_params = os.path.join(self.owa_folder, 'params')
+
+        self.rr_folder = os.path.join(self.data_path, 'rr')
+        self.rr_bagfiles = os.path.join(self.rr_folder, 'bagfiles')
+        self.rr_params = os.path.join(self.rr_folder, 'params')
 
         self.yaml_file_path = "/home/uib/MMRS_ws/src/MMRS_stack/multi_robot_system/config/data_extraction.yaml"
 
@@ -80,34 +84,9 @@ class DataExtraction:
             # self.owas_combinations()
             self.combinations=[(0.5992, 0.2972, 0.1037)] 
 
-        # 15000 4 --> 0.8161,0.0915,0.0924
-        # 15000 5--> 0.6288,0.2653,0.1059
-        # 15000 6 --> 0.5990,0.2973,0.1036
-
-        # 25000
-        # 6--> 0.6163, 0.2813,0.1024
-        # 5--> 0.6845,0.2124,0.1032
-        # 4--> 0.7693,0.1364,0.0944
-        # 3--> 0.5765,0.3176,0.1059
-
-        # 35000
-        # 3-->0.5901, 0.3074,0.1025
-        # 4--> 0.7094, 0.1938,0.0969
-        # 5--> 0.7096, 0.1904, 0.1000
-        # 6--> 0.6226,0.2755,0.1019
-
-        # 45000
-        # 6-->0.6163,0.2813,0.1024
-        # 5-->0.7012,0.2018,0.0970
-        # 4-->0.6462,0.2543,0.0995
-        # 3-->0.6063,0.2953,0.0984
-
-        # 55000
-        # 3: 0.6224,0.2832,0.0944
-        # 4: 0.5917,0.3065, 0.1018
-        # 5: 0.6666,0.2387, 0.0947
-        # 6: 0.5992, 0.2972, 0.1037
-
+        elif self.aggregation_model == 3:
+            self.bagfiles_folder = self.rr_bagfiles
+            self.params_folder = self.rr_params
 
         self.set_parameters()
         rospy.sleep(1)
@@ -133,6 +112,10 @@ class DataExtraction:
         os.makedirs(self.owa_bagfiles, exist_ok=True)
         os.makedirs(self.owa_params, exist_ok=True)
 
+        os.makedirs(self.rr_folder, exist_ok=True)
+        os.makedirs(self.rr_bagfiles, exist_ok=True)
+        os.makedirs(self.rr_params, exist_ok=True)
+
     def check_if_process_end(self):
         list_cmd = subprocess.Popen("rosnode list", shell=True, stdout=subprocess.PIPE)
         list_output = list_cmd.stdout.read()
@@ -149,7 +132,7 @@ class DataExtraction:
             if self.simulation_count < len(self.combinations):
                 self.process()
             else:
-                self.aggregation_model = 2
+                # self.aggregation_model = 2
                 self.process()
 
     def set_parameters(self):
@@ -170,6 +153,9 @@ class DataExtraction:
             data['w1'] = self.combinations[self.simulation_count][0]
             data['w2'] = self.combinations[self.simulation_count][1]
             data['w3'] = self.combinations[self.simulation_count][2]
+
+        if self.aggregation_model == 3:
+            data['aggregation_model'] = 3
 
         self.write_yaml(data)
 
@@ -196,5 +182,5 @@ class DataExtraction:
 if __name__ == "__main__":
     number_of_auvs = int(input("Enter the number of AUVs: "))
     area_exploration = int(input("Enter the area of exploration: "))
-    aggregation_model = int(input("Enter the aggregation model 1--> ARTM   2--> OWA: "))
+    aggregation_model = int(input("Enter the aggregation model 1--> ARTM   2--> OWA  3-->RR: "))
     DataExtraction(number_of_auvs, area_exploration,aggregation_model)

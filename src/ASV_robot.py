@@ -476,6 +476,7 @@ class ASVRobot:
         self.in_process = True
         rospy.sleep(1)
         # obtain the goal_auv from the allocator
+        
         self.robot_goal_id = self.allocator_handler.get_goal_AUV()
         if(self.robot_goal_id==999):
             self.recap_information()
@@ -492,7 +493,8 @@ class ASVRobot:
             self.goal_id_pub.publish(msg)
 
             # set the flag to start to count the transmission time
-            self.set_transmission_init_time=True        
+            self.set_transmission_init_time=True 
+  
     
     def kill_the_process(self, msg):
         # Update area explored

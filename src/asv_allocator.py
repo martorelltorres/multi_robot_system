@@ -56,6 +56,8 @@ class ASVAllocator:
         self.w4 = self.get_param("w4",1)
         self.alpha = self.get_param("alpha",5)
         self.beta = self.get_param("beta",5)
+        self.data_storage = 0
+        self.first_iter = True
      
         
         # Initialize some variables
@@ -315,11 +317,11 @@ class ASVAllocator:
         self.acquired_data = msg.data_stimulus
         regular = msg.buffered_regular_objects
         priority = msg.buffered_priority_objects
-        storage = msg.storage
+        self.data_storage = msg.storage
         # Publish information
         msg = BufferedData()
         msg.header.stamp = rospy.Time.now()
-        msg.storage = storage
+        msg.storage = self.data_storage
         msg.data_stimulus = self.acquired_data
         msg.buffered_regular_objects = regular
         msg.buffered_priority_objects = priority
@@ -455,20 +457,26 @@ class ASVAllocator:
         elif self.aggregation_model == 2:
             self.OWA()
         
-        elif (self.aggregation_model == 3 and not self.goal_id_set): 
-            print(self.robots_id_rr)
-            self.robot_goal_id = self.robots_id_rr[0]
-            self.robots_id_rr = np.roll(self.robots_id_rr, -1)
+        elif (self.aggregation_model == 3): 
+            self.RR()
+
+    def RR(self):
+        auvs_candidates = [i for i, data in enumerate(self.data_storage) if data != 0]
+        print("AUV candidates: "+str(auvs_candidates))
+
+        if(self.first_iter==False and auvs_candidates[0]== self.robot_goal_id):
+            auvs_candidates = np.roll(auvs_candidates, -1)
+
+        self.robot_goal_id = auvs_candidates[0]
+        self.first_iter=False
+        print("GOAL ID: "+str(self.robot_goal_id))
+        auvs_candidates = np.roll(auvs_candidates, -1)
+
         
     def get_goal_AUV(self):
         self.goal_id_set = True
         return(self.robot_goal_id)
-    
-    def reset_goal_id(self):
-        self.goal_id_set = False
-        if(self.aggregation_model==3):
-            rospy.sleep(1)
-            self.update_stimulus_matrix()
+
            
     def ARTM(self,normalized_values):
         for robot in range(self.number_of_auvs):
