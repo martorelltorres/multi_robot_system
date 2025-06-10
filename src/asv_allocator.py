@@ -16,6 +16,7 @@ from geometry_msgs.msg  import PointStamped
 from cola2_msgs.msg import  NavSts,BodyVelocityReq
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker
+from collections import deque
 from cola2_msgs.srv import Goto, GotoRequest
 from multi_robot_system.msg import PriorityObjectInformation,RegularObjectInformation, CoverageStartTime,AcousticData,AggregationModelInfo,TravelledDistance,BufferedData,ExplorationUpdate,TransmittedData,CommunicationLatency,Communication,Distances, Data
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -74,6 +75,7 @@ class ASVAllocator:
         self.robot_at_center = False
         self.robots_id = np.array([])
         self.OWA_inputs= np.array([])
+        self.auvs_candidates = np.array([])
         self.penalty = np.array([])
         self.system_init = False
         self.robot_data = [0,0]
@@ -114,7 +116,6 @@ class ASVAllocator:
         self.start_data_gathering = True
         self.asvs_positions= []
         self.asvs_init = np.array([])
-        self.robots_id_rr = np.array([])
         self.init=False
         self.elapsed_time =np.array([])
         self.asv_id = 100
@@ -173,7 +174,6 @@ class ASVAllocator:
             self.current_time.append(0)
             self.acquired_data.append(0)
         
-        self.robots_id_rr = self.robots_id    
        
         robots_sense = np.zeros(2)
         self.stimulus_variables = np.tile(robots_sense, (self.number_of_auvs, 1))
@@ -449,6 +449,24 @@ class ASVAllocator:
                 rospy.logerr("STIMULUS contains invalid values (NaN or Inf). Terminating method.")
                 return
 
+        # if self.aggregation_model == 1:
+        #     self.ARTM(normalized_values)
+        #     # print("STIMULUS: " + str(self.stimulus_variables))
+        #     # print("ARTM OUTPUT :" + str(self.stimulus))
+
+        # elif self.aggregation_model == 2:
+        #     self.OWA()
+        
+        # elif (self.aggregation_model == 3): 
+        #     self.RR()
+
+    def RR(self):
+        self.auvs_candidates = [i for i, data in enumerate(self.data_storage) if data != 0]
+        print("AUV candidates: " + str(self.auvs_candidates))
+        self.robot_goal_id = np.min(self.auvs_candidates)
+        print("GOAL ID: " + str(self.robot_goal_id))
+        
+    def get_goal_AUV(self):
         if self.aggregation_model == 1:
             self.ARTM(normalized_values)
             # print("STIMULUS: " + str(self.stimulus_variables))
@@ -460,20 +478,6 @@ class ASVAllocator:
         elif (self.aggregation_model == 3): 
             self.RR()
 
-    def RR(self):
-        auvs_candidates = [i for i, data in enumerate(self.data_storage) if data != 0]
-        print("AUV candidates: "+str(auvs_candidates))
-
-        if(self.first_iter==False and auvs_candidates[0]== self.robot_goal_id):
-            auvs_candidates = np.roll(auvs_candidates, -1)
-
-        self.robot_goal_id = auvs_candidates[0]
-        self.first_iter=False
-        print("GOAL ID: "+str(self.robot_goal_id))
-        auvs_candidates = np.roll(auvs_candidates, -1)
-
-        
-    def get_goal_AUV(self):
         self.goal_id_set = True
         return(self.robot_goal_id)
 
@@ -515,7 +519,6 @@ class ASVAllocator:
          # remove the robot from the dustbin goals
         robot_id = msg.data
         self.robots_id = np.delete(self.robots_id, np.where(self.robots_id == robot_id))
-        self.robots_id_rr = np.delete(self.robots_id_rr, np.where(self.robots_id_rr == robot_id))
         # self.robot_to_remove = robot_id
         self.removed_robots.append(robot_id)
         self.active_robots = self.active_robots -1

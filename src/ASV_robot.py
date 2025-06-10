@@ -476,7 +476,6 @@ class ASVRobot:
         self.in_process = True
         rospy.sleep(1)
         # obtain the goal_auv from the allocator
-        
         self.robot_goal_id = self.allocator_handler.get_goal_AUV()
         if(self.robot_goal_id==999):
             self.recap_information()
